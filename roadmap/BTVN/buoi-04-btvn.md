@@ -18,11 +18,11 @@ Mở rộng mô hình `Product`, `Customer`, `CartItem` từ buổi 3 để bi�
 - `Order` có field private `id`, `customer` kiểu `Customer`, `items` kiểu `List<CartItem>` và `status` kiểu `String`; constructor nhận `id` và `customer`, trạng thái đầu là `PENDING`. Quan hệ: Order HAS-A Customer và HAS-A nhiều CartItem; mỗi CartItem vẫn HAS-A một Product.
 - `Order.addItem(CartItem item)` thêm một dòng; `getTotal()` trả tổng `CartItem.getTotal()`; `confirm()` chuyển `PENDING` thành `CONFIRMED`; `cancel()` chuyển `PENDING` thành `CANCELLED`. Gọi confirm/cancel khi trạng thái không còn `PENDING` không làm thay đổi trạng thái.
 - Các chữ ký là `void addItem(CartItem item)`, `double getTotal()`, `void confirm()`, `void cancel()`, `String getStatus()`.
-- Tên class chạy ví dụ là `HitShop`; không cần console menu.
+- Tên class chạy chương trình vẫn là `HitShop`; giữ menu console và các luồng giỏ hàng đã có ở buổi 2–3, đồng thời bổ sung hiển thị danh sách đa hình và thao tác với Order.
 
 ### Nộp Bài
 
-Nộp source các model và `HitShop`; kèm output danh sách mô tả, tổng đơn và trạng thái sau xác nhận.
+Nộp source các model và `HitShop`; kèm output danh sách mô tả, menu/giỏ hàng đang có, tổng đơn và trạng thái sau xác nhận.
 - Tạo `Book` và `Order` từ các class đã học; không dùng interface, abstract class hoặc ép kiểu trong phần bắt buộc.
 
 ### Dữ Liệu Chuẩn Và Kết Quả

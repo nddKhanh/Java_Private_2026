@@ -9,27 +9,29 @@
 - Chọn đề tài, chia nhóm/vai trò, tạo repository và đăng ký kế hoạch.
 - Xác định chức năng, database và cách chứng minh project chạy được.
 
-> **Nối tiếp:** 11 buổi trước xây dần ứng dụng quản lý bán hàng/đơn hàng: Java cơ bản, OOP, xử lý lỗi/file, SQL/JDBC nhiều bảng, cấu trúc MVC và Swing. Buổi 12 chuyển từ bài tập có hướng dẫn sang bài tập lớn theo nhóm.
+> **Cầu nối:** Sau khi đã tiếp cận các chủ đề Java và cách phối hợp bằng Git, một yêu cầu lớn cần được chia thành dữ liệu, chức năng, phần việc và tiêu chí nghiệm thu. Buổi này tập trung vào cách lập kế hoạch và trình bày một ứng dụng nhóm; project tích lũy được dùng trong BTVN, không làm trục cho phần lý thuyết.
 
-## I. Nhìn Lại Ứng Dụng Đã Xây
+## I. Hệ Thống Hóa Kiến Thức Theo Nhóm Chủ Đề
 
-Đây là buổi tổng kết và lập kế hoạch theo lộ trình; phần chọn project phục vụ bài tập lớn, không thay thế hệ thống hóa kiến thức. Nhìn lại chuỗi khái niệm: dữ liệu/điều khiển luồng → object và quan hệ → xử lý lỗi/lưu trữ → SQL/JDBC → phân tầng → làm việc nhóm.
+Đây là buổi tổng kết và lập kế hoạch theo lộ trình; phần chọn đề tài phục vụ bài tập lớn, không thay thế hệ thống hóa kiến thức. Khi lập kế hoạch, cần xác định vấn đề, người dùng, dữ liệu, chức năng, phạm vi và cách chứng minh kết quả.
 
-Ứng dụng xuyên suốt đi từ phép tính giá × số lượng, thành menu giỏ hàng, rồi model Product/Customer/CartItem, Order, payment/delivery, lưu trữ MySQL, repository/service và giao diện demo. Mỗi bước giải quyết giới hạn của bước trước.
+Các chủ đề đã học gồm cú pháp Java, điều khiển luồng, OOP, xử lý lỗi, lưu trữ file, SQL/JDBC, phân tách trách nhiệm, giao diện và phối hợp bằng Git. Mỗi chủ đề giải quyết một dạng vấn đề lập trình riêng và có thể được vận dụng tùy theo yêu cầu đề tài.
 
-| Chặng | Kết quả chính |
+| Nhóm kiến thức | Câu hỏi cần tự trả lời |
 |---|---|
-| Buổi 1–2 | Chương trình console, menu và giỏ hàng |
-| Buổi 3–5 | OOP, nhiều loại sản phẩm, thanh toán/giao hàng |
-| Buổi 6–7 | Xử lý lỗi, file, rồi CRUD JDBC |
-| Buổi 8–9 | Repository/service và dữ liệu đơn nhiều bảng |
-| Buổi 10–11 | MVC, refactor, Git nhóm và Swing cơ bản |
+| Java cơ bản | Dữ liệu có kiểu gì, luồng chạy ra sao, method nhận/trả gì? |
+| OOP | Trạng thái thuộc object nào, quan hệ là HAS-A hay IS-A, hành vi nào có thể thay thế? |
+| Lỗi và lưu trữ | Lỗi nào có thể phục hồi, dữ liệu lưu ở đâu và đọc lại thế nào? |
+| SQL/JDBC | Bảng liên hệ qua khóa nào, truy vấn trả về dữ liệu gì? |
+| Thiết kế và giao diện | Trách nhiệm chia ra sao, thay đổi được review và trình bày thế nào? |
 
-> **Hình minh họa cần bổ sung:** Bản đồ kiến thức từ chương trình Java cơ bản đến ứng dụng có lưu trữ và giao diện.
+~~~text
+Java cơ bản · OOP · lỗi/lưu trữ · SQL/JDBC · thiết kế · giao diện/Git
+~~~
 
 ## II. Chọn Đề Tài Và Chốt Phạm Vi
 
-Gợi ý: quản lý bán hàng, thư viện, khóa học, quán cà phê hoặc đơn hàng thương mại điện tử. Chọn phạm vi vừa đủ để nhóm hoàn thành được CRUD nghiệp vụ, có quan hệ dữ liệu phù hợp và demo được luồng chính.
+Gợi ý: quản lý bán hàng, thư viện, khóa học, quán cà phê hoặc đơn hàng thương mại điện tử. Đây là đề tài để vận dụng kiến thức; nhóm chọn domain riêng, không cần sao chép ứng dụng ví dụ trong giáo án. Chọn phạm vi vừa đủ để nhóm hoàn thành CRUD nghiệp vụ, có quan hệ dữ liệu phù hợp và demo được luồng chính.
 
 Mỗi nhóm ghi rõ:
 
@@ -49,9 +51,13 @@ Thống nhất tiêu chí theo lộ trình:
 - Giao diện console hoặc Swing đơn giản đáp ứng luồng cốt lõi.
 - Báo cáo/demo: trình bày vấn đề, chức năng, database, phân chia công việc và giới hạn.
 
-Demo nên chạy một luồng đầu-cuối bằng dữ liệu mẫu, ví dụ tìm sản phẩm → tạo đơn → xem chi tiết đơn. Chuẩn bị sẵn cách reset dữ liệu demo và phương án nếu máy không có kết nối database.
+Demo nên chạy một luồng đầu-cuối bằng dữ liệu mẫu, ví dụ tìm đầu sách → lập phiếu mượn → xem chi tiết phiếu. Chuẩn bị sẵn cách reset dữ liệu demo và phương án nếu máy không có kết nối database.
 
 Khi lập kế hoạch, nhóm biến yêu cầu thành đầu việc kiểm chứng được: chức năng nào thao tác dữ liệu, bảng nào liên quan, lớp nào chịu trách nhiệm, kịch bản nào chứng minh luồng chạy. Đây là cách vận dụng mô hình dữ liệu, JDBC, phân tầng và Git; buổi tổng kết không yêu cầu học thêm framework mới.
+
+Ví dụ với chức năng “lập phiếu mượn”: chốt quy tắc (bạn đọc và sách phải tồn tại, số lượng dương, sách còn có thể mượn); xác định dữ liệu cần lưu (`loans`, `loan_items`, thời điểm mượn); chia trách nhiệm nhận thông tin, áp dụng quy tắc và truy cập database; cuối cùng viết kịch bản demo cùng kết quả mong đợi. Đây là ví dụ phân tích yêu cầu, không phải cấu trúc bắt buộc cho mọi đề tài.
+
+Không phải đề tài nào cũng cần cùng một thiết kế. Nếu ứng dụng chỉ quản lý danh bạ, có thể không cần quan hệ đơn hàng nhiều bảng; nhóm chọn mô hình dựa trên dữ liệu và thao tác thật của đề tài, rồi giải thích lý do. Tiêu chí là các lớp/bảng phản ánh bài toán và có thể chứng minh bằng một luồng chạy được, không phải đưa mọi khái niệm đã học vào project.
 
 ## IV. Tổ Chức Công Việc Nhóm
 
@@ -73,7 +79,7 @@ Khi lập kế hoạch, nhóm biến yêu cầu thành đầu việc kiểm ch�
 
 ## Tổng Kết Khóa Học
 
-Học viên đã đi từ chương trình Java đầu tiên đến một ứng dụng quản lý đơn hàng đơn giản có model, giao diện, database và quy trình làm việc. Bài tập lớn là cơ hội chọn domain khác và áp dụng lại kiến thức, không phải bắt đầu từ kiến thức rời rạc.
+Học viên đã tiếp cận các nhóm kiến thức Java, OOP, lưu trữ, database, thiết kế, giao diện và làm việc nhóm. Bài tập lớn yêu cầu chọn một domain, xác định phạm vi khả thi, chia việc và chứng minh chức năng bằng một luồng chạy được.
 
 ### Câu Hỏi Chốt Kế Hoạch
 

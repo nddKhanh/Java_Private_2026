@@ -1,4 +1,4 @@
-# Buổi 6: Exception, try-with-resources và Lưu Đơn Hàng Ra File
+# Buổi 6: Exception, try-with-resources và Lưu Dữ Liệu Ra File
 
 ---
 
@@ -7,9 +7,9 @@
 - Giải thích vì sao lỗi input/file không nên làm chương trình dừng đột ngột.
 - Dùng try/catch/finally và throw ở mức cơ bản.
 - Đóng tài nguyên bằng try-with-resources.
-- Đọc/ghi file bằng Files, Path để giữ lại dữ liệu đơn hàng.
+- Đọc/ghi file bằng Files, Path để giữ lại dữ liệu sau khi chương trình kết thúc.
 
-> **Nối tiếp kiến thức:** Buổi 5 học hợp đồng và equality giữa object. Buổi này học cách kiểm soát luồng khi một thao tác thất bại, quản lý tài nguyên và đọc/ghi dữ liệu bền vững qua file. Text/CSV là một định dạng nhập môn; buổi 7 sẽ học cơ chế lưu trữ database.
+> **Cầu nối:** Các object và phép xử lý trước đó thường giả định dữ liệu đầu vào hợp lệ. Khi giả định không đúng hoặc thao tác bên ngoài thất bại, exception giúp kiểm soát luồng và đưa ra cách phục hồi phù hợp. Buổi này xét riêng lỗi, tài nguyên và lưu trữ file.
 
 ## I. Phân Loại Lỗi Qua Ví Dụ
 
@@ -24,9 +24,18 @@ try {
 }
 ~~~
 
+`Integer.parseInt(input)` ném `NumberFormatException` nếu chuỗi không biểu diễn số nguyên. Nếu đọc trực tiếp bằng `Scanner.nextInt()`, token không hợp lệ gây `InputMismatchException`; token đó vẫn còn trong scanner nên cần đọc/bỏ nó hoặc chuyển sang đọc cả dòng rồi parse. Hai cách đọc vì vậy có thể phát sinh loại lỗi khác nhau dù người dùng nhập cùng một chữ.
+
 Không bắt mọi Exception để che lỗi lập trình. Thông báo cho người dùng nên dễ hiểu; log kỹ thuật có thể giữ nguyên nhân để tìm lỗi.
 
-> **Hình minh họa cần bổ sung:** Luồng exception từ vị trí phát sinh, truyền ngược qua các lời gọi method, rồi được catch phù hợp hoặc kết thúc chương trình.
+~~~text
+method A -> method B -> lỗi phát sinh
+              ^             |
+              |             v
+          catch phù hợp <- exception truyền ngược
+              |
+      xử lý/khôi phục hoặc báo lỗi lên trên
+~~~
 
 ## II. try/catch/finally Và throw
 
@@ -35,11 +44,39 @@ Không bắt mọi Exception để che lỗi lập trình. Thông báo cho ngư�
 - `throw` ném một exception object tại vị trí cụ thể. Nó khác `throws` trong khai báo method; lộ trình buổi này yêu cầu `throw` ở mức cơ bản.
 - try-with-resources tự đóng resource implement `AutoCloseable` khi ra khỏi khối, kể cả khi có exception. Nhiều resource được đóng theo thứ tự ngược với khai báo.
 
+Chỉ `catch` ở nơi có thể làm việc hữu ích sau lỗi: hỏi lại input, chọn giá trị thay thế, hoặc báo thao tác lưu thất bại. Nếu method hiện tại không biết cách phục hồi, có thể để exception đi lên caller; `throws IOException` khai báo khả năng đó trong chữ ký method, còn `throw new ...` thực sự ném một lỗi.
+
+~~~java
+static int parsePositive(String input) {
+    int value = Integer.parseInt(input);
+    if (value <= 0) {
+        throw new IllegalArgumentException("Giá trị phải lớn hơn 0");
+    }
+    return value;
+}
+~~~
+
+`NumberFormatException` từ `parseInt` cũng có thể truyền ra nếu chuỗi không biểu diễn số nguyên. `IllegalArgumentException` ở đây do chương trình chủ động ném khi số có dạng hợp lệ nhưng vi phạm điều kiện miền giá trị. Nơi gọi có thể bắt loại lỗi phù hợp để báo rõ nguyên nhân.
+
+`finally` chạy dù khối `try` thành công hay phát sinh exception, nên trước đây thường được dùng để đóng tài nguyên thủ công. Với resource implement `AutoCloseable`, ưu tiên try-with-resources vì nó tự đóng và giảm nguy cơ quên dọn dẹp.
+
+~~~java
+try {
+    System.out.println(Integer.parseInt("42"));
+} catch (NumberFormatException e) {
+    System.out.println("Chuỗi không phải số nguyên");
+} finally {
+    System.out.println("Kết thúc thao tác parse");
+}
+~~~
+
+`finally` chạy sau nhánh `try` hoặc `catch`; với input `42`, output gồm `42` rồi `Kết thúc thao tác parse`. Nếu đổi input thành `abc`, `catch` in thông báo lỗi rồi `finally` vẫn chạy.
+
 ~~~java
 try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-    writer.write("P01,Áo thun,150000,2");
+    writer.write("B01,Dế Mèn phiêu lưu ký,224");
 } catch (IOException e) {
-    System.out.println("Không lưu được đơn hàng.");
+    System.out.println("Không ghi được dữ liệu.");
 }
 ~~~
 
@@ -55,11 +92,13 @@ Files.write(path, lines, StandardCharsets.UTF_8);
 List<String> saved = Files.readAllLines(path, StandardCharsets.UTF_8);
 ~~~
 
+Để đoạn trên dùng được, cần import `java.nio.file.Path`, `java.nio.file.Paths`, `java.nio.file.Files`, `java.nio.charset.StandardCharsets` và `java.util.List`; `lines` là một `List<String>` đã tạo trước đó. `Files.write` ghi các phần tử thành các dòng văn bản; `readAllLines` trả danh sách dòng để chương trình xử lý tiếp.
+
 `Files.write` với cấu hình mặc định tạo file nếu cần và thay nội dung file hiện có; nếu muốn nối thêm phải chỉ rõ open option tương ứng. `readAllLines` nạp toàn bộ dòng vào bộ nhớ nên phù hợp file nhỏ; không nên mặc định cách này phù hợp file rất lớn.
 
 CSV đơn giản thường biểu diễn mỗi bản ghi trên một dòng và tách trường bằng dấu phẩy. Nếu giá trị bên trong có dấu phân cách, dấu nháy hoặc xuống dòng thì cần quy tắc escape/quote; không thể luôn tách bằng `split(",")` an toàn. Buổi nhập môn có thể giới hạn dữ liệu mẫu không chứa dấu phẩy, nhưng phải nói rõ đó là giới hạn ví dụ chứ không phải CSV tổng quát.
 
-Đọc lại dữ liệu là bài toán đối xứng với ghi: parse dữ liệu, xác thực trường, xử lý dòng hỏng và quyết định có bỏ qua dòng hay dừng. Mục tiêu là không để một bản ghi lỗi làm mất khả năng xử lý toàn bộ file mà không có thông báo.
+Đọc lại dữ liệu là bài toán đối xứng với ghi: parse dữ liệu, xác thực trường, xử lý dòng hỏng và quyết định có bỏ qua dòng hay dừng. Mục tiêu là không để một bản ghi lỗi làm mất khả năng xử lý toàn bộ file mà không có thông báo. Với định dạng do chính ứng dụng tạo và file nhỏ, có thể đọc toàn bộ; với file lớn, đọc từng dòng/luồng để tránh giữ tất cả trong bộ nhớ. CSV chuẩn có quy tắc escape riêng, nên ví dụ tự tách bằng dấu phân cách chỉ hợp lệ khi ràng buộc dữ liệu loại trừ dấu đó.
 
 ## IV. Thực Hành Khái Niệm
 
@@ -77,7 +116,7 @@ File -> đọc dòng -> parse + validate -> dữ liệu trong chương trình
 ## Phần Mở Rộng Và Nâng Cao — Tìm Hiểu Thêm
 
 - **Regex (mở rộng):** biểu thức chính quy mô tả mẫu chuỗi; có thể dùng `String.matches()` cho kiểm tra toàn chuỗi như mã đơn hoặc định dạng cơ bản. Regex xác nhận hình dạng chuỗi, không chứng minh email/số điện thoại thật sự tồn tại. Tránh dạy pattern phức tạp trong buổi nhập môn.
-- **Custom exception (nâng cao):** tạo lớp exception riêng khi muốn gọi tên một lỗi nghiệp vụ như số lượng không hợp lệ. Bài tập: tạo `InvalidQuantityException` và ném khi số lượng nhỏ hơn 1; bắt lỗi tại tầng gọi để hiển thị thông báo. Đây là bài riêng, không bắt buộc để đọc/ghi file.
+- **Custom exception (nâng cao):** tạo lớp exception riêng khi muốn gọi tên một lỗi nghiệp vụ như số trang không hợp lệ. Bài tập: tạo `InvalidPageCountException` và ném khi số trang nhỏ hơn 1; bắt lỗi tại nơi gọi để hiển thị thông báo. Đây là bài riêng, không bắt buộc để đọc/ghi file.
 - **Thread (nâng cao, nếu còn thời gian):** một tiến trình có thể có nhiều luồng thực thi; hai luồng chạm cùng trạng thái có thể tạo race condition. Chỉ demo khái niệm qua bộ đếm dùng chung và yêu cầu dự đoán kết quả; không yêu cầu viết đa luồng để hoàn thành ứng dụng.
 
 Các nội dung trên là phần khám phá tùy chọn. Bài thực hành cốt lõi vẫn là xử lý lỗi, quản lý resource và đọc/ghi dữ liệu file.
@@ -91,11 +130,11 @@ Các nội dung trên là phần khám phá tùy chọn. Bài thực hành cốt
 | Không tìm thấy file | Path tương đối từ working directory khác | In/kiểm tra thư mục chạy và Path |
 | Dữ liệu bị tách sai | CSV đơn giản gặp dấu phẩy trong tên | Giữ giới hạn mẫu hoặc dùng format đúng ở phần sau |
 
-## Tổng Kết Và Mốc Project
+## Tổng Kết Buổi 6
 
 - Exception chuyển luồng tới handler phù hợp; try-with-resources quản lý vòng đời tài nguyên.
 - Files/Path tách vị trí file khỏi thao tác đọc/ghi; định dạng text cần quy tắc parse/validate rõ.
-- Lưu đơn hàng là ví dụ áp dụng. File phù hợp dữ liệu nhỏ, còn truy vấn/cập nhật có cấu trúc được tiếp nối bằng SQL/JDBC ở buổi 7.
+- File văn bản phù hợp dữ liệu nhỏ, tuần tự; cần parse và validate khi đọc lại. Truy vấn có cấu trúc là một trong những lý do dùng database.
 
 ### Câu Hỏi Ôn Tập
 

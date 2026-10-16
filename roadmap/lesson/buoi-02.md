@@ -11,35 +11,24 @@
 - Giải thích String bất biến và chọn đúng cách so sánh nội dung.
 - Dùng List/ArrayList để thêm, xóa, sửa, duyệt, tìm kiếm; phân biệt danh sách động với mảng có kích thước cố định.
 
-> **Nối tiếp:** Buổi 1 làm quen với lệnh chạy tuần tự, biến và phép tính. Buổi này học cách chương trình rẽ nhánh, lặp lại thao tác, chia xử lý thành method và biểu diễn văn bản/danh sách. Các khái niệm được luyện bằng ví dụ độc lập; menu giỏ hàng là phần bài tập tích lũy về nhà.
+> **Cầu nối:** Buổi 1 mới thực hiện lệnh theo thứ tự cố định. Khi kết quả cần phụ thuộc dữ liệu hoặc một thao tác phải lặp lại, chương trình cần điều kiện và vòng lặp. Buổi này tập trung riêng vào các cấu trúc điều khiển, method, String và danh sách; ví dụ dùng dữ liệu trung tính.
+
+> **Trọng tâm cần nắm:** điều kiện chọn nhánh; vòng lặp điều khiển số lần thực hiện; method nhận/trả dữ liệu; String lưu văn bản; List/ArrayList quản lý tập hợp có thứ tự. Các ghi chú về UTF-16 và độ phức tạp ở dưới là phần đọc thêm để hiểu giới hạn, không cần ghi nhớ trong buổi đầu.
 
 ## I. Điều Khiển Luồng Giải Quyết Việc Gì?
 
 Chương trình tuần tự thực hiện lần lượt từng lệnh. Nhưng trong nhiều bài toán, hành động tiếp theo phụ thuộc dữ liệu: điểm có đạt không, số nhập có hợp lệ không, hoặc người dùng chọn chức năng nào. Điều kiện cho phép chọn nhánh; vòng lặp cho phép lặp lại một nhóm lệnh mà không sao chép chúng nhiều lần. Menu là một ví dụ quen thuộc, nhưng hai cấu trúc này dùng được trong mọi loại chương trình.
 
 ~~~java
-int choice;
-do {
-    System.out.println("1. Thêm sản phẩm");
-    System.out.println("2. Xem giỏ hàng");
-    System.out.println("0. Thoát");
-    choice = scanner.nextInt();
-
-    switch (choice) {
-        case 1:
-            System.out.println("Thêm sản phẩm");
-            break;
-        case 2:
-            System.out.println("Xem giỏ hàng");
-            break;
-        case 0:
-            System.out.println("Kết thúc");
-            break;
-        default:
-            System.out.println("Lựa chọn không hợp lệ");
-    }
-} while (choice != 0);
+int score = 68;
+if (score >= 50) {
+    System.out.println("Đạt");
+} else {
+    System.out.println("Chưa đạt");
+}
 ~~~
+
+Điều kiện chọn nhánh theo dữ liệu; vòng lặp lặp lại thao tác; method đặt tên và gom một thao tác có thể dùng lại. Các cấu trúc này áp dụng cho nhiều bài toán, không phụ thuộc một ứng dụng cụ thể. Input sai và cách phục hồi sẽ được bàn ở buổi 6.
 
 ## II. Điều Kiện Và Vòng Lặp
 
@@ -75,7 +64,11 @@ Trong ví dụ, kiểm tra `score >= 50` trước `score >= 80` sẽ khiến đi
 `&&` và `||` có cơ chế **short-circuit**: Java chỉ đánh giá vế phải khi cần thiết. Có thể dùng thứ tự này để kiểm tra điều kiện an toàn trước khi truy cập dữ liệu:
 
 ~~~java
-if (scores.size() > 0 && scores.get(0) >= 50) {
+import java.util.ArrayList;
+import java.util.List;
+
+List<Integer> scores = new ArrayList<>();
+if (!scores.isEmpty() && scores.get(0) >= 50) {
     System.out.println("Phần tử đầu tiên đạt");
 }
 ~~~
@@ -174,7 +167,15 @@ for (int number = 1; number <= 5; number++) {
 
 Mẹo với `Scanner`: nếu gọi `nextInt()` rồi sau đó gọi `nextLine()`, `nextInt()` chỉ lấy token số và để lại ký tự xuống dòng. `nextLine()` tiếp theo có thể đọc phần còn lại của dòng đó ngay lập tức. Có thể đọc toàn bộ bằng `nextLine()` rồi chuyển đổi, hoặc gọi thêm `nextLine()` để bỏ phần xuống dòng còn lại trước khi đọc dòng văn bản kế tiếp. Cách đọc cả dòng rồi chuyển đổi thường giúp xử lý input sai nhất quán hơn.
 
-> **Hình minh họa cần bổ sung:** Lưu đồ rẽ nhánh `if/else`, đường đi qua `switch`, và vòng `for`/`while`/`do-while` đánh dấu vị trí kiểm tra điều kiện.
+~~~text
+if: điều kiện? --đúng--> khối if
+          \--sai--> else (nếu có)
+
+while/for: kiểm tra -> chạy thân -> cập nhật -> quay lại kiểm tra
+do-while: chạy thân -> cập nhật/kiểm tra -> chạy tiếp hoặc dừng
+~~~
+
+Khác biệt để nhớ: `while` có thể chạy 0 lần; `do-while` chạy ít nhất 1 lần. `for` đặt điểm bắt đầu, điều kiện và bước cập nhật ở một chỗ nên tiện khi duyệt theo số lượt/index.
 
 ## III. Method, Tham Số Và Giá Trị Trả Về
 
@@ -234,7 +235,7 @@ Trong ứng dụng thật, không nên tạo String bằng `new` như ví dụ t
 | Bỏ khoảng trắng ASCII biên | `name.trim()` | Trả về chuỗi mới đã bỏ ký tự có mã không lớn hơn U+0020 ở hai đầu |
 | So sánh nội dung | `name.equals(other)` | Phân biệt hoa/thường |
 
-Index của String bắt đầu từ 0 giống index của mảng. `length()` đếm đơn vị mã UTF-16; với ký tự tiếng Anh và phần lớn ví dụ nhập môn, có thể hiểu gần như số ký tự, nhưng một số ký tự Unicode cần hai đơn vị. Vì thế vị trí cuối là `length() - 1`, còn `charAt(length())` là sai index. Một chuỗi rỗng có `length() == 0`; cần cẩn thận không gọi `charAt(0)` trong trường hợp này. `trim()` cũng chỉ bỏ một nhóm ký tự khoảng trắng ASCII ở hai đầu, không phải mọi ký tự được Unicode xem là khoảng trắng.
+**Đọc thêm:** Index của String bắt đầu từ 0 giống index của mảng. `length()` đếm đơn vị mã UTF-16; một số ký tự Unicode cần hai đơn vị. Vì thế vị trí cuối là `length() - 1`, còn `charAt(length())` là sai index. `trim()` cũng chỉ bỏ một nhóm ký tự khoảng trắng ASCII ở hai đầu, không phải mọi ký tự được Unicode xem là khoảng trắng. Người mới chỉ cần nhớ quy tắc index và rằng chuỗi rỗng không có phần tử đầu.
 
 String hữu ích khi cần lưu, so sánh, tìm kiếm hoặc hiển thị văn bản. Khi chuẩn hóa input, cần chọn thao tác phù hợp với quy tắc dữ liệu; có thể bỏ khoảng trắng ASCII biên rồi dùng `equalsIgnoreCase()` để so sánh không phân biệt hoa/thường. Không nên dùng `==` để so sánh nội dung.
 
@@ -306,11 +307,17 @@ scoreList.add(9); // danh sách tăng số phần tử
 System.out.println(scoreList.size());
 ~~~
 
-Hai cấu trúc cùng hỗ trợ truy cập theo index trong thời gian hằng số. Với `ArrayList`, thêm cuối thường có chi phí trung bình thấp (amortized); đôi lúc cấu trúc phải cấp sức chứa mới và chép phần tử. Tìm kiếm bằng `contains()` hoặc duyệt tuần tự là tuyến tính; chèn/xóa ở giữa cũng tuyến tính vì phải dịch chuyển phần tử. Đây là cách mô tả độ phức tạp thông dụng; lộ trình không yêu cầu học cấu trúc cài đặt hay tự xây dynamic array.
+**Đọc thêm về hiệu năng:** Hai cấu trúc cùng hỗ trợ truy cập theo index nhanh. `ArrayList` thêm cuối thường nhanh; đôi lúc phải cấp vùng chứa mới và chép phần tử. Tìm kiếm bằng `contains()` hoặc duyệt tuần tự tăng theo số phần tử; chèn/xóa ở giữa phải dịch chuyển các phần tử sau. Chưa cần ghi nhớ thuật ngữ amortized hay tự cài dynamic array.
 
 Chọn mảng khi kích thước đã cố định và muốn lưu primitive trực tiếp, hoặc khi bài học đang tập trung vào index. Chọn `ArrayList` khi danh sách thay đổi số lượng và cần các thao tác thêm/xóa/sửa thường xuyên. Không có cấu trúc nào luôn tốt hơn; hãy căn cứ vào kích thước dữ liệu và thao tác cần thực hiện.
 
-> **Hình minh họa cần bổ sung:** Minh họa mảng có độ dài cố định và một `ArrayList` có số phần tử/capacity tách biệt; đánh dấu các bước phần tử được dời khi xóa ở giữa.
+~~~text
+Array:      [A][B][C]   length = 3 (cố định)
+ArrayList:  [A][B][C][ ][ ]   size = 3, capacity >= 3
+Xóa B:      [A][C]      các phần tử sau vị trí xóa dịch trái
+~~~
+
+`size` là số phần tử đang có; `capacity` là chỗ có thể chứa trước khi cần mở rộng. Không cần tự quản lý capacity khi dùng ArrayList.
 
 ## VII. Hằng Số Và Truyền Tham Số
 
