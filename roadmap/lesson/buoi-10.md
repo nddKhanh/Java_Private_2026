@@ -1,146 +1,272 @@
-# Buổi 10: MVC, SOLID Cơ Bản và Refactor
+# Buổi 10: MVC, SOLID Và Refactor
 
 ---
 
+> **Hạn chế từ buổi 9:** chức năng đã chạy qua nhiều repository nhưng ranh giới giao diện, điều phối và nghiệp vụ chưa đồng đều; dependency cụ thể khiến code khó thay thế và kiểm thử.
+
 ## Mục tiêu buổi học
 
-- Phân biệt Model, View, Controller với Service và Repository.
-- Áp dụng Single Responsibility và Dependency Inversion ở mức dễ hiểu.
-- Dùng interface repository để service không phụ thuộc trực tiếp JDBC.
-- Refactor một ví dụ mà vẫn giữ nguyên hành vi quan sát được.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** Khi chương trình có nhiều phần cùng thay đổi, trách nhiệm chồng lấn khiến sửa một nơi dễ gây lỗi nơi khác. Nguyên tắc thiết kế và phân tách tầng giúp giới hạn ảnh hưởng, làm code dễ hiểu và dễ thay thế hơn.
+- Chỉ ra trách nhiệm của View, Controller, Service, Repository và Model.
+- Refactor một luồng đang chạy mà giữ nguyên kết quả nghiệm thu.
+- Áp dụng SRP và DIP vào Product/Order thay vì học SOLID như định nghĩa rời.
+- Tạo composition root để nối implementation với abstraction.
+- Thay JdbcProductRepository bằng MemoryProductRepository mà không sửa ProductService.
 
-## I. MVC Là Cách Sắp Xếp Trách Nhiệm
+> **Kết quả cuối buổi:** ứng dụng mẫu có luồng View → Controller → Service → Repository interface → JDBC implementation và giữ nguyên hành vi trước refactor.
 
-- Model biểu diễn dữ liệu/domain: Book, Reader, Loan.
-- View hiển thị console và nhận lựa chọn.
-- Controller điều phối input sang service, nhận kết quả và cập nhật view.
-- Repository truy cập dữ liệu; Service thực hiện nghiệp vụ.
+> **Môi trường:** JDK 17; không đổi schema hoặc dữ liệu chuẩn trong lúc refactor.
 
-~~~text
-View -> Controller -> Service -> Repository interface -> JDBC implementation -> MySQL
-                         |
-                       Model
-~~~
+## I. Chẩn Đoán Code Trước Refactor
 
-Không cần framework MVC. Mục tiêu là biết code nào thuộc vai trò nào và tránh SQL trong view.
+Một case menu điển hình có thể đang làm quá nhiều việc:
 
-Model mô tả dữ liệu/khái niệm nghiệp vụ; View trình bày; Controller nhận sự kiện hoặc input và điều phối. Service/Repository hỗ trợ xử lý nghiệp vụ và lưu trữ, không đồng nhất với ba chữ MVC. MVC là cách phân chia trách nhiệm, không phải quy tắc mỗi màn hình chỉ có đúng ba class.
-
-~~~text
-Request: View -> Controller -> Service -> Repository -> Database
-Result:  View <- Controller <- Service <- Repository <- Database
-~~~
-
-## II. SOLID: Hai Ý Chính
-
-- **Single Responsibility:** class nên có một nhóm trách nhiệm liên quan. LoanService không nên in giao diện hay dựng SQL.
-- **Dependency Inversion:** service phụ thuộc abstraction (interface) để có thể thay implementation.
-
-~~~java
-public interface LoanRepository {
-    long insertLoan(String readerId, LoanStatus status, LocalDateTime borrowedAt);
-    Optional<Loan> findById(long id);
+```java
+case 7 -> {
+    String customerId = scanner.nextLine();
+    // đọc item
+    // tìm Product bằng SQL
+    // kiểm tra stock
+    // insert Order và OrderItem
+    // in kết quả
 }
+```
 
-public class LoanService {
-    private final LoanRepository repository;
+Đặt ba câu hỏi:
 
-    public LoanService(LoanRepository repository) {
+1. Nếu đổi console thành Swing, đoạn nào phải đổi?
+2. Nếu đổi MySQL thành memory test, đoạn nào phải đổi?
+3. Nếu quy tắc stock đổi, ta sửa ở đâu?
+
+Nếu câu trả lời đều là “sửa case 7”, code chưa phân trách nhiệm.
+
+## II. Kiến Trúc Đích Và Luồng Thật
+
+```text
+ConsoleView
+    ↓ dữ liệu thô
+AppController
+    ↓ yêu cầu use case
+OrderService
+    ↓ gọi hợp đồng
+OrderRepository + OrderItemRepository + ProductRepository
+    ↓
+Jdbc...Repository
+    ↓
+MySQL
+```
+
+Kết quả đi ngược lại qua cùng các tầng. MVC trong ứng dụng này không phải ba thư mục trang trí; nó là quy tắc ai được gọi ai và ai chịu trách nhiệm điều gì.
+
+## III. View Không Tạo Entity Khi Chưa Có Đủ Ngữ Cảnh
+
+Người dùng chỉ nhập product id và quantity. View không nên tự tra Product hoặc quyết định unit price. Tạo input record:
+
+```java
+public record OrderItemInput(String productId, int quantity) {}
+```
+
+```java
+public List<OrderItemInput> readOrderItems() {
+    // chỉ đọc id và quantity rồi trả dữ liệu thô
+}
+```
+
+Controller nhận danh sách này và gọi Service. OrderService mới có repository để tìm Product, kiểm tra tồn kho và chốt giá.
+
+```java
+public long createOrder(
+        String customerId,
+        List<OrderItemInput> inputs,
+        LocalDateTime createdAt) {
+    // tìm Customer/Product
+    // validate quantity
+    // tạo OrderItem với product.getPrice()
+    // gọi repository
+}
+```
+
+Ranh giới này ngăn người dùng tự nhập unit price và ngăn View gắn với JDBC.
+
+## IV. Controller Chỉ Điều Phối
+
+```java
+public void handleCreateOrder() {
+    String customerId = view.readCustomerId();
+    List<OrderItemInput> items = view.readOrderItems();
+    LocalDateTime createdAt = view.readCreatedAt();
+
+    try {
+        long id = orderService.createOrder(customerId, items, createdAt);
+        view.showMessage("Đã tạo đơn " + id);
+    } catch (IllegalArgumentException e) {
+        view.showMessage(e.getMessage());
+    }
+}
+```
+
+Controller biết thứ tự tương tác, nhưng không viết SQL và không tự tính tổng. Nếu controller có vòng lặp giảm stock hoặc JOIN, trách nhiệm đang bị đặt sai.
+
+## V. SRP Qua Một Thay Đổi Cụ Thể
+
+Single Responsibility Principle có thể hiểu bằng lý do thay đổi:
+
+| Thành phần | Thay đổi khi |
+|---|---|
+| ConsoleView | Cách nhập/hiển thị console đổi |
+| AppController | Luồng điều phối màn hình/menu đổi |
+| OrderService | Quy tắc tạo/hủy đơn đổi |
+| JdbcOrderRepository | Schema hoặc SQL Order đổi |
+| Order | Hành vi nội tại/trạng thái Order đổi |
+
+Một class không cần “chỉ có một method”; nó cần có một nhóm trách nhiệm kết dính và một lý do thay đổi chính.
+
+## VI. DIP Qua Repository Interface
+
+Sai hướng phụ thuộc:
+
+```java
+public class ProductService {
+    private final JdbcProductRepository repository = new JdbcProductRepository();
+}
+```
+
+ProductService vừa tự tạo dependency, vừa khóa chặt MySQL. Sửa bằng constructor:
+
+```java
+public class ProductService {
+    private final ProductRepository repository;
+
+    public ProductService(ProductRepository repository) {
         this.repository = repository;
     }
 }
-~~~
+```
 
-Đây là trích đoạn hợp đồng, không phải toàn bộ class chạy độc lập; `LoanStatus`, `LocalDateTime`, `Loan` và `Optional` đến từ các phần model/API đã học trước.
+Memory implementation:
 
-Constructor nhận dependency giúp test thủ công hoặc thay repository khác mà không đổi logic service.
+```java
+public class MemoryProductRepository implements ProductRepository {
+    private final List<Product> products = new ArrayList<>();
 
-So sánh hai cách gắn repository: nếu Service tự gọi `new JdbcLoanRepository(...)`, nó biết trực tiếp về JDBC và khó thay khi cần lưu trong bộ nhớ; nếu constructor nhận `LoanRepository`, phần khởi tạo chọn triển khai nào còn quy tắc nghiệp vụ chỉ làm việc với hợp đồng. Đây là **Dependency Inversion (DIP)** ở mức thực hành: phần nghiệp vụ không phụ thuộc chi tiết lưu trữ.
+    @Override
+    public Optional<Product> findById(String id) {
+        return products.stream()
+                .filter(product -> product.getId().equals(id))
+                .findFirst();
+    }
 
-~~~java
-LoanRepository repository = new JdbcLoanRepository(connection);
-LoanService service = new LoanService(repository);
-~~~
+    // các method còn lại theo cùng hợp đồng
+}
+```
 
-Hai dòng khởi tạo đặt ở `LibraryApplication` hoặc composition root (điểm tập trung lắp ghép ứng dụng), không đặt trong `LoanService`. Có thể truyền một `MemoryLoanRepository` thay cho demo/test; service không đổi nếu hai class cùng thực hiện interface.
+Nếu cùng ProductService chạy được với JDBC và memory repository, dependency inversion đã tạo ra lợi ích quan sát được.
 
-SRP không có nghĩa “một class chỉ có một method”; nghĩa là nhóm hành vi có một lý do chính để thay đổi. Dependency Inversion ở đây: Service phụ thuộc hợp đồng (interface), còn JDBC là một triển khai. Truyền implementation qua constructor là cách nối cụ thể lúc khởi tạo. Buổi này tập trung SRP và DIP ở mức nền tảng.
+## VII. Composition Root
 
-## III. Singleton Và Factory Đơn Giản
+Tất cả việc chọn implementation nằm ở một nơi:
 
-Singleton đảm bảo một instance dùng chung khi thực sự cần, ví dụ đối tượng cấu hình đọc một lần. Factory gom cách tạo object khi lựa chọn class cụ thể. Giới thiệu cách dùng tối thiểu; không áp dụng pattern chỉ để tăng số class.
+```java
+public class Application {
+    public static void main(String[] args) {
+        ConnectionFactory connectionFactory = new ConnectionFactory();
 
-~~~java
-interface Shape {}
-class Circle implements Shape {}
-class Rectangle implements Shape {}
+        ProductRepository productRepository =
+                new JdbcProductRepository(connectionFactory);
+        CustomerRepository customerRepository =
+                new JdbcCustomerRepository(connectionFactory);
+        OrderRepository orderRepository =
+                new JdbcOrderRepository(connectionFactory);
+        OrderItemRepository itemRepository =
+                new JdbcOrderItemRepository(connectionFactory);
 
-public class ShapeFactory {
-    public static Shape create(String type) {
-        if ("CIRCLE".equals(type)) return new Circle();
-        if ("RECTANGLE".equals(type)) return new Rectangle();
-        throw new IllegalArgumentException("Loại hình không hỗ trợ");
+        ProductService productService = new ProductService(productRepository);
+        CustomerService customerService = new CustomerService(customerRepository);
+        OrderService orderService = new OrderService(
+                orderRepository, itemRepository,
+                productRepository, customerRepository);
+
+        ConsoleView view = new ConsoleView();
+        AppController controller = new AppController(
+                view, productService, customerService, orderService);
+        controller.run();
     }
 }
-~~~
+```
 
-Factory hữu ích khi việc chọn class cụ thể dựa trên input hoặc cấu hình; nó gom quyết định tạo object vào một nơi. Nếu chỉ tạo một class và không có lựa chọn/phức tạp, gọi constructor trực tiếp thường đơn giản hơn.
+Class main không xử lý nghiệp vụ; nó lắp ráp object graph.
 
-Singleton giới hạn một class còn một instance được chia sẻ. Nó chỉ đáng dùng khi “một cấu hình dùng chung” là quy tắc thật của ứng dụng; không nên biến mọi service hoặc repository thành Singleton vì sẽ khó thay phụ thuộc và kiểm thử. Kết nối JDBC cũng không nên giữ vĩnh viễn như một Singleton trong bài nhập môn; connection được mở/đóng theo thao tác hoặc được quản lý theo vòng đời phù hợp.
+## VIII. Quy Trình Refactor An Toàn
 
-~~~java
-public final class DisplaySettings {
-    private static final DisplaySettings INSTANCE = new DisplaySettings();
-    private final String language = "vi";
+Không di chuyển toàn bộ project trong một lần. Dùng các bước có thể chạy độc lập:
 
-    private DisplaySettings() {}
-    public static DisplaySettings getInstance() { return INSTANCE; }
-    public String getLanguage() { return language; }
-}
-~~~
+1. Ghi lại một bộ test Product/Order đang chạy đúng trước khi di chuyển code.
+2. Tạo package nhưng chưa đổi hành vi.
+3. Tách View, chạy CRUD Product.
+4. Tách Controller, chạy lại cùng test.
+5. Đổi Service sang repository interface, chạy JDBC.
+6. Thêm MemoryProductRepository, chạy cùng Service.
+7. Refactor tạo/xem Order và báo cáo.
+8. Tìm toàn project để chắc chắn SQL chỉ nằm trong JDBC repository.
 
-Đây là dạng Singleton đơn giản để nhận diện, không phải khuôn mẫu bắt buộc cho mọi thiết lập. Giá trị cố định trong ví dụ chỉ để minh họa; cấu hình có thể cần đọc từ nguồn bên ngoài.
+Mỗi bước là một commit nhỏ. Khi output sai, phạm vi tìm lỗi chỉ nằm trong bước vừa thực hiện.
 
-Static ở cấp class đã là phần nâng cao buổi 3; nếu lớp chưa nắm, nhắc lại ngắn qua method factory static, không mở rộng lý thuyết.
+## IX. So Sánh Trước Và Sau
 
-## IV. Refactor Giữ Nguyên Hành Vi
+### Trước
 
-1. Mô tả input, output và các bước của chương trình hiện tại.
-2. Xác định method nào đang có nhiều lý do thay đổi.
-3. Tách phần trình bày, điều phối, quy tắc và lưu trữ thành các trách nhiệm riêng.
-4. Thay dependency cụ thể bằng interface khi caller chỉ cần một hợp đồng.
-5. So sánh hành vi quan sát được trước và sau khi refactor.
+```text
+main → Scanner + validation + SQL + println
+```
 
-## Lỗi Thường Gặp
+### Sau
 
-| Lỗi | Nguyên nhân | Cách xử lý |
+```text
+main → lắp dependency
+View → nhập/xuất
+Controller → điều phối
+Service → nghiệp vụ
+Repository → hợp đồng dữ liệu
+JdbcRepository → SQL
+```
+
+Không đánh giá refactor bằng số package nhiều hơn. Đánh giá bằng khả năng thay View/repository, vị trí quy tắc rõ ràng và test case cũ vẫn đúng.
+
+## X. Thực Hành Có Hướng Dẫn
+
+- Nhóm A refactor luồng list Product.
+- Nhóm B refactor find Product.
+- Nhóm C refactor create Order bằng OrderItemInput.
+- Các nhóm review chéo: khoanh mọi dòng SQL ngoài repository và mọi lời gọi repository trực tiếp từ View.
+- Cuối buổi, đổi một ProductService sang MemoryProductRepository ngay tại composition root và demo không sửa service.
+
+## Lỗi thường gặp
+
+| Lỗi | Dấu hiệu | Cách sửa |
 |---|---|---|
-| View viết SQL | Chưa tách tầng | Chuyển query về repository |
-| Service tạo JDBC trực tiếp | Phụ thuộc implementation | Nhận interface qua constructor |
-| Class quá nhiều method không liên quan | Trách nhiệm chưa rõ | Tách theo lý do thay đổi |
-| Dùng Singleton ở mọi nơi | Lạm dụng pattern | Chỉ dùng khi cần một instance dùng chung |
+| Chỉ chia package, code vẫn gọi chéo | View import JdbcRepository | Kiểm tra dependency theo sơ đồ |
+| Controller chứa nghiệp vụ | Tính tổng/stock trong controller | Chuyển sang Service/Model |
+| Service `new Jdbc...` | Không thay repository được | Inject interface qua constructor |
+| View trả OrderItem đầy đủ | View phải tra Product/chốt giá | Trả OrderItemInput |
+| Refactor làm đổi dữ liệu mẫu | Khó biết lỗi do đâu | Giữ bộ nghiệm thu trước/sau |
 
-## Tổng Kết Buổi 10
+## Tổng kết buổi 10
 
-- Model, View, Controller, Service và Repository là các trách nhiệm khác nhau; MVC không đồng nghĩa toàn bộ kiến trúc ứng dụng.
-- SRP giúp nhóm các hành vi có cùng lý do thay đổi; DIP để phía nghiệp vụ phụ thuộc abstraction.
-- Singleton và Factory là công cụ cho tình huống cụ thể, không phải khuôn mẫu cần áp dụng cho mọi class.
+MVC phân luồng tương tác; SRP đặt trách nhiệm theo lý do thay đổi; DIP làm nghiệp vụ phụ thuộc hợp đồng. Refactor chỉ thành công khi hành vi cũ vẫn đúng và dependency thực sự đi qua các ranh giới đã định.
 
-### Câu Hỏi Ôn Tập
+## Bài tập nhỏ trên lớp — Refactor danh bạ theo tầng
 
-1. MVC chia phần nào của ứng dụng?
-2. Vì sao Service không nên chứa SQL trực tiếp?
-3. Dependency Inversion thể hiện thế nào qua repository interface?
-4. Khi nào Singleton hữu ích và vì sao không nên lạm dụng?
-5. Factory có trách nhiệm gì?
+Từ một chương trình console đang giữ `List<Contact>`, tổ chức lại thành:
 
-## Bài Tập Về Nhà
+- `ContactView` đọc tên/số điện thoại và hiển thị kết quả.
+- `ContactController` điều phối thao tác thêm và tìm.
+- `ContactService` kiểm tra tên/số điện thoại không rỗng.
+- `ContactRepository` là interface; `MemoryContactRepository` lưu bằng ArrayList.
+- `Application` là nơi duy nhất khởi tạo và nối các dependency.
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 10](../BTVN/buoi-10-btvn.md).
-## Tài Liệu Tham Khảo
+**Nghiệm thu:** View không import repository, Service không `new MemoryContactRepository`, và chức năng thêm/tìm vẫn cho kết quả như trước refactor. Thời gian làm khoảng 20 phút.
 
-- [Oracle — Java Classes and Objects](https://docs.oracle.com/javase/tutorial/java/javaOO/index.html)
-- [Oracle — JDBC Basics](https://docs.oracle.com/javase/tutorial/jdbc/basics/index.html)
-- [Martin Fowler — Dependency Injection](https://martinfowler.com/articles/injection.html)
+## Bài tập về nhà
+
+Hoàn thành [BTVN buổi 10](../BTVN/buoi-10-btvn.md), kèm README và bằng chứng chạy cả JDBC lẫn memory Product repository.

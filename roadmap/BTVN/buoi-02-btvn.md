@@ -12,6 +12,7 @@ Mở rộng chương trình buổi 1 thành giỏ hàng console. Mỗi dòng hà
 
 ### Ràng Buộc Dữ Liệu Và Chương Trình
 
+- Bài chạy bằng JDK 17 và tiếp tục cùng repository của buổi 1.
 - Dùng đúng ba danh sách song song: `ArrayList<String> names`, `ArrayList<Double> prices`, `ArrayList<Integer> quantities`.
 - Cùng một vị trí `i` ở cả ba danh sách luôn mô tả cùng một mặt hàng. Sau mọi thao tác, ba danh sách phải có cùng `size()`.
 - Mỗi dòng hàng có tên không rỗng, giá lớn hơn 0 và số lượng nguyên dương. Mỗi lần thêm tạo một dòng hàng mới; chưa gộp các sản phẩm trùng tên.
@@ -25,7 +26,7 @@ Mở rộng chương trình buổi 1 thành giỏ hàng console. Mỗi dòng hà
 
 ### Dữ Liệu Chuẩn Để Đối Chiếu
 
-Khi lần lượt thêm `P01 / Áo thun / 150000 / 2`, `P02 / Bình nước / 50000 / 1`, danh sách có hai dòng và tổng là `350000`. Xóa dòng số 1 thì còn `P02 / Bình nước / 50000 / 1`, tổng là `50000`.
+Khi lần lượt thêm `Áo thun / 150000 / 2`, `Bình nước / 50000 / 1`, danh sách có hai dòng và tổng là `350000`. Xóa dòng số 1 thì còn `Bình nước / 50000 / 1`, tổng là `50000`. Mã `P01`, `P02` được bổ sung ở buổi 3 khi dữ liệu chuyển thành object `Product`.
 
 ### Nộp Bài
 
@@ -40,17 +41,3 @@ Giữ tên bốn method `addItem`, `removeItem`, `printItems`, `calculateTotal` 
 - Tìm theo tên không phân biệt hoa/thường; kết quả là mọi dòng khớp chính xác với tên tìm kiếm. Không tìm thấy thì in `Không tìm thấy mặt hàng.`
 - VAT cố định 10% trên tổng tiền hàng; phí vận chuyển cố định 20000 nếu giỏ có ít nhất một dòng, bằng 0 nếu giỏ rỗng. In riêng tiền hàng, VAT, phí vận chuyển và tổng thanh toán.
 - Debug là phần tự chọn: nộp ảnh breakpoint/Variables hoặc ghi ngắn một lỗi index đã phát hiện. Không cần bổ sung chức năng core.
-
-## ERD Và Đặc Tả Dữ Liệu
-
-Buổi 2 chưa yêu cầu database. Phần này để trống để hoàn thiện khi học thiết kế dữ liệu.
-
-### Sơ Đồ ERD
-
-_Bổ sung sau khi chốt mô hình dữ liệu._
-
-### Đặc Tả Bảng
-
-| Tên bảng | Cột | Kiểu dữ liệu | Khóa / ràng buộc | Mô tả |
-|---|---|---|---|---|
-| _Chưa áp dụng_ |  |  |  |  |

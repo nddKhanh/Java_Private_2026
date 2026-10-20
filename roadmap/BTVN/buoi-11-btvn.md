@@ -4,7 +4,7 @@
 
 ### Kế Thừa Từ Buổi 10
 
-Tiếp tục repository `HitShop`, class `HitShop` và `ProductService`/repository đã có. Thêm cửa sổ Swing làm View thay cho màn hình console; lấy Product từ cùng `ProductService`, không tạo danh sách sản phẩm hoặc repository riêng cho giao diện.
+Tiếp tục repository `HitShop` bằng JDK 17, class `HitShop` và `ProductService`/repository đã có. Thêm cửa sổ Swing làm View thay cho màn hình console; lấy Product từ cùng `ProductService`, không tạo danh sách sản phẩm hoặc repository riêng cho giao diện.
 
 ### Bài Toán
 
@@ -13,12 +13,18 @@ Tạo một cửa sổ desktop để xem danh sách sản phẩm trong cửa hà
 ### Cấu Trúc Giao Diện
 
 - Một `JFrame` tiêu đề `Quản lý sản phẩm`, kích thước tối thiểu 700×450 px, đóng cửa sổ thì ứng dụng kết thúc.
-- Một `JPanel` ở phía trên chứa nhãn `Tên sản phẩm`, một `JTextField` để trống khi mở ứng dụng, nhãn `Giá`, một `JTextField` để trống và một `JButton` chữ `Thêm`.
+- Một `JPanel` ở phía trên chứa nhãn `Tên sản phẩm`, một `JTextField` để trống khi mở ứng dụng, nhãn `Giá`, một `JTextField` để trống và một `JButton` chữ `Thêm`. Trong phần bắt buộc, nút bị vô hiệu hóa bằng `setEnabled(false)` và có tooltip `Thực hiện ở phần mở rộng` để giao diện không gợi một chức năng chưa hoạt động.
 - Một `JTable` phía dưới nằm trong `JScrollPane`; có đúng các cột theo thứ tự `Mã`, `Tên sản phẩm`, `Đơn giá`, `Tồn kho`.
-- Bảng khi mở hiển thị Product do `ProductService.findAllProducts()` trả về, theo dữ liệu shop hiện có: `P01 | Áo thun | 150000 | 20`, `P02 | Bình nước | 50000 | 10`, `P03 | Java cơ bản | 120000 | 5`. Không tự tạo dữ liệu thay thế cho repository.
+- Bảng khi mở hiển thị Product do `ProductService.findAllProducts()` trả về, theo dữ liệu shop hiện có: `P01 | Áo thun | 160000 | 20`, `P02 | Bình nước | 50000 | 10`, `P03 | Java cơ bản | 120000 | 5`. Giá P01 là trạng thái catalog sau dữ liệu chuẩn buổi 9; Order lịch sử vẫn giữ unit price 150000. Không tự tạo dữ liệu thay thế cho repository.
 - Cửa sổ phải hiển thị đồng thời form và bảng; nhãn/cột không bị cắt ở kích thước quy định.
 - Bắt buộc có JFrame, JPanel, JTextField, JButton, JTable; phần này không yêu cầu gắn event handler. Kết nối dữ liệu vẫn dùng repository/service đã có.
-- Trong bản bắt buộc, bấm nút `Thêm` không làm thay đổi bảng; tương tác chỉ thuộc phần tự chọn bên dưới.
+- Trong bản bắt buộc, nút `Thêm` đang disabled; tương tác chỉ thuộc phần tự chọn bên dưới.
+
+### Sơ Đồ Lớp Và Quan Hệ
+
+![Sơ đồ lớp BTVN buổi 11](assets/buoi-11-class-diagram.svg)
+
+`ProductWindow extends JFrame` và nhận `ProductService`; cửa sổ không tự tạo repository hoặc danh sách Product riêng.
 
 ### Nộp Bài Theo Git
 
@@ -28,4 +34,4 @@ Repository nhóm dùng nhánh `main`, `develop` và nhánh chức năng có tên
 
 Mốc bàn giao: giữ `HitShop`, `ProductWindow` và ProductService. Buổi 12 tiếp tục cùng ứng dụng và các hợp đồng repository/service; không khởi tạo project/repository mới.
 
-Nút `Thêm` nhận tên và giá, gọi `ProductService.addProduct` để tạo mã mới tiếp sau mã lớn nhất hiện có (với dữ liệu chuẩn, mã đầu tiên là P04); tồn kho mặc định là 0. Tên rỗng hoặc giá không phải số dương thì bảng không đổi và giao diện báo lỗi. Bài mở rộng này thêm tương tác tiện ích; form/bảng ở phần bắt buộc đã đạt yêu cầu độc lập.
+Kích hoạt nút `Thêm`. Nút nhận tên và giá, gọi `ProductService.addProduct` để tạo mã mới tiếp sau mã lớn nhất hiện có (với dữ liệu chuẩn, mã đầu tiên là P04); tồn kho mặc định là 0. Tên rỗng hoặc giá không phải số dương thì bảng không đổi và giao diện báo lỗi. Bài mở rộng này thêm tương tác tiện ích; form/bảng ở phần bắt buộc đã đạt yêu cầu độc lập.

@@ -4,7 +4,7 @@
 
 ### Kế Thừa Từ Buổi 03
 
-Tiếp tục repository `HitShop` và các class `Product`, `Customer`, `CartItem`. Giữ sản phẩm P01/P02, khách C01, giỏ P01 × 2 và P02 × 1; `HitShop` vẫn gọi các chức năng `addItem`, `removeItem`, `printItems`, `calculateTotal`. Bài này thêm `Book` và `Order` lên mô hình hiện có.
+Tiếp tục repository `HitShop` bằng JDK 17 và các class `Product`, `Customer`, `CartItem`. Giữ sản phẩm P01/P02, khách C01, giỏ P01 × 2 và P02 × 1; `HitShop` vẫn gọi các chức năng `addItem`, `removeItem`, `printItems`, `calculateTotal`. Bài này thêm `Book` và `Order` lên mô hình hiện có.
 
 ### Bài Toán
 
@@ -17,8 +17,14 @@ Mở rộng mô hình `Product`, `Customer`, `CartItem` từ buổi 3 để bi�
 - Một `List<Product>` chứa cả object Product thường và Book. Phần hiển thị danh sách gọi cùng `getDescription()` cho mọi phần tử.
 - `Order` có field private `id`, `customer` kiểu `Customer`, `items` kiểu `List<CartItem>` và `status` kiểu `String`; constructor nhận `id` và `customer`, trạng thái đầu là `PENDING`. Quan hệ: Order HAS-A Customer và HAS-A nhiều CartItem; mỗi CartItem vẫn HAS-A một Product.
 - `Order.addItem(CartItem item)` thêm một dòng; `getTotal()` trả tổng `CartItem.getTotal()`; `confirm()` chuyển `PENDING` thành `CONFIRMED`; `cancel()` chuyển `PENDING` thành `CANCELLED`. Gọi confirm/cancel khi trạng thái không còn `PENDING` không làm thay đổi trạng thái.
-- Các chữ ký là `void addItem(CartItem item)`, `double getTotal()`, `void confirm()`, `void cancel()`, `String getStatus()`.
+- Các chữ ký là `void addItem(CartItem item)`, `double getTotal()`, `void confirm()`, `void cancel()`, `String getStatus()`, `String getId()`, `Customer getCustomer()` và `List<CartItem> getItems()`. `getItems()` không được trả null.
 - Tên class chạy chương trình vẫn là `HitShop`; giữ menu console và các luồng giỏ hàng đã có ở buổi 2–3, đồng thời bổ sung hiển thị danh sách đa hình và thao tác với Order.
+
+### Sơ Đồ Lớp Và Quan Hệ
+
+![Sơ đồ lớp BTVN buổi 04](assets/buoi-04-class-diagram.svg)
+
+Mũi tên tam giác biểu diễn `Book extends Product`; hình thoi tại `Order` biểu diễn một đơn chứa nhiều `CartItem`.
 
 ### Nộp Bài
 

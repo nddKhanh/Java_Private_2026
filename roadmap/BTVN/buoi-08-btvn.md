@@ -1,42 +1,59 @@
 # Bài Tập Về Nhà — Buổi 08
 
-## Bài Bắt Buộc — Tách Repository Và Service
+## Bài Bắt Buộc — Tách Repository, Service Và Trạng Thái Đơn
 
 ### Kế Thừa Từ Buổi 07
 
-Tiếp tục repository `HitShop`, schema `shop_db` và dữ liệu Product P01/P02/P03. Đưa các thao tác JDBC đã có vào `JdbcProductRepository` nhưng giữ tên và ý nghĩa `add`, `findById`, `findAll`, `update`, `deleteById`; menu của `HitShop` tiếp tục sử dụng cùng các chức năng.
+Tiếp tục `HitShop` bằng JDK 17, bảng `products` và JDBC CRUD đã có. Buổi này không viết lại SQL theo một ứng dụng mới; hãy đưa code hiện có vào repository và để console đi qua service.
 
-### Bài Toán
+### Luồng Bắt Buộc
 
-Tổ chức lại phần JDBC Product từ buổi 7 thành các trách nhiệm model, repository, service và console. Bổ sung khả năng tra cứu Customer và chuẩn hóa trạng thái Order bằng enum.
+```text
+HitShop/console → ProductService hoặc CustomerService → repository interface → JDBC implementation → MySQL
+```
+
+Console không gọi repository trực tiếp. Service không chứa SQL. JDBC implementation không đọc bàn phím hoặc in menu.
 
 ### Thành Phần Và Hợp Đồng
 
-- `ProductRepository`: chịu trách nhiệm JDBC với bảng `products`; có các thao tác thêm, tìm theo id, liệt kê, cập nhật và xóa. `findById(String id)` trả `Optional<Product>`; danh sách trả về theo thứ tự id tăng dần.
-- `JdbcProductRepository`: là triển khai JDBC cụ thể của ProductRepository. Không chứa lời nhắc nhập/xuất console.
-- `ProductService`: nhận một ProductRepository qua constructor; cung cấp các thao tác thêm/tìm/liệt kê/cập nhật/xóa cho giao diện console. Quy tắc bắt buộc: mã và tên không rỗng, giá > 0, stock >= 0; dữ liệu sai không được ghi xuống database.
-- `Customer`: field private `id`, `name`, `phone`; id là khóa định danh. Bảng `customers` có các cột tương ứng: `id VARCHAR(20) PRIMARY KEY`, `name VARCHAR(100) NOT NULL`, `phone VARCHAR(20) NOT NULL`.
-- Customer có constructor nhận đủ ba field, getter cho cả ba và không có setter cho id.
-- Tạo bảng customers bằng đúng schema trên; không đổi cấu trúc bảng products buổi 7.
-- `CustomerRepository` và `JdbcCustomerRepository`: cùng ranh giới trách nhiệm như ProductRepository, hỗ trợ thêm, tìm id và liệt kê Customer theo id tăng dần.
-- Hợp đồng method ProductRepository: `boolean add(Product)`, `Optional<Product> findById(String)`, `List<Product> findAll()`, `boolean update(Product)`, `boolean deleteById(String)`. CustomerRepository: `boolean add(Customer)`, `Optional<Customer> findById(String)`, `List<Customer> findAll()`.
-- ProductService có `addProduct(Product): boolean`, `findProductById(String): Optional<Product>`, `findAllProducts(): List<Product>`, `updateProduct(Product): boolean`, `deleteProduct(String): boolean`; method chuyển yêu cầu tới repository sau khi áp dụng quy tắc dữ liệu.
-- ProductService có thêm `findAllProductSummaries(): List<ProductSummary>`; mỗi Product được chuyển thành record có cùng id/name/price và không có stock.
-- Package cố định: `model` chứa model/enum/record; `repository` chứa interface và JDBC implementation; `service` chứa ProductService; `app` chứa `HitShop`.
-- `HitShop` chịu trách nhiệm nhập/xuất console và gọi service/repository; không chứa SQL. File cấu hình kết nối ở ngoài source và không có credential thật.
-- Menu `HitShop`: `1` thêm Product, `2` liệt kê Product, `3` tìm Product theo mã, `4` cập nhật Product, `5` xóa Product, `6` thêm Customer, `7` liệt kê Customer, `0` thoát. Lựa chọn khác báo `Lựa chọn không hợp lệ.`
-- `OrderStatus` là enum có đúng các giá trị `PENDING`, `CONFIRMED`, `CANCELLED`, `COMPLETED`. Field status của Order có kiểu OrderStatus, không còn kiểu String.
-- `ProductSummary` là DTO dạng `record` gồm `String id`, `String name`, `double price`; giá trị summary không chứa stock.
-- Console chỉ gọi ProductService/CustomerRepository; lớp console không chứa SQL. Repository không in thông báo cho người dùng.
+- `ProductRepository`:
+  - `boolean insert(Product product)`;
+  - `List<Product> findAll()`;
+  - `Optional<Product> findById(String id)`;
+  - `boolean update(Product product)`;
+  - `boolean deleteById(String id)`.
+- `JdbcProductRepository` implements `ProductRepository` và chuyển SQL CRUD buổi 7 vào đây.
+- `ProductService` nhận `ProductRepository` qua constructor; có `addProduct`, `findAllProducts`, `findProductById`, `updateProduct`, `deleteProduct` với kiểu trả về tương ứng repository.
+- Service từ chối Product có id/name rỗng, giá không dương hoặc stock âm trước khi gọi repository.
+- Tạo bảng `customers(id VARCHAR(20) PRIMARY KEY, name VARCHAR(100) NOT NULL, phone VARCHAR(20) NOT NULL)`.
+- `CustomerRepository` có `insert`, `findAll`, `findById`; `JdbcCustomerRepository` triển khai ba method.
+- `CustomerService` nhận `CustomerRepository` qua constructor, kiểm tra id/name/phone không rỗng rồi mới thêm; cung cấp `addCustomer`, `findAllCustomers`, `findCustomerById`.
+- `findById` và method tìm tương ứng của service trả `Optional.empty()` khi không có dữ liệu; không trả null.
+- Tạo enum `OrderStatus { PENDING, CONFIRMED, CANCELLED }` và đổi field status của Order từ String sang enum; `getStatus()` đổi kiểu trả về thành `OrderStatus`. Các chuyển trạng thái của buổi 4 phải tiếp tục đúng.
+- File `orders.txt` không còn là nguồn dữ liệu nghiệp vụ sau khi Order được chuyển vào MySQL ở buổi 9.
 
-### Dữ Liệu Chuẩn Và Kết Quả
+### Sơ Đồ Lớp Và Quan Hệ
 
-Product chuẩn của buổi 7 tiếp tục giữ nguyên. Customer chuẩn: `C01 / Linh Nguyễn / 0900000001`, `C02 / Minh Trần / 0900000002`. Tra P99 trả trạng thái không có kết quả qua Optional; list Customer hiển thị C01 trước C02. Lần lượt gán OrderStatus phải chỉ nhận bốn giá trị nêu trên.
+![Sơ đồ lớp BTVN buổi 08](assets/buoi-08-class-diagram.svg)
+
+Console gọi service; service nhận repository interface qua constructor; lớp JDBC implements interface. `Order` dùng `OrderStatus` thay cho chuỗi trạng thái.
+
+### Dữ Liệu Nghiệm Thu
+
+- Product: P01, P02, P03 như các buổi trước.
+- Customer: `C01 / Linh Nguyễn / 0900000001`, `C02 / Minh Trần / 0900000002`.
+- Tìm P01/C01 trả object đúng; tìm P99/C99 trả `Optional.empty()` và console báo rõ không tìm thấy.
+- Product giá 0 hoặc Customer có phone rỗng bị service từ chối và không xuất hiện trong database.
+- Order mới có status `PENDING`; xác nhận thành `CONFIRMED`; không thể hủy lại order đã xác nhận.
 
 ### Nộp Bài
 
-Nộp source các interface, JDBC repository, services, model/enum/record và script tạo bảng customers; kèm output tra P99 và danh sách Customer chuẩn.
+Nộp schema customers, source repository/service, enum và output chạy qua menu console. Trong README, chỉ ra một luồng cụ thể từ console tới service rồi repository.
 
 ## Mở Rộng — Bài Tự Chọn
 
-Phân loại `SQLException`, `IOException` là checked exception; `IllegalArgumentException` là unchecked exception. Nêu thông báo nghiệp vụ dễ hiểu cho người dùng nhưng giữ nguyên cause kỹ thuật trong log/nội bộ. Đây là cải tiến xử lý lỗi, không phải yêu cầu để CRUD cốt lõi hoạt động.
+- Tạo record `ProductSummary(String id, String name, double price)` và method chuyển Product thành dữ liệu chỉ đọc để hiển thị.
+- Viết unit test service bằng một repository in-memory.
+- Chuẩn hóa lỗi nghiệp vụ bằng custom exception.
+
+`record`/DTO chỉ là phần giới thiệu ở buổi này; không làm không ảnh hưởng yêu cầu lõi.

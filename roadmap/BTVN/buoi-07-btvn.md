@@ -4,7 +4,7 @@
 
 ### Kế Thừa Từ Buổi 06
 
-Tiếp tục repository `HitShop` và Product P01/P02/P03 đã dùng trong các buổi trước. Giữ nguyên model Product `(id, name, price, stock)`; thay nguồn lưu Product của ứng dụng bằng MySQL để các chức năng giỏ/đơn tiếp tục dùng đúng mã sản phẩm.
+Tiếp tục repository `HitShop` bằng JDK 17 và Product P01/P02/P03 đã dùng trong các buổi trước. Giữ nguyên model Product `(id, name, price, stock)`; thay nguồn lưu Product của ứng dụng bằng MySQL để các chức năng giỏ/đơn tiếp tục dùng đúng mã sản phẩm. File Order ở buổi 6 chỉ còn là bài thực hành I/O, không phải nguồn dữ liệu của catalog.
 
 ### Bài Toán
 
@@ -21,6 +21,12 @@ Thay nguồn đọc/ghi Product bằng MySQL. Chương trình console phải th�
 - Connection, PreparedStatement/Statement và ResultSet phải được giải phóng sau thao tác. Input được truyền dưới dạng tham số SQL, không ghép trực tiếp vào câu lệnh.
 - Thao tác liệt kê dùng `Statement` cho câu SQL cố định; các thao tác có dữ liệu nhập dùng `PreparedStatement`.
 - `HitShop` sở hữu Connection cho một thao tác menu; `ProductJdbc` không đóng Connection do caller mở, nhưng đóng Statement và ResultSet do method tạo ra. Sau thao tác, HitShop đóng Connection.
+
+### Sơ Đồ Lớp Và Quan Hệ
+
+![Sơ đồ lớp BTVN buổi 07](assets/buoi-07-class-diagram.svg)
+
+`HitShop` mở và đóng `Connection`, sau đó truyền connection cùng `Product` vào `ProductJdbc`; lớp JDBC ánh xạ object với bảng `products`.
 
 ### Hành Vi Bắt Buộc
 

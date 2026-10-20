@@ -1,129 +1,221 @@
-# Buổi 11: Git Flow, Pull Request, Code Review và Swing Cơ Bản
+# Buổi 11: Git Flow, Pull Request, Code Review Và Swing Cơ Bản
 
 ---
 
+> **Hạn chế từ buổi 10:** code đã được phân tầng nhưng khi nhiều người cùng sửa một repository vẫn dễ đè thay đổi, conflict và thiếu review; giao diện console cũng chưa minh họa cách tái sử dụng Service trong desktop UI.
+
 ## Mục tiêu buổi học
 
-- Tổ chức repository nhóm theo main, develop và feature branch.
-- Mở pull request, review thay đổi và xử lý conflict cơ bản.
-- Dựng giao diện Swing một form và một bảng với dữ liệu học tập mẫu.
-- Nhận biết ranh giới giữa giao diện và xử lý dữ liệu; tích hợp service là phần minh họa thêm.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** Thiết kế code tốt cần đi cùng cách phối hợp thay đổi và cách người dùng tương tác với chương trình. Buổi này tìm hiểu quy trình Git theo nhánh/nhóm và những thành phần giao diện Swing cơ bản; hai chủ đề có thể học độc lập.
+- Làm việc theo nhánh `main`, `develop`, `feature/*` và tạo pull request.
+- Xử lý một conflict nhỏ mà không mất thay đổi của người khác.
+- Review theo hành vi, kiến trúc và khả năng chạy, không chỉ nhìn format.
+- Tạo JFrame, JPanel, JTextField, JButton, JTable và JScrollPane.
+- Hiển thị Product từ cùng ProductService của buổi 10 trong Swing.
 
-## I. Git Flow Và Chia Việc
+> **Kết quả cuối buổi:** một feature branch tạo được cửa sổ Swing lấy dữ liệu qua Service và được đưa vào `develop` bằng pull request.
 
-- `main` giữ phiên bản ổn định; `develop` tích hợp phần đã review; mỗi chức năng có feature branch.
-- Commit nhỏ, mô tả đúng thay đổi; pull trước khi bắt đầu; push branch và tạo pull request.
-- Đặt tên branch ngắn theo chức năng; commit message nêu hành động và đối tượng thay đổi, ví dụ `feat: add score table`.
-- Reviewer kiểm tra mục đích, phạm vi, code dễ hiểu và ảnh hưởng tới chức năng cũ.
-- Khi conflict, mở từng file, hiểu cả hai thay đổi rồi mới chọn/kết hợp; không xóa marker một cách máy móc.
+## I. Git Flow Phục Vụ Việc Chia Nhỏ Thay Đổi
 
-Branch là nhánh phát triển độc lập để công việc chưa hoàn tất không ảnh hưởng bản ổn định. Commit tạo mốc thay đổi; push đưa commit lên remote; PR là đề xuất tích hợp kèm thảo luận/review, chưa có nghĩa là đã merge. Conflict xảy ra khi Git không thể tự kết hợp chỉnh sửa chồng lấn; cần hiểu ý định cả hai phía rồi kiểm tra kết quả.
+Quy ước của lớp:
 
-~~~text
-feature/score-table ────┐
-                      ├── PR/merge → develop → PR/merge → main
-feature/score-form ────┘
-~~~
+```text
+main       phiên bản ổn định để demo
+develop    nơi tích hợp chức năng đã review
+feature/*  một thay đổi cụ thể đang làm
+```
 
-Đây là luồng làm việc minh họa, không phải cây phân cấp cố định: các branch được tạo từ một commit nền và mỗi nhóm có thể cập nhật branch của mình theo quy ước. PR đề xuất ghép thay đổi vào `develop`; sau khi tích hợp và kiểm tra, nhóm mới đưa phiên bản ổn định sang `main`.
+Tạo nhánh từ develop mới nhất:
 
-Quy trình: tạo branch → sửa một chức năng → commit/push → mở PR vào develop → review → sửa → merge theo quy ước nhóm.
+```bash
+git switch develop
+git pull
+git switch -c feature/product-ui
+```
 
-## II. Swing: Form Và Bảng
+Sau khi hoàn thành một phần chạy được:
 
-Swing có sẵn trong JDK. `JFrame` là cửa sổ; `JPanel` nhóm component; `JTextField` nhận text; `JButton` là nút; `JTable` hiển thị dữ liệu dạng bảng.
+```bash
+git status
+git add src/main/java/view/ProductManagementFrame.java
+git commit -m "feat: add product management window"
+git push -u origin feature/product-ui
+```
 
-~~~java
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.awt.BorderLayout;
+Commit nên mô tả một thay đổi có nghĩa. Không gom file cấu hình bí mật, thư mục build và nhiều chức năng không liên quan vào cùng commit.
 
-public class ScoreWindowDemo {
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Theo dõi điểm học tập");
-            JPanel panel = new JPanel();
-            panel.add(new JLabel("Tên học viên"));
-            JTextField nameField = new JTextField(16);
-            panel.add(nameField);
-            panel.add(new JLabel("Điểm trung bình"));
-            JTextField scoreField = new JTextField(10);
-            panel.add(scoreField);
-            JButton searchButton = new JButton("Tìm");
-            panel.add(searchButton);
+## II. Pull Request Và Review Có Tiêu Chí
 
-            DefaultTableModel tableModel = new DefaultTableModel(
-                    new Object[][] {{"S01", "Lan", 8.5, 3}},
-                    new String[] {"Mã học viên", "Họ tên", "Điểm TB", "Số bài"}
-            );
-            JTable scoreTable = new JTable(tableModel);
+PR `Add product management window` cần có:
 
-            frame.add(panel, BorderLayout.NORTH);
-            frame.add(new JScrollPane(scoreTable), BorderLayout.CENTER);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(700, 450);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
+- Mục tiêu và phạm vi.
+- Cách chạy.
+- Ảnh cửa sổ.
+- Test case đã kiểm tra.
+- Điểm chưa làm, ví dụ nút Add chưa có event.
+
+Reviewer kiểm tra theo thứ tự:
+
+1. Có build/run trên JDK 17 không?
+2. Bảng có lấy dữ liệu qua ProductService không?
+3. Swing View có gọi JDBC trực tiếp không?
+4. View Swing có làm thay đổi hành vi console cũ không?
+5. Tên/format có làm code khó đọc không?
+
+Nhận xét nên chỉ vị trí, vấn đề và kết quả mong đợi. Ví dụ: “View Swing đang tự tạo danh sách dữ liệu trong constructor; hãy inject ProductService và dùng `findAllProducts()` để UI hiển thị từ cùng nguồn.”
+
+## III. Xử Lý Conflict Nhỏ
+
+Khi develop thay đổi trong lúc feature đang làm:
+
+```bash
+git fetch origin
+git merge origin/develop
+```
+
+Git đánh dấu:
+
+```text
+  <<<<<<< HEAD
+phần trên nhánh feature
+  =======
+phần trên develop
+  >>>>>>> origin/develop
+```
+
+Người xử lý phải hiểu cả hai ý định, tạo nội dung cuối đúng rồi xóa marker. Sau đó:
+
+```bash
+git add <file-da-xu-ly>
+git commit
+```
+
+Trước khi push lại, build và chạy test case. Conflict được “resolve” về mặt Git chưa có nghĩa code đúng về mặt nghiệp vụ.
+
+## IV. Swing Và Event Dispatch Thread
+
+Khởi động UI:
+
+```java
+SwingUtilities.invokeLater(() -> {
+    ProductManagementFrame window = new ProductManagementFrame(productService);
+    window.setVisible(true);
+});
+```
+
+Swing component nên được tạo và cập nhật trên Event Dispatch Thread. Truy vấn database dài không nên chặn thread này trong ứng dụng thật; ở buổi nhập môn, dataset nhỏ và mục tiêu là dựng View đúng kiến trúc.
+
+## V. Dựng Một Cửa Sổ Quản Lý Product
+
+```java
+public class ProductManagementFrame extends JFrame {
+    private final ProductService productService;
+    private final DefaultTableModel tableModel;
+
+    public ProductManagementFrame(ProductService productService) {
+        this.productService = productService;
+
+        setTitle("Quản lý sản phẩm");
+        setSize(700, 450);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        JPanel formPanel = new JPanel();
+        JTextField nameField = new JTextField(15);
+        JTextField priceField = new JTextField(10);
+        JButton addButton = new JButton("Thêm");
+        addButton.setEnabled(false);
+        addButton.setToolTipText("Thực hiện ở phần mở rộng");
+
+        formPanel.add(new JLabel("Tên sản phẩm"));
+        formPanel.add(nameField);
+        formPanel.add(new JLabel("Giá"));
+        formPanel.add(priceField);
+        formPanel.add(addButton);
+
+        tableModel = new DefaultTableModel(
+                new Object[]{"Mã", "Tên sản phẩm", "Đơn giá", "Tồn kho"}, 0);
+        JTable table = new JTable(tableModel);
+
+        add(formPanel, BorderLayout.NORTH);
+        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        loadProducts();
+    }
+}
+```
+
+Nút Add bị disabled trong phần lõi để giao diện không hứa một hành vi chưa tồn tại. Phần mở rộng sẽ kích hoạt nút và gắn listener.
+
+## VI. Nạp Dữ Liệu Qua Service
+
+```java
+private void loadProducts() {
+    tableModel.setRowCount(0);
+    for (Product product : productService.findAllProducts()) {
+        tableModel.addRow(new Object[]{
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getStock()
         });
     }
 }
-~~~
+```
 
-`JTable` chỉ trình bày các hàng/cột; dữ liệu hiển thị nằm trong `TableModel`. Dùng `DefaultTableModel` cho ví dụ nhỏ vì dễ nạp dòng; khi cần ràng buộc dữ liệu chặt hoặc đọc trực tiếp từ domain model, có thể viết model riêng. `SwingUtilities.invokeLater` đưa thao tác tạo/cập nhật giao diện lên Event Dispatch Thread (EDT), luồng chuyên xử lý sự kiện UI. Truy vấn lâu không nên chạy trực tiếp trên EDT vì cửa sổ sẽ đứng; xử lý nền là chủ đề concurrency, chỉ cần ghi nhớ giới hạn này.
+Không khởi tạo dữ liệu mẫu ngay trong cửa sổ. Nếu console và Swing dùng hai list khác nhau, hai giao diện sẽ cho kết quả không nhất quán. ProductService là nguồn use case chung; repository phía sau có thể là JDBC hoặc memory khi demo.
 
-Ví dụ này dùng dữ liệu mẫu để tập trung vào cấu trúc giao diện. `JTable` hiển thị dữ liệu theo hàng/cột thông qua `TableModel`; bảng không tự lưu hay cập nhật nguồn dữ liệu bên ngoài. Layout manager quyết định cách sắp xếp component khi cửa sổ đổi kích thước. Bắt event nút và nối với một service là phần mở rộng tùy thời lượng, không phải điều kiện để hiểu form/bảng.
+Giáo viên chuẩn bị ba Product bất kỳ trong repository demo để kiểm tra bảng. Dữ liệu này chỉ phục vụ buổi học và không phụ thuộc kết quả BTVN của học viên.
 
-`JButton` phát sinh sự kiện khi được nhấn; `JTextField` nhận chuỗi nhập. Lộ trình chỉ yêu cầu dựng form/bảng. `ActionListener` và kết nối thao tác Thêm/Xóa tới service thuộc phần mở rộng, vì vậy phần bắt buộc có thể dùng dữ liệu mẫu để tập trung vào component và cấu trúc giao diện.
+## VII. Event Handling Là Phần Mở Rộng Có Kiểm Soát
 
-**Bài tập mở rộng:** Bắt sự kiện nút Thêm, đọc tên từ JTextField và thêm một dòng vào TableModel; nếu đã có service thì lấy dữ liệu qua service thay vì truy cập JDBC từ giao diện. Có thể bỏ phần này mà form/bảng cơ bản và bài tập lớn vẫn hoàn thành được.
+Khi thêm event:
 
-~~~text
-+-------------------------- JFrame ------------------------------------+
-| JPanel: [Tên học viên ______] [Điểm TB ______] [Tìm]                 |
-|----------------------------------------------------------------------|
-| JScrollPane                                                          |
-|   JTable: Mã học viên | Họ tên | Điểm TB | Số bài                     |
-|          ...                                                          |
-+------------------------------------------------------------------------+
-~~~
+```java
+addButton.addActionListener(event -> handleAddProduct());
+```
 
-## III. Thực Hành Git Nhóm
+`handleAddProduct()` đọc text, parse giá, gọi ProductService rồi reload bảng. Không viết INSERT SQL trong listener. Input sai giữ nguyên bảng và hiện thông báo rõ.
 
-1. Tạo branch feature riêng cho form và bảng.
-2. Hai nhánh sửa cùng file để cố ý tạo conflict.
-3. Pull, resolve conflict, chạy lại chức năng và commit kết quả.
-4. Mở PR, ghi mục đích và cách review, nhận góp ý rồi cập nhật.
+Mã P04 không nên được tạo bằng `products.size() + 1` nếu danh sách có thể xóa. Đây là một điểm thảo luận về chiến lược id; bài mở rộng dùng “mã lớn nhất + 1” cho dữ liệu lớp nhỏ.
 
-## Lỗi Thường Gặp
+## VIII. Thực Hành Nhóm
 
-| Lỗi | Nguyên nhân | Cách xử lý |
+1. Một thành viên tạo layout và commit.
+2. Một thành viên nối ProductService và commit riêng.
+3. Thành viên khác review PR theo checklist.
+4. Giáo viên tạo một thay đổi nhỏ trên develop để nhóm thực hành conflict.
+5. Nhóm chạy lại console và Swing trước khi merge.
+
+Mỗi nhóm phải cho thấy `git log --oneline --graph --all` và giải thích nhánh nào chứa thay đổi nào.
+
+## Lỗi thường gặp
+
+| Lỗi | Hậu quả | Cách sửa |
 |---|---|---|
-| Commit thẳng vào main | Không theo quy ước nhóm | Làm trên feature branch |
-| Conflict bị ghi đè | Chọn một phía mà không đọc | So sánh hai thay đổi và kiểm tra kết quả |
-| JTable không hiện dữ liệu | TableModel chưa được nạp/cập nhật | Kiểm tra model và gọi refresh phù hợp |
-| UI chạy JDBC trực tiếp | Bỏ qua service/repository | Gọi service từ controller/event handler |
+| Làm trực tiếp trên develop | Khó review/rollback | Tạo feature branch |
+| Resolve conflict bằng cách chọn toàn bộ một phía | Mất thay đổi bên kia | Hiểu ý định, ghép nội dung cuối rồi test |
+| Swing tự tạo dữ liệu mẫu | Hai nguồn dữ liệu | Inject ProductService |
+| JTable không nằm trong JScrollPane | Khó cuộn/thiếu header | Bọc table bằng JScrollPane |
+| Nút hoạt động giả | Người dùng hiểu sai | Disabled cho đến khi có handler |
+| SQL trong ActionListener | View gắn chặt database | Gọi Service |
 
-## Tổng Kết Buổi 11
+## Tổng kết buổi 11
 
-- Branch giúp tách công việc; commit tạo mốc; pull request hỗ trợ review và trao đổi trước khi merge.
-- Swing ghép component trong JFrame; JTable trình bày dữ liệu do TableModel quản lý.
-- Bắt sự kiện và nối giao diện với service là bước kế tiếp, được để ở phần mở rộng.
+Git flow làm thay đổi nhỏ, review được và tích hợp có kiểm soát. Swing chỉ là một View mới; kiến trúc đúng cho phép nó dùng lại Service/Repository từ console. Một UI đơn giản nhưng dùng đúng nguồn dữ liệu có giá trị hơn một form nhiều nút nhưng bỏ qua tầng nghiệp vụ.
 
-### Câu Hỏi Ôn Tập
+## Bài tập nhỏ trên lớp — Cửa sổ danh bạ
 
-1. Feature branch giúp nhóm điều gì?
-2. Pull request dùng để làm gì?
-3. Nên xử lý conflict theo thứ tự nào?
-4. JFrame, JPanel và JTable dùng cho phần nào?
-5. Vì sao Swing event không nên tự truy cập JDBC?
+Thực hiện trên nhánh `feature/contact-window`:
 
-## Bài Tập Về Nhà
+- Tạo JFrame có hai JTextField `Tên`, `Số điện thoại`, một JButton disabled và JTable ba cột `Mã`, `Tên`, `Số điện thoại`.
+- Dữ liệu bảng lấy từ `ContactService.findAll()`, không tạo list riêng trong JFrame.
+- Bọc JTable trong JScrollPane và bảo đảm form/bảng cùng hiển thị ở kích thước 600×400.
+- Commit với message `feat: add contact window` và chuẩn bị mô tả pull request ngắn.
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 11](../BTVN/buoi-11-btvn.md).
-## Tài Liệu Tham Khảo
+**Nghiệm thu:** cửa sổ hiển thị ít nhất hai contact do Service trả về; không có SQL hoặc dữ liệu hard-code trong View. Thời gian làm khoảng 20 phút.
 
-- [GitHub Docs — About Pull Requests](https://docs.github.com/en/pull-requests/reference/pull-requests)
-- [Oracle — Creating a GUI With Swing](https://docs.oracle.com/javase/tutorial/uiswing/)
-- [Oracle — How to Use Tables](https://docs.oracle.com/javase/tutorial/uiswing/components/table.html)
+## Bài tập về nhà
+
+Hoàn thành [BTVN buổi 11](../BTVN/buoi-11-btvn.md) bằng PR vào develop. Phần event handler là tự chọn.

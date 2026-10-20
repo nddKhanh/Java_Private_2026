@@ -1,98 +1,249 @@
-# Buổi 12: Tổng Kết Khóa Học và Khởi Động Bài Tập Lớn
+# Buổi 12: Tổng Kết Và Khởi Động Capstone
 
 ---
 
+> **Hạn chế từ buổi 11:** học viên đã có các kỹ thuật riêng lẻ nhưng chưa tự chốt phạm vi, mô hình dữ liệu, transaction, phân công và tiêu chí demo cho một sản phẩm nhóm.
+
 ## Mục tiêu buổi học
 
-- Kết nối các mảng đã học thành quy trình làm một ứng dụng đơn giản từ đầu.
-- Hiểu yêu cầu, phạm vi, tiêu chí chấm và quy trình demo bài tập lớn.
-- Chọn đề tài, chia nhóm/vai trò, tạo repository và đăng ký kế hoạch.
-- Xác định chức năng, database và cách chứng minh project chạy được.
+Sau buổi học, mỗi nhóm có thể:
 
-> **Cầu nối:** Sau khi đã tiếp cận các chủ đề Java và cách phối hợp bằng Git, một yêu cầu lớn cần được chia thành dữ liệu, chức năng, phần việc và tiêu chí nghiệm thu. Buổi này tập trung vào cách lập kế hoạch và trình bày một ứng dụng nhóm; project tích lũy được dùng trong BTVN, không làm trục cho phần lý thuyết.
+- Nối kiến thức 11 buổi thành một luồng ứng dụng hoàn chỉnh.
+- Chọn đề tài và thu hẹp phạm vi thành sản phẩm demo được.
+- Thiết kế entity, ERD, use case nhiều bảng và ranh giới tầng.
+- Lập kế hoạch transaction, test case, Git/PR và demo.
+- Bắt đầu sprint đầu tiên với backlog và tiêu chí nghiệm thu rõ.
 
-## I. Hệ Thống Hóa Kiến Thức Theo Nhóm Chủ Đề
+> **Kết quả cuối buổi:** mỗi nhóm có đề cương một trang, ERD, kiến trúc, luồng transaction, backlog và bộ dữ liệu demo cho đề tài tự chọn.
 
-Đây là buổi tổng kết và lập kế hoạch theo lộ trình; phần chọn đề tài phục vụ bài tập lớn, không thay thế hệ thống hóa kiến thức. Khi lập kế hoạch, cần xác định vấn đề, người dùng, dữ liệu, chức năng, phạm vi và cách chứng minh kết quả.
+## I. Nhìn Lại Khóa Học Theo Một Luồng Dữ Liệu
 
-Các chủ đề đã học gồm cú pháp Java, điều khiển luồng, OOP, xử lý lỗi, lưu trữ file, SQL/JDBC, phân tách trách nhiệm, giao diện và phối hợp bằng Git. Mỗi chủ đề giải quyết một dạng vấn đề lập trình riêng và có thể được vận dụng tùy theo yêu cầu đề tài.
+Thay vì ôn từng khái niệm rời, theo dõi một request từ người dùng tới database:
 
-| Nhóm kiến thức | Câu hỏi cần tự trả lời |
+```text
+Người dùng nhập dữ liệu
+    → View đọc và hiển thị
+    → Controller điều phối
+    → Service kiểm tra nghiệp vụ
+    → Model biểu diễn trạng thái/hành vi
+    → Repository interface mô tả nhu cầu dữ liệu
+    → JDBC implementation chạy SQL
+    → MySQL bảo vệ khóa, quan hệ và tính bền vững
+```
+
+Các kiến thức nền nằm trong luồng đó:
+
+- Biến, điều kiện, vòng lặp, method xử lý dữ liệu.
+- OOP/encapsulation tổ chức model.
+- Kế thừa, đa hình, interface tạo khả năng thay thế.
+- Exception xử lý đường thất bại.
+- Collection giữ tập object trong bộ nhớ.
+- JDBC/SQL lưu và truy vấn dữ liệu.
+- MVC/SOLID đặt trách nhiệm và dependency.
+- Git/PR cho phép nhiều người cộng tác.
+
+Mỗi nhóm chọn một chức năng đã làm và kể lại toàn bộ đường đi này. Nếu một bước không chỉ ra được class chịu trách nhiệm, đó là điểm cần sửa trước capstone.
+
+## II. Chọn Đề Tài Từ Vấn Đề, Không Từ Danh Sách Công Nghệ
+
+Một đề tài tốt có người dùng, dữ liệu và một giao dịch cốt lõi. Ví dụ:
+
+| Đề tài | Entity gợi ý | Luồng nhiều bảng |
+|---|---|---|
+| Cửa hàng | Product, Customer, Order, OrderItem | Tạo đơn và giảm tồn kho |
+| Thư viện | Book, Reader, Loan, LoanItem | Tạo phiếu mượn và đổi trạng thái sách |
+| Đặt lịch | Customer, Staff, Appointment | Đặt lịch và khóa khung giờ |
+| Khóa học | Student, Course, Enrollment | Đăng ký học và cập nhật số chỗ |
+
+Không chọn đề tài chỉ vì “có thể dùng Swing”. Giao diện là cách truy cập; nghiệp vụ và dữ liệu mới quyết định cấu trúc ứng dụng.
+
+### Bài tập tại lớp: câu tuyên bố phạm vi
+
+Nhóm hoàn thành mẫu:
+
+```text
+Ứng dụng giúp [người dùng] thực hiện [ba chức năng chính].
+Luồng quan trọng nhất là [tên luồng], ghi vào [các bảng].
+Sản phẩm demo bằng [console hoặc Swing].
+Các chức năng chưa làm trong phiên bản đầu: [...].
+```
+
+Nếu câu trả lời vượt một trang hoặc có hơn năm chức năng chính, phạm vi đang quá rộng.
+
+## III. Từ Use Case Sang ERD Và Object
+
+Với mỗi use case, nhóm xác định:
+
+1. Input từ người dùng.
+2. Quy tắc nghiệp vụ.
+3. Entity tham gia.
+4. Bảng bị đọc/ghi.
+5. Output và đường lỗi.
+
+Ví dụ một ứng dụng bán hàng:
+
+```text
+Input: customerId, [(productId, quantity)], createdAt
+Rule: customer/product tồn tại, quantity > 0 và không vượt stock
+Write: orders, order_items, products.stock
+Output: generated orderId và tổng
+Failure: bất kỳ bước nào lỗi thì rollback toàn bộ
+```
+
+Sau đó mới vẽ ERD và class. Không vẽ bảng chỉ từ danh từ; phải đối chiếu với use case để biết cột lịch sử, khóa ngoại và ràng buộc.
+
+## IV. Transaction Là Yêu Cầu Cốt Lõi
+
+Capstone phải có ít nhất một luồng ghi nhiều bảng. Luồng đó chạy trên một Connection và một transaction:
+
+```java
+connection.setAutoCommit(false);
+try {
+    // bước 1
+    // bước 2
+    // bước 3
+    connection.commit();
+} catch (Exception e) {
+    connection.rollback();
+    throw e;
+} finally {
+    connection.setAutoCommit(true);
+}
+```
+
+Nhóm phải xác định ai sở hữu transaction. Với kiến trúc hiện tại, một coordinator repository hoặc transaction-aware service có thể điều phối, nhưng các repository tham gia phải dùng cùng Connection. Không mở một Connection mới ở mỗi bước rồi gọi rollback trên Connection khác.
+
+Test bắt buộc: cố ý làm bước giữa thất bại và chạy SELECT chứng minh không còn row/stock thay đổi dở dang.
+
+## V. Thiết Kế Kiến Trúc Trước Khi Chia Việc
+
+Mỗi nhóm vẽ sơ đồ:
+
+```text
+[ConsoleView hoặc SwingView]
+             ↓
+         Controller
+             ↓
+           Service
+             ↓
+      Repository interfaces
+             ↓
+       JDBC implementations
+             ↓
+            MySQL
+```
+
+Sau đó ghi class vào từng hộp. Nếu một class nằm ở hai hộp, trách nhiệm chưa rõ. Nếu View gọi thẳng JdbcRepository, sơ đồ và code không khớp.
+
+Chia việc theo vertical slice nhỏ sẽ giảm conflict hơn chia “một người làm toàn model, một người làm toàn SQL”. Ví dụ:
+
+- Feature product/customer CRUD.
+- Feature tạo giao dịch nhiều bảng.
+- Feature xem chi tiết và báo cáo.
+- Feature giao diện/tài liệu tích hợp.
+
+Mỗi slice vẫn cần thống nhất contract trước khi các thành viên làm song song.
+
+## VI. Backlog Có Tiêu Chí Nghiệm Thu
+
+Một task tốt không chỉ ghi “Làm Order”. Ví dụ:
+
+```text
+Task: Tạo Order và giảm stock trong transaction.
+Input mẫu: KH01, SP01 × 2, SP02 × 1, thời điểm cố định do nhóm chọn.
+Kết quả: Order có generated id, tổng khớp phép tính tay và stock giảm đúng.
+Ca lỗi: P99 ở item thứ hai; không có Order/OrderItem và stock không đổi.
+Done: code, SQL, test output, README và PR đã review.
+```
+
+Định nghĩa Done chung:
+
+- Build/run trên JDK 17.
+- Test case chuẩn đạt.
+- Không lộ credential.
+- SQL dùng tham số và tài nguyên được đóng.
+- PR được review và comment đã xử lý.
+- README cập nhật nếu cách chạy thay đổi.
+
+## VII. Lập Kịch Bản Demo Trước Khi Code Xong
+
+Demo tốt có thể lặp lại từ dữ liệu sạch:
+
+1. Chạy schema và seed.
+2. Khởi động ứng dụng.
+3. Xem dữ liệu seed.
+4. Thực hiện CRUD.
+5. Chạy giao dịch nhiều bảng.
+6. Xem chi tiết và báo cáo.
+7. Chạy ca rollback.
+8. Khởi động lại để chứng minh dữ liệu còn.
+
+Nhóm ghi input và output mong đợi cho từng bước. Tránh dùng thời gian hệ thống hoặc dữ liệu ngẫu nhiên nếu khiến báo cáo không thể đối chiếu.
+
+## VIII. Review Đề Cương Theo Ba Vòng
+
+### Vòng 1 — Phạm vi
+
+- Ba chức năng chính có demo được không?
+- Có phần nào chỉ “cho đẹp” nhưng chưa phục vụ use case?
+- Có chức năng nào nên chuyển thành nâng cao?
+
+### Vòng 2 — Dữ liệu và transaction
+
+- Khóa chính/ngoại có rõ không?
+- Có snapshot dữ liệu lịch sử cần thiết không?
+- Transaction gồm chính xác các bước nào?
+- Ca rollback chứng minh bằng query nào?
+
+### Vòng 3 — Kiến trúc và cộng tác
+
+- Dependency có đi đúng tầng không?
+- Task/branch có đủ nhỏ để review không?
+- README và seed do ai chịu trách nhiệm?
+- Ai review chéo feature nào?
+
+Sau mỗi vòng, nhóm sửa trực tiếp đề cương thay vì chỉ ghi nhận góp ý.
+
+## IX. Mốc Cuối Buổi
+
+Mỗi nhóm trình bày trong 5 phút:
+
+- Vấn đề và người dùng.
+- ERD.
+- Luồng nghiệp vụ nhiều bảng và transaction.
+- Kiến trúc/package.
+- Ba test case chính, gồm một rollback.
+- Backlog và phân công.
+
+Mentor chỉ duyệt khi phạm vi, dữ liệu đầu vào và kết quả nghiệm thu đủ cụ thể để một nhóm khác đọc cũng hiểu.
+
+## Lỗi thường gặp
+
+| Lỗi | Cách điều chỉnh |
 |---|---|
-| Java cơ bản | Dữ liệu có kiểu gì, luồng chạy ra sao, method nhận/trả gì? |
-| OOP | Trạng thái thuộc object nào, quan hệ là HAS-A hay IS-A, hành vi nào có thể thay thế? |
-| Lỗi và lưu trữ | Lỗi nào có thể phục hồi, dữ liệu lưu ở đâu và đọc lại thế nào? |
-| SQL/JDBC | Bảng liên hệ qua khóa nào, truy vấn trả về dữ liệu gì? |
-| Thiết kế và giao diện | Trách nhiệm chia ra sao, thay đổi được review và trình bày thế nào? |
+| Chọn quá nhiều chức năng | Chốt một luồng lõi, một CRUD, một báo cáo trước |
+| ERD có nhiều bảng nhưng không có use case | Xóa bảng không tham gia demo |
+| Transaction chỉ ghi trong slide | Viết ca lỗi và query chứng minh rollback |
+| Chia việc theo tầng gây chờ nhau | Chia vertical slice, thống nhất interface trước |
+| Demo phụ thuộc dữ liệu máy cá nhân | Có schema/seed/reset và README |
+| Bắt mọi nhóm làm cùng một đề tài | Cho nhóm chọn miền và chốt cùng một bộ tiêu chí kỹ thuật |
 
-~~~text
-Java cơ bản · OOP · lỗi/lưu trữ · SQL/JDBC · thiết kế · giao diện/Git
-~~~
+## Tổng kết khóa học
 
-## II. Chọn Đề Tài Và Chốt Phạm Vi
+Mục tiêu không phải nhớ mọi API mà là biết đưa một yêu cầu đi từ input đến model, nghiệp vụ, dữ liệu và output với trách nhiệm rõ. Capstone là nơi chứng minh chuỗi đó hoạt động, có thể kiểm tra, có rollback khi lỗi và có lịch sử cộng tác qua Git.
 
-Gợi ý: quản lý bán hàng, thư viện, khóa học, quán cà phê hoặc đơn hàng thương mại điện tử. Đây là đề tài để vận dụng kiến thức; nhóm chọn domain riêng, không cần sao chép ứng dụng ví dụ trong giáo án. Chọn phạm vi vừa đủ để nhóm hoàn thành CRUD nghiệp vụ, có quan hệ dữ liệu phù hợp và demo được luồng chính.
+## Bài tập nhỏ trên lớp — Đề cương quản lý bãi xe
 
-Mỗi nhóm ghi rõ:
+Trong nhóm nhỏ, lập đề cương một trang cho bài toán quản lý bãi xe:
 
-- Người dùng chính và vấn đề ứng dụng giải quyết.
-- Danh sách chức năng cốt lõi; phân biệt tính năng cần có và ý tưởng để sau.
-- Các bảng database dự kiến, khóa chính/ngoại và quan hệ.
-- Thành viên, vai trò, người review và quy ước Git.
-- Cách chạy ứng dụng, dữ liệu demo và kịch bản trình bày.
+- Xác định người dùng, ba chức năng chính và ba entity tối thiểu.
+- Vẽ ERD có ít nhất một quan hệ một-nhiều.
+- Chọn một luồng ghi nhiều bảng cần transaction và mô tả ca rollback.
+- Viết ba test case có input/kết quả mong đợi.
+- Chia luồng thành ba task/feature branch có thể review độc lập.
 
-## III. Tiêu Chí Chấm Và Demo
+**Nghiệm thu:** nhóm khác đọc đề cương có thể chỉ ra dữ liệu được ghi ở đâu, khi nào rollback và cách demo từ database sạch. Thời gian làm khoảng 20 phút.
 
-Thống nhất tiêu chí theo lộ trình:
+## Bài tập sau buổi 12
 
-- OOP: class có trách nhiệm rõ, dùng encapsulation và quan hệ phù hợp.
-- CRUD JDBC: truy vấn có tham số, dữ liệu lưu được, liên kết bảng hợp lệ.
-- Git/GitHub: commit có ý nghĩa, branch/PR và đóng góp thành viên nhìn được.
-- Giao diện console hoặc Swing đơn giản đáp ứng luồng cốt lõi.
-- Báo cáo/demo: trình bày vấn đề, chức năng, database, phân chia công việc và giới hạn.
-
-Demo nên chạy một luồng đầu-cuối bằng dữ liệu mẫu, ví dụ tìm đầu sách → lập phiếu mượn → xem chi tiết phiếu. Chuẩn bị sẵn cách reset dữ liệu demo và phương án nếu máy không có kết nối database.
-
-Khi lập kế hoạch, nhóm biến yêu cầu thành đầu việc kiểm chứng được: chức năng nào thao tác dữ liệu, bảng nào liên quan, lớp nào chịu trách nhiệm, kịch bản nào chứng minh luồng chạy. Đây là cách vận dụng mô hình dữ liệu, JDBC, phân tầng và Git; buổi tổng kết không yêu cầu học thêm framework mới.
-
-Ví dụ với chức năng “lập phiếu mượn”: chốt quy tắc (bạn đọc và sách phải tồn tại, số lượng dương, sách còn có thể mượn); xác định dữ liệu cần lưu (`loans`, `loan_items`, thời điểm mượn); chia trách nhiệm nhận thông tin, áp dụng quy tắc và truy cập database; cuối cùng viết kịch bản demo cùng kết quả mong đợi. Đây là ví dụ phân tích yêu cầu, không phải cấu trúc bắt buộc cho mọi đề tài.
-
-Không phải đề tài nào cũng cần cùng một thiết kế. Nếu ứng dụng chỉ quản lý danh bạ, có thể không cần quan hệ đơn hàng nhiều bảng; nhóm chọn mô hình dựa trên dữ liệu và thao tác thật của đề tài, rồi giải thích lý do. Tiêu chí là các lớp/bảng phản ánh bài toán và có thể chứng minh bằng một luồng chạy được, không phải đưa mọi khái niệm đã học vào project.
-
-## IV. Tổ Chức Công Việc Nhóm
-
-1. Tạo repository và branch chính theo hướng dẫn mentor.
-2. Đăng ký đề tài, chức năng cốt lõi và sơ đồ database dự kiến.
-3. Chia feature thành phần nhỏ có thể review độc lập.
-4. Chốt lịch kiểm tra tiến độ và quy ước merge.
-5. Nộp bản đăng ký để mentor phản hồi trước khi mở rộng phạm vi.
-
-## Lỗi Thường Gặp
-
-| Rủi ro | Cách phòng tránh |
-|---|---|
-| Đề tài quá rộng | Chốt ít chức năng lõi, để ý tưởng khác ở backlog |
-| Không ai sở hữu database | Giao người phụ trách schema và review cùng nhóm |
-| Dồn tích hợp đến cuối | Tích hợp sớm theo feature nhỏ |
-| Chỉ chuẩn bị slide, không chạy app | Demo luồng thật trên dữ liệu mẫu |
-| Một người làm toàn bộ | Chia task và dùng lịch sử PR để theo dõi đóng góp |
-
-## Tổng Kết Khóa Học
-
-Học viên đã tiếp cận các nhóm kiến thức Java, OOP, lưu trữ, database, thiết kế, giao diện và làm việc nhóm. Bài tập lớn yêu cầu chọn một domain, xác định phạm vi khả thi, chia việc và chứng minh chức năng bằng một luồng chạy được.
-
-### Câu Hỏi Chốt Kế Hoạch
-
-1. Ứng dụng giải quyết vấn đề nào và ai sử dụng?
-2. Ba chức năng cốt lõi nào phải chạy được khi demo?
-3. Dữ liệu chính gồm những bảng nào và quan hệ ra sao?
-4. Nhóm làm việc và review code theo quy ước nào?
-5. Tiêu chí nào chứng minh project hoàn thành?
-
-## Bài Tập Về Nhà
-
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 12](../BTVN/buoi-12-btvn.md).
-## Tài Liệu Tham Khảo
-
-- [GitHub Docs — About Repositories](https://docs.github.com/en/repositories/creating-and-managing-repositories/about-repositories)
-- [MySQL Reference Manual](https://dev.mysql.com/doc/refman/8.4/en/)
+Thực hiện [đặc tả capstone](../BTVN/buoi-12-btvn.md). Nộp đề cương/ERD trước khi mở rộng phạm vi code.

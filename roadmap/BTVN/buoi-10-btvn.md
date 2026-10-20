@@ -1,45 +1,80 @@
 # Bài Tập Về Nhà — Buổi 10
 
-## Bài Bắt Buộc — Tổ Chức Ứng Dụng Theo MVC Và DIP
+## Bài Bắt Buộc — Refactor HitShop Theo MVC Và DIP
 
 ### Kế Thừa Từ Buổi 09
 
-Tiếp tục đúng repository `HitShop`, database và các lớp model/repository/service của buổi 8–9. Giữ nguyên chữ ký các method CRUD Product và tạo/xem Order; lần này chỉ phân trách nhiệm giao diện, điều phối và nghiệp vụ theo MVC/DIP.
+Tiếp tục đúng repository, database và hành vi Product/Customer/Order đã có bằng JDK 17. Giữ Order id kiểu `long`; dữ liệu mẫu là order id `1`, không quay lại `O01`. Bài này thay cách tổ chức code, không thay kết quả nghiệp vụ.
 
-### Bài Toán
+### Cấu Trúc Package
 
-Sắp xếp lại ứng dụng cửa hàng đã có để mỗi phần có trách nhiệm rõ: giao diện, điều phối, nghiệp vụ, truy cập dữ liệu và model. Hành vi CRUD sản phẩm và xem/tạo đơn đã có phải tiếp tục hoạt động sau khi tổ chức lại.
+```text
+src/main/java/
+├── app/HitShop.java
+├── controller/ShopController.java
+├── view/ConsoleView.java
+├── service/ProductService.java
+├── service/CustomerService.java
+├── service/OrderService.java
+├── repository/ProductRepository.java
+├── repository/CustomerRepository.java
+├── repository/OrderRepository.java
+├── repository/OrderItemRepository.java
+├── repository/jdbc/JdbcProductRepository.java
+├── repository/jdbc/JdbcCustomerRepository.java
+├── repository/jdbc/JdbcOrderRepository.java
+├── repository/jdbc/JdbcOrderItemRepository.java
+└── model/...
+```
 
-### Cấu Trúc Và Trách Nhiệm Bắt Buộc
+### Trách Nhiệm
 
-- Model: `Product`, `Customer`, `CartItem`, `Order`, `OrderItem`, `OrderStatus`; tiếp tục giữ dữ liệu P01/P02/P03, C01/C02 và Order O01 theo các buổi trước. Chỉ giữ dữ liệu và hành vi nghiệp vụ tương ứng, không in menu hoặc chứa SQL. Field/quan hệ giữ đúng hợp đồng buổi 3, 4 và 9.
-- View: `ConsoleView`; hiển thị menu/kết quả và nhận dữ liệu console, không gọi JDBC.
-- Controller: `ShopController`; nhận lựa chọn từ View, gọi `ProductService` hoặc `OrderService`, đưa kết quả về View. Controller không chứa SQL.
-- Service: `ProductService` và `OrderService`; áp dụng quy tắc nghiệp vụ và gọi repository interface. Không phụ thuộc class JDBC cụ thể.
-- Hợp đồng: `ProductRepository`, `OrderRepository`, `OrderItemRepository` là interface; `JdbcProductRepository`, `JdbcOrderRepository`, `JdbcOrderItemRepository` là các triển khai JDBC tương ứng. `OrderService` phụ thuộc OrderRepository và OrderItemRepository qua interface.
-- Khởi tạo nối implementation với service/controller ở một điểm tập trung trong class chạy chương trình. Không tạo kết nối database hoặc câu SQL bên trong View.
-- Package cố định: `model`, `view`, `controller`, `service`, `repository`, `app`; mỗi class nằm trong package theo đúng trách nhiệm liệt kê trên. `HitShop` nằm trong `app`.
-- Hợp đồng method: `ProductService.addProduct(Product): boolean`, `findProductById(String): Optional<Product>`, `findAllProducts(): List<Product>`, `updateProduct(Product): boolean`, `deleteProduct(String): boolean`; `OrderService.createOrder(String, List<OrderItem>, LocalDateTime): long`, `findOrderById(long): Optional<Order>`.
-- `OrderRepository.insertOrder(String, OrderStatus, LocalDateTime): long`; `OrderItemRepository.insertAll(long, List<OrderItem>): void` và `findByOrderId(long): List<OrderItem>`; các method report giữ đúng chữ ký đã nêu ở buổi 9.
-- `OrderService` còn có `findRevenueByDay(): List<DailyRevenue>` và `findRevenueByCustomer(): List<CustomerRevenue>` theo hợp đồng buổi 9. `HitShop` là class duy nhất chứa `main`.
-- Hợp đồng giao diện: `ShopController.run(): void`, `handleChoice(int): void`; `ConsoleView.showMenu(): void`, `readChoice(): int`, `readProduct(): Product`, `readCustomerId(): String`, `readOrderItems(): List<OrderItem>`, `readCreatedAt(): LocalDateTime`, `showProducts(List<Product>): void`, `showOrder(Optional<Order>): void`, `showMessage(String): void`.
+- Model giữ dữ liệu và hành vi của entity, không in menu, không đọc input, không chứa SQL.
+- `ConsoleView` hiển thị/nhận dữ liệu thô, không gọi service hoặc JDBC.
+- `ShopController` điều phối request từ View sang Service, không chứa SQL hay quy tắc tồn kho.
+- Service kiểm tra nghiệp vụ và phụ thuộc repository interface qua constructor.
+- JDBC implementation chứa SQL và mapping, không in output giao diện.
+- `HitShop.main` là composition root duy nhất: tạo DataSource/connection provider, repository implementation, service, view và controller rồi gọi `controller.run()`.
 
-### Hành Vi Và Nghiệm Thu
+### Dữ Liệu Nhập Đơn
 
-- Product CRUD từ buổi 7 vẫn tạo, liệt kê, tìm, cập nhật, xóa đúng dữ liệu.
-- Tạo/xem đơn từ buổi 9 vẫn trả đúng Customer, OrderItem và tổng tiền.
-- Một đường gọi CRUD có dạng View → Controller → Service → Repository interface → JDBC implementation; kết quả đi ngược về View.
-- Một repository thay thế không dùng JDBC có thể được truyền vào ProductService mà không sửa code nghiệp vụ Service.
-- Repository thay thế tên `MemoryProductRepository`, implements ProductRepository, khởi tạo với P01/P02 chuẩn buổi 7 và thực hiện cùng hợp đồng ProductRepository.
-- Hướng dẫn chạy nêu database cần có, cấu hình kết nối cần cung cấp và chức năng có thể quan sát được. Nộp kết quả kiểm tra thủ công bằng các bộ dữ liệu chuẩn buổi 7 và 9.
+View không được tạo `OrderItem` hoàn chỉnh vì chưa chịu trách nhiệm tra Product hoặc chốt giá. Tạo record:
+
+```java
+public record OrderItemInput(String productId, int quantity) {}
+```
+
+`ConsoleView.readOrderItems()` trả `List<OrderItemInput>`. Controller chuyển input sang Service; `OrderService` tra Product, kiểm tra quantity và tạo OrderItem với giá hiện tại. Không nhận `unitPrice` từ người dùng.
+
+### Hợp Đồng Chính
+
+- `ShopController.run(): void`, `handleChoice(int): void`.
+- `ConsoleView.showMenu(): void`, `readChoice(): int`, `readProduct(): Product`, `readCustomerId(): String`, `readOrderItems(): List<OrderItemInput>`, `readCreatedAt(): LocalDateTime` và các method hiển thị.
+- Giữ hợp đồng ProductService, CustomerService, OrderService và repository của buổi 8–9, ngoại trừ overload tạo đơn nhận `List<OrderItemInput>` ở biên controller/service.
+- `OrderService.findOrderById(long)` vẫn trả Order đã có đầy đủ items.
+
+### Sơ Đồ Lớp Và Quan Hệ
+
+![Sơ đồ lớp BTVN buổi 10](assets/buoi-10-class-diagram.svg)
+
+Đọc sơ đồ theo luồng `View → Controller → Service → Repository interface → JDBC implementation`; `HitShop` chỉ khởi tạo và lắp các dependency tại composition root.
+
+### Nghiệm Thu Refactor
+
+1. CRUD Product với P01/P02/P03 cho kết quả như trước refactor.
+2. Tạo và xem Order id 1 trả đúng Customer, items, unit price và tổng.
+3. Một luồng gọi có thể chỉ ra rõ: View → Controller → Service → Repository interface → JDBC implementation.
+4. Tìm toàn repository không có SQL trong `view`, `controller`, `service` hoặc `model`.
+5. Tạo `MemoryProductRepository implements ProductRepository`, khởi tạo P01/P02; truyền nó vào ProductService và chạy tìm/list mà không sửa code Service.
+6. README mô tả cấu hình database và hai cách chạy: JDBC repository và memory repository.
 
 ### Nộp Bài
 
-Nộp source theo cấu trúc package cố định, README hướng dẫn chạy và output kiểm tra CRUD Product/tạo-xem Order.
+Nộp source theo package, README và output so sánh trước/sau refactor. Không đổi schema hoặc dữ liệu chuẩn chỉ để refactor dễ hơn.
 
 ## Bài Tự Chọn — Pattern
 
-- `PaymentMethodFactory` nhận một trong hai mã `CASH`/`BANK` và trả CashPayment/BankTransferPayment tương ứng; mã khác không tạo đối tượng payment.
-- Nếu có class Singleton cấu hình, instance duy nhất chỉ chứa cấu hình không bí mật hoặc đọc credential từ bên ngoài; không đưa mật khẩu thật vào source.
+- `PaymentMethodFactory` nhận `CASH`/`BANK` và trả implementation tương ứng.
+- Một lớp cấu hình duy nhất đọc credential từ biến môi trường hoặc file bị `.gitignore`; không hard-code mật khẩu.
 
-Phần pattern là cải tiến tổ chức; bỏ qua không ảnh hưởng CRUD, tạo đơn hay cấu trúc MVC bắt buộc.
+Pattern chỉ được thêm khi làm code gọi rõ hơn; không thay thế repository/service/MVC bắt buộc.

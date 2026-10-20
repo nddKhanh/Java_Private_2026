@@ -1,197 +1,217 @@
-# Buổi 5: Abstract Class, Interface, equals() và hashCode()
+# Buổi 5: Interface, Abstract Class Và Equality
 
 ---
 
+> **Hạn chế từ buổi 4:** kế thừa giải quyết được quan hệ IS-A, nhưng các nhóm class không cùng họ vẫn cần một hợp đồng chung; object khác instance cũng chưa được so sánh theo định danh nghiệp vụ.
+
 ## Mục tiêu buổi học
 
-- Phân biệt abstract class và interface; biết dùng implements cho hợp đồng hành vi.
-- Mô tả các khả năng chung bằng interface thay vì phụ thuộc class cụ thể.
-- So sánh object theo nội dung bằng equals() và tuân thủ quy tắc hashCode().
-- Thực hành bằng hợp đồng gửi thông báo, xuất báo cáo và equality của Book.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** Kế thừa và đa hình ở buổi trước mô tả các biến thể trong cùng một họ kiểu. Khi những class không cùng một họ vẫn cần cung cấp cùng một khả năng, interface biểu diễn hợp đồng chung mà không buộc chúng dùng chung lớp cha. Buổi này cũng phân biệt equality theo nội dung với cùng tham chiếu object.
+- Nhận ra rẽ nhánh theo loại và thay bằng một hợp đồng chung.
+- Tạo, triển khai và sử dụng `PaymentMethod`, `DeliveryMethod` qua interface.
+- Phân biệt vai trò của abstract class và interface.
+- Override `equals()`/`hashCode()` nhất quán dựa trên định danh Product.
+- Giải thích vì sao `ArrayList.contains/remove` phụ thuộc equality.
 
-## I. Từ if/else Đến Hợp Đồng
+> **Kết quả cuối buổi:** chương trình thay được cách thanh toán và giao hàng mà code gọi không đổi; hai Product cùng id được xem là cùng sản phẩm.
 
-Nhiều loại đối tượng có thể cùng thực hiện một khả năng nhưng cách làm khác nhau. Ví dụ nhiều loại thông báo đều có thể `send()`, nhưng email và tin nhắn gửi theo cách khác nhau. Nếu code gọi phụ thuộc từng class cụ thể, thêm một cách làm mới thường kéo theo sửa nhiều nhánh. Interface nêu hợp đồng mà bên gọi cần; class triển khai chịu trách nhiệm về cách thực hiện.
+> **Môi trường:** JDK 17, tiếp tục Order và Product của buổi 4.
 
-~~~java
-public interface MessageSender {
-    String send(String message);
+## I. Từ `if/else` Đến Hợp Đồng
+
+Một cách chọn thanh toán dễ xuất hiện là:
+
+```java
+if (type.equals("CASH")) {
+    // xử lý tiền mặt
+} else if (type.equals("BANK")) {
+    // xử lý chuyển khoản
 }
+```
 
-class EmailSender implements MessageSender {
+Khi thêm phương thức mới, nhiều nơi phải biết thêm chuỗi mới. Nơi tạo lựa chọn và nơi thực hiện hành vi bị trộn lẫn. Ta tách phần “mọi cách thanh toán đều làm được gì” thành interface:
+
+```java
+public interface PaymentMethod {
+    String pay(double amount);
+}
+```
+
+Hai implementation:
+
+```java
+public class CashPayment implements PaymentMethod {
     @Override
-    public String send(String message) {
-        return "Gửi email: " + message;
+    public String pay(double amount) {
+        return "Đã nhận tiền mặt: " + amount;
     }
 }
 
-class SmsSender implements MessageSender {
+public class BankTransferPayment implements PaymentMethod {
     @Override
-    public String send(String message) {
-        return "Gửi SMS: " + message;
+    public String pay(double amount) {
+        return "Đã tạo yêu cầu chuyển khoản: " + amount;
     }
 }
-~~~
+```
 
-Code gọi qua interface có thể yêu cầu `send` mà không cần biết thông báo được gửi bằng email hay SMS. Interface mô tả khả năng mà phía gọi cần; class triển khai chịu trách nhiệm cách thực hiện.
+Code dùng payment chỉ phụ thuộc hợp đồng:
 
-~~~text
-                 MessageSender
-                  send(message)
-                 /           \
-       EmailSender           SmsSender
-                 \           /
-                  caller gọi send()
-~~~
-
-## II. Abstract Class Và Interface
-
-- Abstract class là class chưa hoàn thiện để tạo object trực tiếp; nó có thể chứa field, constructor, method đã cài đặt và method abstract buộc lớp con cung cấp phần còn thiếu.
-- Interface định nghĩa hợp đồng hành vi mà class cam kết thực hiện. Class dùng `implements`; một class có thể implement nhiều interface, nhưng chỉ extends một class trực tiếp.
-- Chọn abstract class khi các lớp con thật sự cùng một họ, cần chia sẻ trạng thái hoặc code chung; chọn interface khi cần mô tả khả năng/hợp đồng có thể áp dụng cho các class không cùng một lớp cha.
-- Không chọn theo quy tắc máy móc “is-a”/“can-do”; hãy xem quan hệ trong miền bài toán, khả năng thay thế và phần code/state thật sự cần chia sẻ. Một interface không bắt buộc chỉ có method abstract trong mọi phiên bản Java, nhưng buổi học tập trung vào hợp đồng method cơ bản.
-
-| Câu hỏi khi thiết kế | Abstract class thường phù hợp | Interface thường phù hợp |
-|---|---|---|
-| Các kiểu có cùng nền tảng và trạng thái chung không? | Có, ví dụ `Shape` giữ màu và cho biết diện tích | Không nhất thiết; chỉ cần cùng một khả năng |
-| Một class cần kết hợp nhiều vai trò không? | Java chỉ cho extends một class | Có thể implements nhiều interface |
-| Bên gọi cần biết điều gì? | Có thể dựa vào API và trạng thái chung của lớp cha | Chỉ dựa vào các method trong hợp đồng |
-
-Ví dụ: `Circle extends Shape` nếu Circle là một hình và có thể dùng ở nơi nhận Shape. `EmailSender implements MessageSender` vì class này cung cấp khả năng gửi thông báo; nó không cần kế thừa lớp hình học.
-
-~~~java
-public abstract class ReportGenerator {
-    public abstract String generate();
-
-    public void printReportTitle() {
-        System.out.println("Báo cáo tổng hợp");
-    }
+```java
+static void checkout(PaymentMethod paymentMethod, double amount) {
+    System.out.println(paymentMethod.pay(amount));
 }
-~~~
+```
 
-Không tạo trực tiếp `ReportGenerator`; class cụ thể kế thừa nó và cài đặt `generate()`. Abstract class phù hợp khi các lớp con thật sự cùng một loại và có phần code chung.
+Giáo viên gọi `checkout` lần lượt với hai object. Điểm quan trọng không phải output khác nhau; điểm quan trọng là chữ ký và thân của `checkout` không đổi.
 
-~~~java
-public class SummaryReport extends ReportGenerator {
-    private final int recordCount;
+## II. Áp Dụng Lần Hai Với DeliveryMethod
 
-    public SummaryReport(int recordCount) {
-        this.recordCount = recordCount;
-    }
+Nếu học viên chỉ làm một ví dụ, interface dễ bị hiểu như “một cú pháp riêng cho payment”. Áp dụng lại cùng ý tưởng cho giao hàng:
 
+```java
+public interface DeliveryMethod {
+    String deliver(Order order);
+}
+
+public class StandardDelivery implements DeliveryMethod {
     @Override
-    public String generate() {
-        return "Số bản ghi: " + recordCount;
+    public String deliver(Order order) {
+        return "Giao tiêu chuẩn cho đơn " + order.getId();
     }
 }
-~~~
 
-Trong ví dụ này, class trừu tượng giữ một hành vi chung là in tiêu đề; lớp cụ thể cung cấp dữ liệu báo cáo. Dùng abstract class khi các lớp con thuộc cùng một họ và có phần state/code thực sự dùng chung; nếu chỉ muốn nhiều class có cùng khả năng, interface ít ràng buộc hơn.
-
-~~~java
-public interface ExportFormat {
-    String export(String content);
-}
-
-class TextExport implements ExportFormat {
+public class ExpressDelivery implements DeliveryMethod {
     @Override
-    public String export(String content) {
-        return content;
+    public String deliver(Order order) {
+        return "Giao nhanh cho đơn " + order.getId();
     }
 }
-~~~
+```
 
-Một class có thể implement các interface khác nhau nếu nó đáp ứng từng hợp đồng. Bên gọi chỉ cần biết hợp đồng; nó không cần phụ thuộc class triển khai.
+```java
+static void printDelivery(DeliveryMethod method, Order order) {
+    System.out.println(method.deliver(order));
+}
+```
 
-~~~java
-MessageSender sender = new EmailSender();
-String result = sender.send("Lịch học bắt đầu lúc 8 giờ");
-System.out.println(result);
-~~~
+PaymentMethod và DeliveryMethod khác miền hành vi nhưng cùng nguyên tắc: code cấp cao dùng abstraction, implementation cụ thể có thể thay thế.
 
-Biến có kiểu interface cho phép thay `new EmailSender()` bằng `new SmsSender()` mà lời gọi `sender.send(...)` không đổi. Dùng interface ở ranh giới nơi code cần một khả năng nhưng không nên gắn với một cách thực hiện cụ thể.
+## III. Abstract Class Khác Interface Ở Đâu?
 
-## III. equals() Và hashCode()
+Interface phù hợp khi cần định nghĩa khả năng mà nhiều class khác nhau cùng thực hiện. Abstract class phù hợp khi các lớp con thực sự cùng một họ và cần dùng chung trạng thái hoặc một phần implementation.
 
-Với object, `==` kiểm tra hai biến có tham chiếu cùng một object không. `equals()` là method để định nghĩa khi nào hai object được xem là bằng nhau về giá trị/định danh; mặc định kế thừa từ `Object` cũng chỉ so sánh cùng instance, nên class cần override nếu muốn equality theo nội dung.
+Ví dụ mở rộng cho delivery:
 
-~~~java
+```java
+public abstract class BaseDeliveryMethod implements DeliveryMethod {
+    private final double fee;
+
+    protected BaseDeliveryMethod(double fee) {
+        if (fee < 0) {
+            throw new IllegalArgumentException("Phí không được âm");
+        }
+        this.fee = fee;
+    }
+
+    public double getFee() {
+        return fee;
+    }
+}
+```
+
+Class trừu tượng có thể giữ `fee` và constructor dùng chung; interface chỉ nêu hành vi `deliver`. Một class chỉ kế thừa một class nhưng có thể implements nhiều interface.
+
+Trong bài lõi, Product vẫn là class concrete vì ta còn tạo trực tiếp áo thun và bình nước. Không biến Product thành abstract chỉ để “có dùng abstract class”, vì điều đó làm hỏng dữ liệu từ buổi 3–4.
+
+## IV. Product Equality: Bằng Nhau Theo Điều Gì?
+
+Mặc định, hai object khác instance không bằng nhau dù field giống nhau:
+
+```java
+Product a = new Product("SP01", "Sổ tay", 25000, 50);
+Product b = new Product("SP01", "Sổ tay bìa cứng", 30000, 20);
+System.out.println(a.equals(b)); // false nếu chưa override
+```
+
+Trong ví dụ quản lý sản phẩm, id là định danh ổn định. Hai Product cùng id đại diện cùng sản phẩm:
+
+```java
 @Override
-public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (!(obj instanceof Book)) return false;
-    Book other = (Book) obj;
-    return id.equals(other.id);
+public boolean equals(Object other) {
+    if (this == other) return true;
+    if (!(other instanceof Product)) return false;
+    Product product = (Product) other;
+    return id.equals(product.id);
 }
 
 @Override
 public int hashCode() {
     return id.hashCode();
 }
-~~~
+```
 
-Đoạn minh họa giả sử `id` được khởi tạo và không bao giờ null, ví dụ field `private final String id` được kiểm tra trong constructor. Điều này quan trọng vì nếu id null, `id.equals(...)` gây NullPointerException. Với Java mới có thể dùng `Objects.equals(id, other.id)` để xử lý null an toàn; với định danh, thường nên bắt buộc có giá trị ngay từ lúc tạo.
+Quy tắc bắt buộc: nếu `a.equals(b)` là true thì `a.hashCode() == b.hashCode()` cũng phải true. Vì vậy hai method phải dựa trên cùng `id`.
 
-Nếu override equals(), cần override hashCode() theo cùng dữ liệu định danh. Trong buổi này ta áp dụng tìm/xóa trong ArrayList bằng mã; chưa học sâu Set/Map.
+Không đưa name, price hoặc stock vào equality. Các field này có thể thay đổi, trong khi định danh sản phẩm không nên đổi. Nếu equality dựa vào field thay đổi, một Product đang nằm trong collection có thể trở nên “khó tìm” sau khi cập nhật.
 
-Hợp đồng quan trọng: equality phải phản xạ (object bằng chính nó), đối xứng, bắc cầu và ổn định khi dữ liệu dùng để so sánh không đổi; `equals(null)` phải false. Nếu `a.equals(b)` là true thì `a.hashCode()` phải bằng `b.hashCode()`. Chiều ngược lại không bắt buộc: hai object khác nhau vẫn có thể trùng hash code. Vì thế hai method phải dựa trên cùng các trường định danh. Nếu trường equality bị đổi khi object đang nằm trong cấu trúc dựa trên hash, việc tìm object có thể không còn như mong muốn; đây là lý do nên chọn khóa định danh ổn định.
+## V. Equality Ảnh Hưởng Collection
 
-Trong phạm vi buổi học, kiểm tra equality theo `id` là một lựa chọn mô hình. Nếu `id` có thể null, phải xử lý null an toàn thay vì gọi `id.equals(...)` trực tiếp.
+```java
+List<Product> products = new ArrayList<>();
+products.add(new Product("SP01", "Sổ tay", 25000, 50));
 
-## IV. Áp Dụng Và Củng Cố
+Product searchKey = new Product("SP01", "Tên không quan trọng", 1, 0);
+System.out.println(products.contains(searchKey));
+products.remove(searchKey);
+```
 
-1. Khai báo MessageSender và ExportFormat.
-2. Viết EmailSender, SmsSender và TextExport.
-3. Viết một method nhận MessageSender làm tham số và gọi send.
-4. Override equals/hashCode của Book theo id rồi tìm sách tương ứng trong danh sách.
-5. Dành 1 giờ cuối buổi cho kiểm tra OOP.
+`contains` và `remove(Object)` dùng `equals`. Sau khi override đúng, object làm khóa tìm kiếm không cần cùng instance với object trong list.
 
-## Phần Mở Rộng Và Nâng Cao — Tìm Hiểu Thêm
+### Kiểm tra biên
 
-- **Lambda cơ bản (mở rộng):** Lambda viết gọn cách cài đặt một hành vi có một method trừu tượng; `forEach` có thể nhận hành động cho từng phần tử, `removeIf` nhận điều kiện lọc. Ví dụ: `scores.removeIf(score -> score < 0);`. Chỉ giới thiệu cú pháp và trường hợp dùng, không đi vào Stream.
-- **Generics (nâng cao):** `Box<T>` hoặc method `<T> T first(List<T> values)` cho phép tái sử dụng logic với kiểu dữ liệu khác nhau mà vẫn kiểm tra kiểu khi biên dịch. `ArrayList<T>` là ví dụ generic đã dùng; tự định nghĩa generic không phải phần bắt buộc.
-- **Optional (giới thiệu sớm):** biểu diễn một kết quả có thể vắng mặt. Chỉ nhận diện `Optional.empty()`/`Optional.of(value)`; nội dung sử dụng trong repository được dạy chính thức ở buổi 8.
+- Cùng instance: true.
+- Khác instance, cùng id: true.
+- Khác id: false.
+- So với null: false.
+- Hai object equal: cùng hash code.
 
-**Bài tập tự chọn:** Viết lambda lọc danh sách số, rồi tạo `Box<T>` có thao tác lấy/đặt giá trị. Thử `Optional` cho một phép tìm sách nhỏ. Đây là bài luyện khái niệm độc lập, không phải điều kiện để học phần bắt buộc.
+## VI. Thực Hành Có Hướng Dẫn
 
-### Bài Luyện Tập Khái Niệm
+1. Viết payment bằng `if/else`, sau đó refactor sang interface và so sánh code gọi.
+2. Tạo hai DeliveryMethod và chạy với một Order mẫu `DH01`.
+3. Viết equality cho Product, kiểm tra năm ca biên.
+4. Dùng một Product khác instance để tìm và xóa SP01 trong `ArrayList`.
+5. Gọi payment/delivery từ một class demo, không đưa logic lựa chọn UI vào implementation.
 
-1. Đề xuất một interface trung tính như `Exportable` và hai class không cùng lớp cha nhưng cùng cài đặt hợp đồng đó.
-2. So sánh abstract class và interface theo state/code dùng chung, khả năng kết hợp và ràng buộc lớp.
-3. Lập các cặp object có cùng nội dung nhưng là hai instance riêng; xác định kết quả của `==` và `equals()`.
-4. Kiểm tra hợp đồng `equals()`/`hashCode()` bằng các object có cùng và khác mã định danh.
+Giáo viên yêu cầu mỗi nhóm trả lời: phần nào thay đổi khi thêm `QrPayment`, và phần nào không được thay đổi? Câu trả lời đúng phải nêu implementation mới và điểm khởi tạo/lựa chọn, không sửa `checkout`.
 
-## Lỗi Thường Gặp
+## Lỗi thường gặp
 
-| Lỗi | Nguyên nhân | Cách sửa |
+| Lỗi | Hậu quả | Cách sửa |
 |---|---|---|
-| Class chưa implement hết method | Thiếu method của interface | Implement đủ hoặc khai báo class abstract |
-| equals() luôn false | So sánh tham chiếu hoặc sai field định danh | So sánh mã sách |
-| equals đúng nhưng hashCode khác | Override hai method không cùng dữ liệu | Dùng cùng id |
-| Caller vẫn kiểm tra loại sender | Caller phụ thuộc class cụ thể | Nhận MessageSender interface |
+| Nơi gọi dùng `instanceof` cho từng payment | Mất lợi ích đa hình | Chỉ gọi method qua interface |
+| Override equals nhưng quên hashCode | Collection hash hoạt động không nhất quán | Dùng cùng field id cho cả hai |
+| Equality dựa vào price/stock | Cập nhật làm thay đổi định danh logic | Chỉ dùng id bất biến |
+| Biến Product thành abstract | Không tạo được các Product thông thường | Giữ Product concrete trong ví dụ hiện tại |
+| Interface chứa logic/state dùng chung phức tạp | Hợp đồng khó hiểu | Cân nhắc abstract base class khi có quan hệ họ hàng thật |
 
-## Tổng Kết Buổi 5
+## Tổng kết buổi 5
 
-- Abstract class gom trạng thái/hành vi chung; interface mô tả hợp đồng; class có thể cài nhiều interface.
-- `equals()` định nghĩa equality theo miền dữ liệu; `hashCode()` phải nhất quán với equality.
-- MessageSender, ExportFormat và Book là các ví dụ minh họa hợp đồng và equality theo nội dung/định danh.
-- Buổi 6 sẽ xét cách kiểm soát lỗi khi thao tác thất bại và lưu dữ liệu bền vững.
+Interface tách “có thể làm gì” khỏi “làm bằng cách nào”. Abstract class chia sẻ trạng thái/implementation cho một họ lớp. Equality biến định danh nghiệp vụ thành quy tắc mà collection hiểu được. Ba ý này chuẩn bị trực tiếp cho repository interface và dependency inversion ở các buổi sau.
 
-### Câu Hỏi Ôn Tập
+## Bài tập nhỏ trên lớp — Gửi thông báo
 
-1. Khi nào dùng abstract class, khi nào dùng interface?
-2. Một class có thể implement nhiều interface không?
-3. == khác equals() với object thế nào?
-4. Quy tắc giữa equals() và hashCode() là gì?
-5. Interface giúp thay đổi cách gửi thông báo mà không sửa nơi gọi ra sao?
+Tạo interface `NotificationSender` có method `String send(String recipient, String message)`:
 
-## Bài Tập Về Nhà
+- `EmailSender` và `SmsSender` triển khai hai nội dung trả về khác nhau.
+- Viết method `notifyUser(NotificationSender sender, String recipient, String message)` chỉ phụ thuộc interface.
+- Gọi method với cả hai implementation.
+- Tạo thêm class `NotificationTemplate` có `code`, `title`; override `equals()` và `hashCode()` theo `code`, rồi kiểm tra `contains()` bằng object khác instance.
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 05](../BTVN/buoi-05-btvn.md).
-## Tài Liệu Tham Khảo
+**Nghiệm thu:** thêm một implementation mới không làm thay đổi `notifyUser`; hai template cùng code được xem là bằng nhau. Thời gian làm khoảng 20 phút.
 
-- [Oracle — Abstract Methods and Classes](https://docs.oracle.com/javase/tutorial/java/IandI/abstract.html)
-- [Oracle — Defining an Interface](https://docs.oracle.com/javase/tutorial/java/IandI/createinterface.html)
-- [Java SE API — Object.equals and hashCode](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html)
+## Bài tập về nhà
+
+Hoàn thành [BTVN buổi 05](../BTVN/buoi-05-btvn.md).

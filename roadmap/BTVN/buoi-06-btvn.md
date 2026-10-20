@@ -1,38 +1,66 @@
 # Bài Tập Về Nhà — Buổi 06
 
-## Bài Bắt Buộc — Kiểm Tra Dữ Liệu Và Lưu Đơn Hàng Văn Bản
+## Bài Bắt Buộc — Kiểm Tra Dữ Liệu Và Lưu Đơn Hàng Ra File
 
 ### Kế Thừa Từ Buổi 05
 
-Tiếp tục `HitShop`, các model Product/Customer/CartItem/Order và payment method đã có. Dùng lại Order O01 cùng dữ liệu P01 × 2, P02 × 1; bổ sung khả năng lưu và nạp danh sách Order, không tạo mô hình đơn hàng khác.
+Tiếp tục `HitShop` bằng JDK 17 và dùng nguyên các model Product, Customer, CartItem, Order. Order vẫn được tạo bằng `new Order(id, customer)` rồi thêm item qua `addItem`; không tạo constructor hoặc một model Order khác chỉ để đọc file.
 
 ### Bài Toán
 
-Ứng dụng nhận một đơn gồm khách hàng và một hoặc nhiều dòng hàng. Dữ liệu hợp lệ được lưu thành file text để có thể đọc lại khi chương trình chạy lần sau.
+Kiểm tra một Order trước khi lưu, ghi nội dung dễ đọc vào `orders.txt`, sau đó đọc lại các dòng để hiển thị. Mục tiêu của bài là xử lý lỗi và tài nguyên file; chưa yêu cầu khôi phục toàn bộ object graph từ file.
 
-### Dữ Liệu Và Ràng Buộc
+### Định Dạng File
 
-- Dùng các class đã có: `Product(id, name, price, stock)`, `Customer(id, name, phone)`, `CartItem(product, quantity)` và `Order(id, customer, items, status)`.
-- `Order` có ít nhất một `CartItem`; mỗi quantity là số nguyên dương; mỗi Product được tham chiếu phải tồn tại trong catalog đang nạp. Đơn không hợp lệ không được ghi vào file.
-- File có tên `orders.txt`, UTF-8; mỗi dòng biểu diễn một Order theo đúng thứ tự trường: `orderId|customerId|customerName|customerPhone|status|itemList`.
-- Class `OrderFileStore` có `void saveOrders(List<Order> orders)` và `List<Order> loadOrders()`; class chạy ví dụ là `HitShop`.
-- `itemList` gồm các item cách nhau bằng `;`; mỗi item theo thứ tự `productId,productName,unitPrice,stock,quantity`. Mọi trường trong file đều được giữ lại để tạo lại Customer, Product, CartItem và Order.
-- Mỗi lần `saveOrders` ghi lại đúng toàn bộ danh sách được truyền vào, theo thứ tự list; không tự nối dữ liệu cũ. `loadOrders` trả các bản ghi theo thứ tự trong file. Dòng sai định dạng được báo vị trí và bỏ qua; các dòng hợp lệ còn lại vẫn được nạp.
-- Dữ liệu chuẩn không chứa `|`, `;` hoặc `,` trong giá trị văn bản.
-- `unitPrice` là giá tại lúc tạo đơn; tổng đơn là tổng `quantity × unitPrice` của các item. Không cần thay đổi stock trong bài này.
-- Có chức năng ghi các đơn hợp lệ và chức năng đọc lại toàn bộ file rồi in mỗi mã đơn, tên khách, trạng thái, số dòng hàng và tổng tiền.
-- File chưa tồn tại được xem là chưa có đơn nào. Lỗi đọc/ghi file phải có thông báo dễ hiểu; không được báo lưu thành công khi ghi thất bại.
+Mỗi đơn là một khối:
 
-### Dữ Liệu Chuẩn Và Kết Quả
+```text
+ORDER|O01|C01|Linh Nguyễn|PENDING
+ITEM|P01|Áo thun|2|150000.0
+ITEM|P02|Bình nước|1|50000.0
+END
+```
 
-Đơn `O01`, khách `C01 / Linh Nguyễn / 0900000001`, status `PENDING`, gồm `P01 × 2` giá `150000` và `P02 × 1` giá `50000`; tổng `350000`. Sau khi đọc lại, thông tin O01 và các object liên kết phải giữ nguyên. Dòng file tương ứng dùng `O01|C01|Linh Nguyễn|0900000001|PENDING|P01,Áo thun,150000,20,2;P02,Bình nước,50000,10,1`.
+- `ORDER` giữ order id, customer id, customer name và status.
+- Mỗi `ITEM` giữ product id, product name, quantity và unit price tại lúc lưu.
+- `END` kết thúc một đơn.
+- Dữ liệu chuẩn không chứa ký tự `|`.
+
+### Class Và Hành Vi Bắt Buộc
+
+- Tạo `OrderValidator.validate(Order order)`; ném `IllegalArgumentException` nếu order null, không có item, quantity không dương hoặc Product null.
+- Tạo `OrderFileStore` với:
+  - `void saveOrder(Order order, Path path) throws IOException`;
+  - `List<String> loadLines(Path path) throws IOException`.
+- `saveOrder` gọi validator trước khi mở file, dùng UTF-8 và ghi lại một khối đơn theo đúng định dạng trên. Bài chỉ lưu một đơn nên có thể ghi đè file cũ.
+- Dùng `Files.newBufferedWriter`/`Files.newBufferedReader` trong try-with-resources. Không tự gọi `close()` trong nhiều nhánh.
+- Nếu file chưa tồn tại, `loadLines` trả danh sách rỗng và thông báo `Chưa có dữ liệu đơn hàng.`.
+- Nếu lưu thất bại, không in thông báo thành công. Thông báo lỗi phải nêu thao tác nào thất bại nhưng không in mật khẩu hay thông tin nhạy cảm.
+- Khi đọc, in lần lượt các dòng của file và tính lại tổng từ các dòng `ITEM`. Không bắt buộc dựng lại Product, Customer và Order từ text trong phần lõi.
+
+### Sơ Đồ Lớp Và Quan Hệ
+
+![Sơ đồ lớp BTVN buổi 06](assets/buoi-06-class-diagram.svg)
+
+`OrderFileStore` dùng `OrderValidator` trước khi ghi và đọc dữ liệu từ mô hình `Order` hiện có; không tạo một model Order thứ hai cho file.
+
+### Dữ Liệu Nghiệm Thu
+
+Order O01 của C01 gồm P01 × 2 giá 150000 và P02 × 1 giá 50000, trạng thái PENDING. File phải có đúng khối mẫu; tổng đọc lại là `350000.0`.
+
+Kiểm tra thêm ba trường hợp:
+
+1. Order không có item: báo lỗi hợp lệ và file không bị ghi.
+2. Một CartItem có quantity 0: báo lỗi hợp lệ và file không bị ghi.
+3. Đường dẫn không ghi được: báo lỗi I/O, không báo `Lưu thành công`.
 
 ### Nộp Bài
 
-Nộp source, file `orders.txt` mẫu và ảnh/chụp output đọc lại O01. Không yêu cầu Regex, custom exception hay thread trong phần bắt buộc.
+Nộp source, file `orders.txt` mẫu và output của bốn ca kiểm tra. Không yêu cầu Regex, thread, CSV library hoặc phục hồi toàn bộ object graph.
 
-## Mở Rộng/Nâng Cao — Bài Tự Chọn
+## Mở Rộng — Bài Tự Chọn
 
-- **Regex:** định nghĩa một mẫu kiểm tra mã đơn theo định dạng `O` theo sau bởi đúng hai chữ số. Mã hợp lệ `O01`; `01O` không hợp lệ.
-- **Custom exception:** lỗi số lượng nhỏ hơn 1 có tên `InvalidQuantityException`; khi lỗi xảy ra, đơn đó không được thêm vào file.
-- **Thread:** demo riêng hai thao tác cùng đọc và giảm một stock đang bằng 1; nêu trạng thái sai có thể xảy ra. Không đưa tính năng đa luồng vào yêu cầu lưu/đọc đơn lõi.
+- Tạo `InvalidOrderException` riêng thay cho `IllegalArgumentException` và cập nhật chữ ký method phù hợp.
+- Viết `OrderFileParser` để chuyển một khối hợp lệ trở lại thành Order bằng catalog Product và danh sách Customer đang có. Dòng sai phải báo số dòng và không làm mất các khối hợp lệ khác.
+
+Đây là phần mở rộng, không phải điều kiện hoàn thành bài lõi.

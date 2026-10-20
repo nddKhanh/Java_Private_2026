@@ -1,159 +1,249 @@
-# Buổi 8: Repository, Service, Optional, enum và Clean Code
+# Buổi 8: Repository, Service, Optional, enum Và Clean Code
 
 ---
 
+> **Hạn chế từ buổi 7:** SQL, mapping, kiểm tra dữ liệu và giao diện dễ bị trộn trong cùng class; code JDBC bắt đầu lặp và khó thay nguồn dữ liệu.
+
 ## Mục tiêu buổi học
 
-- Tách truy cập database khỏi xử lý nghiệp vụ bằng repository/DAO.
-- Chia ứng dụng console thành model, repository, service và view/controller đơn giản.
-- Dùng Optional cho kết quả có thể không tồn tại và enum cho một tập trạng thái hữu hạn.
-- Nhận biết DTO/record để truyền dữ liệu gọn và áp dụng một số nguyên tắc clean code.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** JDBC cho phép gửi SQL, nhưng trộn câu lệnh lưu trữ với quy tắc nghiệp vụ làm code khó đọc và thay đổi. Repository và service giới thiệu ranh giới trách nhiệm; Optional, enum và DTO/record là các chủ đề riêng giúp diễn tả kết quả, tập giá trị và dữ liệu truyền đi rõ hơn.
+- Tách SQL khỏi nghiệp vụ bằng repository interface và JDBC implementation.
+- Đặt validation và use case ở Service thay vì View/Repository.
+- Trả kết quả tìm kiếm bằng `Optional` thay cho null.
+- Dùng `OrderStatus` enum thay chuỗi trạng thái tự do.
+- Thêm Customer CRUD theo cùng cấu trúc Product và nhận ra code lặp cần kiểm soát.
 
-## I. Vì Sao Cần Tách Tầng?
+> **Kết quả cuối buổi:** giao diện console gọi ProductService/CustomerService; service gọi repository interface; status của Order là enum.
 
-Nếu một method vừa nhận yêu cầu, vừa lưu dữ liệu, vừa áp dụng quy tắc và hiển thị kết quả, một thay đổi nhỏ có thể ảnh hưởng nhiều nơi. Repository chịu trách nhiệm lưu/đọc; Service áp dụng quy tắc; View/Controller nhận input và trình bày kết quả.
+## I. Mùi Code Sau Buổi 7
 
-~~~text
-console view -> BookService -> BookRepository -> MySQL
-                    |
-                 validation
-~~~
+Nếu menu vừa đọc input, vừa kiểm tra giá, vừa viết SQL, một thay đổi nhỏ sẽ kéo theo nhiều trách nhiệm:
 
-Tách code không cần framework. Mục tiêu là mỗi class có trách nhiệm dễ gọi tên và method có phạm vi rõ.
+```text
+case 1 trong menu
+  ├── đọc Scanner
+  ├── kiểm tra Product
+  ├── mở Connection
+  ├── chạy INSERT
+  └── in thông báo
+```
 
-Một cách nhận ra code đang trộn trách nhiệm: cùng một method vừa đọc input, vừa kiểm tra quy tắc, viết SQL và in kết quả. Khi đổi giao diện, phần SQL không nên phải sửa; khi đổi database, quy tắc tính toán cũng không nên đổi. Các tầng tạo ranh giới để thay đổi cục bộ, nhưng chương trình nhỏ vẫn cần cấu trúc vừa đủ.
+Code này chạy được nhưng khó test và khó đổi giao diện. Ta tách theo lý do thay đổi:
 
-~~~text
-View/Controller --> BookService --> BookRepository (interface)
-                                            ^
-                                            |
-                              JdbcBookRepository
-                                            |
-                                          MySQL
-~~~
+```text
+Console: giao tiếp với người dùng
+Service: quy tắc/use case
+Repository: hợp đồng lưu trữ
+JDBC implementation: SQL cụ thể
+```
 
-Service chỉ biết interface; class JDBC là implementation được lắp vào lúc khởi tạo. Dấu mũi tên phụ thuộc thể hiện nơi gọi cần biết hợp đồng, không cần biết chi tiết SQL.
+## II. Repository Là Hợp Đồng Truy Cập Dữ Liệu
 
-## II. Repository, Service Và Optional
-
-BookRepository chứa các thao tác đọc/ghi. Service gọi repository và áp dụng quy tắc nghiệp vụ.
-
-Đoạn code dưới tập trung vào hợp đồng và cách Service nhận Repository; có thể đặt các interface/model vào file/package riêng theo cấu trúc ở buổi 3. Import và phần triển khai JDBC được lược bỏ để làm rõ luồng phụ thuộc.
-
-~~~java
-public interface BookRepository {
-    boolean add(Book book);
-    Optional<Book> findById(String id);
-    List<Book> findAll();
-    boolean update(Book book);
+```java
+public interface ProductRepository {
+    boolean insert(Product product);
+    List<Product> findAll();
+    Optional<Product> findById(String id);
+    boolean update(Product product);
     boolean deleteById(String id);
 }
+```
 
-public class BookService {
-    private final BookRepository repository;
+Interface không nhắc MySQL, Connection hoặc câu SQL. Vì vậy Service có thể dùng JDBC implementation hôm nay và memory implementation khi test ở buổi 10.
 
-    public BookService(BookRepository repository) {
+```java
+public class JdbcProductRepository implements ProductRepository {
+    private final ConnectionFactory connectionFactory;
+
+    public JdbcProductRepository(ConnectionFactory connectionFactory) {
+        this.connectionFactory = connectionFactory;
+    }
+
+    @Override
+    public Optional<Product> findById(String id) {
+        String sql = "SELECT id, name, price, stock FROM products WHERE id = ?";
+        try (Connection connection = connectionFactory.open();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, id);
+            try (ResultSet result = statement.executeQuery()) {
+                if (!result.next()) {
+                    return Optional.empty();
+                }
+                return Optional.of(mapProduct(result));
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Không thể tìm Product " + id, e);
+        }
+    }
+}
+```
+
+Repository chuyển row thành object. Nó không quyết định price bao nhiêu là hợp lệ theo nghiệp vụ và không in “không tìm thấy” ra console.
+
+## III. Service Điều Phối Nghiệp Vụ
+
+```java
+public class ProductService {
+    private final ProductRepository repository;
+
+    public ProductService(ProductRepository repository) {
         this.repository = repository;
     }
 
-    public Optional<Book> findBookById(String id) {
+    public boolean addProduct(Product product) {
+        validate(product);
+        if (repository.findById(product.getId()).isPresent()) {
+            return false;
+        }
+        return repository.insert(product);
+    }
+
+    public Optional<Product> findProductById(String id) {
+        if (id == null || id.isBlank()) {
+            return Optional.empty();
+        }
         return repository.findById(id);
     }
-}
-~~~
 
-Trong ví dụ thực tế, `BookService.findBookById` có thể trả trực tiếp `repository.findById(id)` nếu chưa có quy tắc nghiệp vụ cần bổ sung. Dùng cùng tên/hợp đồng xuyên bài: Repository tập trung lưu trữ (`add`, `findById`, `findAll`, `update`, `deleteById`); Service cung cấp nghiệp vụ (`addBook`, `findBookById`, `findAllBooks`, `updateBook`, `deleteBook`). Một triển khai JDBC có thể được thay bằng triển khai bộ nhớ trong lúc minh họa, miễn cùng thực hiện hợp đồng.
-
-Optional biểu diễn kết quả có thể vắng mặt. Dùng `isPresent()`, `orElse()` hoặc `orElseThrow()` thay vì trả null không rõ nghĩa. Phần exception ở đây chỉ dùng lại nội dung buổi 6.
-
-Chọn `Optional<Book>` cho phép tìm có thể không có kết quả; dùng `List<Book>` cho không hoặc nhiều kết quả. `Optional` không có nghĩa “không có lỗi”: database vẫn có thể lỗi khi tìm kiếm. Với `orElse`, giá trị dự phòng được tính ngay; `orElseGet` tính nó khi cần; `orElseThrow` phù hợp khi thiếu giá trị khiến thao tác không thể tiếp tục. Không gọi `get()` mà chưa kiểm tra, vì điều đó lại đưa nguy cơ lỗi ẩn về caller. Phép tìm kiếm và lỗi khi truy xuất dữ liệu là hai kết quả khác nhau.
-
-~~~java
-import java.util.Optional;
-
-public class OptionalDemo {
-    public static void main(String[] args) {
-        Optional<String> title = Optional.empty();
-        System.out.println(title.orElse("Không tìm thấy")); // Không tìm thấy
+    private void validate(Product product) {
+        if (product == null || product.getId().isBlank()
+                || product.getName().isBlank()
+                || product.getPrice() <= 0
+                || product.getStock() < 0) {
+            throw new IllegalArgumentException("Product không hợp lệ");
+        }
     }
 }
-~~~
+```
 
-Trong code thực tế, trả `null` làm mất lợi ích mà `Optional` cung cấp; nên dùng `orElse` với giá trị dự phòng phù hợp, `orElseGet` nếu tạo mặc định tốn công, hoặc `orElseThrow` nếu thiếu dữ liệu khiến thao tác không thể tiếp tục. Caller có thể dùng `ifPresent` khi chỉ cần làm việc nếu kết quả tồn tại.
+Service phụ thuộc `ProductRepository`, không phụ thuộc `JdbcProductRepository`. Dependency đi vào qua constructor nên rõ ràng, bắt buộc và dễ thay thế.
 
-## III. enum Và DTO/record
+## IV. Optional Buộc Nơi Gọi Xử Lý Không Tìm Thấy
 
-Trạng thái là tập giá trị hữu hạn, nên dùng enum thay vì String tùy ý:
+Thay vì:
 
-~~~java
-public enum LoanStatus {
-    PENDING, CONFIRMED, CANCELLED, COMPLETED
+```java
+Product product = repository.findById(id);
+System.out.println(product.getName()); // có thể NullPointerException
+```
+
+Dùng:
+
+```java
+service.findProductById(id)
+        .ifPresentOrElse(
+                product -> System.out.println(product),
+                () -> System.out.println("Không tìm thấy sản phẩm."));
+```
+
+Optional phù hợp với kết quả có thể không tồn tại. Không dùng Optional cho mọi field hoặc tham số; ở đây nó diễn đạt chính xác kết quả tìm theo id.
+
+## V. Làm Lại Cùng Luồng Với Customer
+
+Tạo bảng:
+
+```sql
+CREATE TABLE customers (
+    id VARCHAR(20) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL
+);
+```
+
+Sau đó tạo `CustomerRepository`, `JdbcCustomerRepository`, `CustomerService`. Việc lặp lại mô hình với entity thứ hai giúp học viên phân biệt phần ổn định của kiến trúc với field riêng của từng entity.
+
+Luồng thêm Customer:
+
+```text
+Console đọc KH01/Nguyễn An/090...
+    → CustomerService kiểm tra field
+    → CustomerRepository kiểm tra/insert
+    → Console nhận boolean hoặc lỗi để hiển thị
+```
+
+Console không được bỏ qua CustomerService và gọi repository trực tiếp chỉ vì chức năng này đơn giản.
+
+## VI. enum Thay Chuỗi Trạng Thái
+
+Ở buổi 4, status là String nên có thể bị gán sai chính tả. Thay bằng:
+
+```java
+public enum OrderStatus {
+    PENDING,
+    CONFIRMED,
+    CANCELLED
 }
-~~~
+```
 
-Mỗi hằng enum là một object thuộc đúng kiểu `LoanStatus`; compiler không cho gán một chuỗi tùy ý như `"CONFIRMEDD"`. Dùng enum khi tập trạng thái hữu hạn và biết trước. Có thể so sánh bằng `==`, dùng trong `switch`, hoặc lấy tên để lưu/hiển thị; `valueOf()` chuyển chuỗi khớp chính xác thành enum và ném `IllegalArgumentException` nếu chuỗi không hợp lệ, nên không gọi trực tiếp với dữ liệu ngoài nếu chưa xử lý lỗi.
+Trong Order:
 
-Khi truyền dữ liệu cần cho một màn hình hoặc một thao tác, DTO (Data Transfer Object) gom các giá trị liên quan thành một gói có cấu trúc. `record` là cú pháp ngắn để khai báo kiểu dữ liệu chủ yếu dùng giữ và truyền dữ liệu; các thành phần record có accessor và không có setter thông thường. Chọn DTO khi muốn bộc lộ đúng dữ liệu cần truyền thay vì chuyển nguyên object có nhiều trách nhiệm.
+```java
+private OrderStatus status = OrderStatus.PENDING;
 
-~~~java
-public record BookSummary(String id, String name, String author) {}
-~~~
+public void confirm() {
+    if (status == OrderStatus.PENDING) {
+        status = OrderStatus.CONFIRMED;
+    }
+}
+```
 
-Record tự sinh constructor, accessor theo tên thành phần (ví dụ `summary.name()`), `equals`, `hashCode` và `toString`. Thành phần record không có setter; tuy nhiên “final” chỉ bảo vệ việc gán lại tham chiếu thành phần, không tự làm object mutable bên trong trở nên bất biến. Không chuyển toàn bộ model sang DTO/record trong buổi này; chỉ nhận diện mục đích và dùng một ví dụ nhỏ.
+Khi đọc/ghi database ở buổi 9, dùng `status.name()` để lưu và `OrderStatus.valueOf(text)` để phục hồi. Enum thu hẹp tập giá trị hợp lệ ngay ở hệ thống kiểu.
 
-## IV. Clean Code Trong Thiết Kế
+## VII. DTO/record: Giới Thiệu Đúng Mức
 
-- Dùng tên nói rõ nhiệm vụ như `findById`, `calculateTotal`.
-- Giữ method ngắn, một trách nhiệm chính; tránh lặp câu SQL và validate ở nhiều nơi.
-- Truyền dependency qua constructor để service dễ thay thế repository.
+JDK 17 hỗ trợ record. Khi màn hình chỉ cần ba field:
 
-**Mở rộng — checked và unchecked exception:** Checked exception là loại compiler yêu cầu xử lý hoặc khai báo (ví dụ `IOException`, `SQLException`); unchecked exception kế thừa `RuntimeException` và không bắt buộc khai báo (ví dụ `IllegalArgumentException`). Đây là phần mở rộng để phân loại exception đã gặp, không yêu cầu đổi toàn bộ chữ ký method.
+```java
+public record ProductSummary(String id, String name, double price) {}
+```
 
-**Bài tập tự chọn:** Phân loại một số tình huống đã gặp (file không đọc được, không tìm thấy Book, truyền số lượng âm) thành lỗi ngoại cảnh hay vi phạm đầu vào/nghiệp vụ; giải thích loại exception phù hợp. Bài phân loại này không làm thay đổi chức năng cốt lõi.
+Record hữu ích để vận chuyển dữ liệu chỉ đọc, nhưng không bắt buộc trong bài lõi. Không thay toàn bộ entity bằng DTO trong một buổi khi học viên còn đang ổn định repository/service.
 
-## V. Ví Dụ Luồng Tra Cứu
+## VIII. Demo Trước Và Sau Khi Tách Tầng
 
-Khi người dùng yêu cầu tìm sách theo mã, View chuyển mã cho Service; Service gọi Repository; Repository trả `Optional<Book>`. View quyết định cách trình bày kết quả. Nếu không tìm thấy, đó có thể là kết quả bình thường; nếu database không truy cập được, đây là lỗi khác cần báo riêng.
+Giáo viên lấy chức năng “tìm Product theo id” của buổi 7 và refactor theo ba commit nhỏ:
 
-~~~text
-View -> BookService.findBookById("B01")
-     -> BookRepository.findById("B01")
-     <- Optional<Book>
-View hiển thị sách hoặc thông báo không tìm thấy
-~~~
+1. Di chuyển SQL vào `JdbcProductRepository`, kết quả vẫn giữ nguyên.
+2. Thêm `ProductService`, console gọi service.
+3. Đổi null sang Optional và xử lý nhánh không tìm thấy.
 
-Đây là ví dụ về ranh giới trách nhiệm, không phải hướng dẫn triển khai một ứng dụng cụ thể. Thực hành: phân loại một thao tác tra cứu thành phần nhận yêu cầu, phần áp dụng quy tắc và phần lưu trữ; nêu điều gì nên thay đổi nếu database được thay bằng bộ nhớ.
+Sau mỗi commit chạy SP01 và mã không tồn tại SP99. Việc giữ test case không đổi chứng minh refactor không làm thay đổi hành vi người dùng.
 
-## Lỗi Thường Gặp
+## IX. Thực Hành Có Hướng Dẫn
 
-| Lỗi | Nguyên nhân | Cách xử lý |
+1. Hoàn thiện ProductRepository/JdbcProductRepository từ DAO buổi 7.
+2. Tạo ProductService và đưa validation ra khỏi menu.
+3. Seed KH01/KH02, hoàn thiện CustomerRepository và CustomerService.
+4. Đổi status của Order sang enum; chạy lại hai chuỗi chuyển trạng thái buổi 4.
+5. Vẽ một mũi tên dependency và chỉ ra interface nằm ở đâu.
+
+## Lỗi thường gặp
+
+| Lỗi | Dấu hiệu | Cách sửa |
 |---|---|---|
-| View/controller vẫn gọi JDBC trực tiếp | Chưa phân trách nhiệm | Gọi service từ view/controller |
-| Optional.get() báo lỗi | Không kiểm tra giá trị có mặt | Dùng orElse/orElseThrow hoặc kiểm tra trước |
-| Status sai chính tả | Dùng String tự do | Dùng hằng enum |
-| Service chứa SQL | Tầng nghiệp vụ và lưu trữ bị trộn | Chuyển SQL về repository |
+| Service chứa SQL | Có chuỗi SELECT/INSERT trong service | Chuyển sang JDBC repository |
+| Console gọi repository | UI gắn chặt nguồn dữ liệu | Console chỉ gọi service |
+| Repository in thông báo | Không tái sử dụng được cho Swing | Trả dữ liệu/trạng thái, để View hiển thị |
+| `Optional.get()` không kiểm tra | Có thể ném NoSuchElementException | Dùng `ifPresent`, `orElse`, `orElseThrow` phù hợp |
+| status vẫn là String ở một số class | Hợp đồng không nhất quán | Chuyển toàn bộ model/method sang OrderStatus |
 
-## Tổng Kết Buổi 8
+## Tổng kết buổi 8
 
-- Repository đặt ranh giới truy cập dữ liệu; Service giữ quy tắc nghiệp vụ; View/Controller nhận và trình bày yêu cầu.
-- Optional biểu diễn kết quả có thể vắng mặt; enum giới hạn tập giá trị; DTO/record gom dữ liệu truyền đi.
-- Phân tầng giảm phụ thuộc chéo, nhưng với chương trình nhỏ cần giữ cấu trúc vừa đủ và tránh tạo tầng không có trách nhiệm rõ.
+Repository che chi tiết lưu trữ, Service giữ nghiệp vụ, Optional mô tả kết quả có thể vắng mặt và enum bảo vệ tập trạng thái. Đây là nền tảng để buổi 9 mở rộng Order nhiều bảng mà không đưa JOIN và transaction vào giao diện.
 
-### Câu Hỏi Ôn Tập
+## Bài tập nhỏ trên lớp — Tách tầng quản lý công việc
 
-1. Repository và service khác trách nhiệm ra sao?
-2. Optional diễn đạt trường hợp nào?
-3. enum giúp tránh lỗi gì so với status String?
-4. DTO/record dùng để làm gì?
-5. Vì sao view không nên chứa SQL?
+Refactor bài `tasks` thành:
 
-## Bài Tập Về Nhà
+- Enum `TaskStatus { TODO, DONE }`.
+- Interface `TaskRepository` có `insert`, `findAll`, `findById`, `updateStatus`.
+- `JdbcTaskRepository` chứa toàn bộ SQL.
+- `TaskService` từ chối title rỗng và không cho đánh dấu một id không tồn tại.
+- Class console chỉ gọi TaskService; tìm id vắng mặt được xử lý bằng `Optional`.
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 08](../BTVN/buoi-08-btvn.md).
-## Tài Liệu Tham Khảo
+**Nghiệm thu:** tìm id không tồn tại không gây NullPointerException, và tìm toàn source không có SQL ngoài JdbcTaskRepository. Thời gian làm khoảng 20 phút.
 
-- [Java SE API — Optional](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html)
-- [Java SE API — Enum](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html)
-- [Java SE API — Record](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html)
+## Bài tập về nhà
+
+Hoàn thành [BTVN buổi 08](../BTVN/buoi-08-btvn.md). ProductSummary/record là phần tự chọn; ProductService và CustomerService là bắt buộc.

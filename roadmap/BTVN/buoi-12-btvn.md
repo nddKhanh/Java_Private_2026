@@ -1,79 +1,111 @@
 # Bài Tập Sau Buổi 12 — Capstone
 
-## Bài Bắt Buộc — Ứng Dụng Quản Lý Cửa Hàng
+## Mục Tiêu
 
-### Kế Thừa Từ Buổi 11
+Mỗi nhóm chọn một bài toán quản lý phù hợp, ví dụ cửa hàng, thư viện, khóa học, phòng khám nhỏ hoặc đặt lịch. `HitShop` là đề tài tham khảo có thể tiếp tục từ buổi 11, không phải đề tài bắt buộc cho mọi nhóm.
 
-Hoàn thiện repository `HitShop` đã được mở rộng từ buổi 1 đến buổi 11. Giữ tên model, repository, service và method đã chốt; phần capstone nối chúng thành một ứng dụng hoàn chỉnh. Swing/ProductWindow là giao diện tùy chọn, giao diện console là luồng demo bắt buộc.
+Sản phẩm chạy bằng JDK 17, lưu dữ liệu trong MySQL và chứng minh được toàn bộ chuỗi kiến thức của khóa học: OOP, JDBC, thiết kế nhiều bảng, phân tầng ứng dụng, xử lý lỗi, transaction và Git collaboration.
 
-### Mục Tiêu Sản Phẩm
+## 1. Đăng Ký Phạm Vi
 
-Hoàn thiện ứng dụng `HitShop` quản lý cửa hàng nhỏ có dữ liệu bền vững trong MySQL. Tất cả nhóm dùng cùng đề tài, chức năng và dữ liệu chuẩn để kết quả có thể đối chiếu thống nhất. Tiếp tục repository code đã tích lũy từ các buổi trước.
+Trước khi code, nhóm nộp một trang mô tả:
 
-### Nhóm Và Repository
+- Tên đề tài và vấn đề cần giải quyết.
+- Người dùng chính và ba chức năng họ cần nhất.
+- Danh sách entity, quan hệ giữa các entity và ERD dự kiến.
+- Một luồng nghiệp vụ cốt lõi ghi vào ít nhất hai bảng liên quan.
+- Phân công thành viên và danh sách feature branch dự kiến.
+- Giao diện chọn một trong hai: console hoàn chỉnh hoặc Swing. Không bắt buộc làm cả hai.
 
-- Mỗi nhóm phân công đủ ba trách nhiệm: dữ liệu/JDBC, nghiệp vụ/model, giao diện console/tài liệu; một người có thể kiêm nhiệm nếu quy mô nhóm khác. Thành viên cùng review phần của nhau.
-- Repository có nhánh `main`, `develop` và nhánh `feature/<ten-chuc-nang>`; chức năng được tích hợp qua pull request vào `develop`.
-- README ghi rõ JDK, MySQL, cách cấu hình kết nối không lộ mật khẩu, schema cần tạo, cách chạy, menu và dữ liệu mẫu.
-- Không commit credential hoặc file cục bộ có mật khẩu thật.
+Mentor chốt phạm vi theo tiêu chí “demo được, dữ liệu đúng, trách nhiệm rõ”. Nhóm không cộng thêm chức năng khi luồng lõi chưa hoàn thành.
 
-### Mô Hình Dữ Liệu Bắt Buộc
+## 2. Yêu Cầu Kỹ Thuật Bắt Buộc
 
-- `products(id, name, price, stock)`; `id` là khóa chính.
-- `customers(id, name, phone)`; `id` là khóa chính.
-- `orders(id, customer_id, status, created_at)`; `id` tự tăng, `customer_id` là khóa ngoại đến customers.
-- `order_items(id, order_id, product_id, quantity, unit_price)`; `id` tự tăng; khóa ngoại lần lượt đến orders và products.
-- Kiểu cột cố định: products `id VARCHAR(20)`, `name VARCHAR(150)`, `price DECIMAL(12,2)`, `stock INT`; customers `id VARCHAR(20)`, `name VARCHAR(100)`, `phone VARCHAR(20)`; orders `id BIGINT AUTO_INCREMENT`, `customer_id VARCHAR(20)`, `status VARCHAR(20)`, `created_at DATETIME`; order_items `id BIGINT AUTO_INCREMENT`, `order_id BIGINT`, `product_id VARCHAR(20)`, `quantity INT`, `unit_price DECIMAL(12,2)`. Các trường dữ liệu bắt buộc đều NOT NULL.
-- Một Customer có nhiều Order; một Order có ít nhất một OrderItem; mỗi OrderItem gắn với một Product.
-- `quantity > 0`, `price > 0`, `stock >= 0`; `unit_price` giữ giá lúc đặt hàng. Tiền trong database dùng `DECIMAL(12,2)`.
+### OOP Và Mô Hình Dữ Liệu
 
-### Class Và Trách Nhiệm Bắt Buộc
+- Có ít nhất ba entity nghiệp vụ, field được đóng gói và quan hệ object rõ ràng.
+- Database có ít nhất ba bảng nghiệp vụ và ít nhất một quan hệ một-nhiều bằng foreign key.
+- Có quy tắc kiểm tra dữ liệu ở Service, ví dụ số lượng dương, lịch không trùng hoặc trạng thái chuyển hợp lệ.
+- Giá trị lịch sử cần giữ nguyên phải được snapshot đúng lúc. Ví dụ đơn hàng giữ `unit_price` thay vì luôn đọc giá Product hiện tại.
 
-- Model: `Product`, `Customer`, `CartItem`, `Order`, `OrderItem`, `OrderStatus`.
-- Field cốt lõi: Product `(id, name, price, stock)`; Customer `(id, name, phone)`; CartItem `(product, quantity)`; Order `(id, customer, status, createdAt, items)`; OrderItem `(id, product, quantity, unitPrice)`.
-- Repository: `ProductRepository`, `CustomerRepository`, `OrderRepository`, `OrderItemRepository` cùng các triển khai JDBC tương ứng.
-- Các chữ ký Product/Order repository, service và kiểu kết quả báo cáo giống hợp đồng đã chốt ở BTVN buổi 8–10; không đổi tên/kiểu trả về.
-- Service: `ProductService`, `OrderService`; nghiệp vụ không đặt trong View và SQL không đặt trong View/Controller.
-- View/Controller là ứng dụng console; menu gọi Controller, Controller gọi Service, Service gọi repository interface.
-- Menu có các mục: `1` xem sản phẩm, `2` thêm sản phẩm, `3` cập nhật sản phẩm, `4` xóa sản phẩm, `5` thêm khách hàng, `6` xem khách hàng, `7` tạo đơn, `8` xem đơn theo mã, `9` xem báo cáo doanh thu, `0` thoát. Giá trị khác báo lựa chọn không hợp lệ và tiếp tục.
-- Thời điểm tạo đơn demo cố định là `2026-01-15 10:00`; không lấy thời gian hệ thống cho bộ kiểm tra chuẩn.
-- Tên class chứa `main` là `HitShop`.
-- `ProductService` có `addProduct(Product): boolean`, `findAllProducts(): List<Product>`, `findProductById(String): Optional<Product>`, `updateProduct(Product): boolean`, `deleteProduct(String): boolean`. `OrderService` có `createOrder(String, List<OrderItem>, LocalDateTime): long`, `findOrderById(long): Optional<Order>`, `findRevenueByDay(): List<DailyRevenue>`, `findRevenueByCustomer(): List<CustomerRevenue>`. `Order.getTotal()` là tổng các OrderItem.
+### JDBC Và Chức Năng
 
-### Chức Năng Và Kết Quả Bắt Buộc
+- Có CRUD đầy đủ cho ít nhất một entity chính.
+- Có tạo và xem chi tiết cho luồng nghiệp vụ nhiều bảng.
+- Có ít nhất một truy vấn JOIN và một báo cáo dùng `GROUP BY` hoặc phép tổng hợp tương đương.
+- SQL nhận input phải dùng `PreparedStatement`; tài nguyên được đóng bằng try-with-resources.
+- Dữ liệu vẫn còn sau khi đóng và chạy lại ứng dụng.
 
-1. **Quản lý sản phẩm:** thêm, xem danh sách, tìm theo id, cập nhật tên/giá/tồn kho, xóa. Mã trùng bị từ chối; mã không tồn tại báo rõ và không đổi dữ liệu.
-2. **Quản lý khách hàng:** thêm khách và xem danh sách theo mã tăng dần.
-3. **Tạo đơn:** chọn một Customer và từ 1 đến 10 dòng sản phẩm; số lượng mỗi dòng là số nguyên dương và không vượt tồn kho. Tổng tiền tính theo giá tại thời điểm đặt. Khi tạo đơn thành công, stock giảm đúng quantity.
-4. **Xem đơn:** tìm theo id; in Customer, thời gian, trạng thái, từng sản phẩm, quantity, unit price, thành tiền từng dòng và tổng đơn.
-5. **Doanh thu:** báo cáo tổng doanh thu theo ngày và theo khách hàng, tính từ OrderItem với `quantity × unit_price`.
-6. **Trạng thái:** đơn mới bắt đầu `PENDING`; chỉ cho phép chuyển sang `CONFIRMED` hoặc `CANCELLED`. Khi hủy một đơn PENDING, số lượng đã giữ được trả về stock; trạng thái khác hoặc chuyển lặp không làm đổi dữ liệu.
-7. **Dữ liệu tồn tại:** đóng rồi chạy lại ứng dụng không làm mất Products, Customers, Orders hoặc OrderItems đã lưu.
+### Transaction
 
-### Dữ Liệu Chuẩn Để Demo
+Luồng nghiệp vụ ghi nhiều bảng phải chạy trong một transaction. Tất cả bước cùng commit hoặc cùng rollback. Nhóm phải demo một ca cố ý làm bước giữa thất bại và chứng minh database không còn dữ liệu dở dang.
 
-- Products: `P01 / Áo thun / 150000 / stock 20`; `P02 / Bình nước / 50000 / stock 10`.
-- Product bổ sung từ buổi 4: `P03 / Java cơ bản / 120000 / stock 5`.
-- Customers: `C01 / Linh Nguyễn / 0900000001`; `C02 / Minh Trần / 0900000002`.
-- Database khởi đầu có đúng ba Product và hai Customer trên, không có Order/OrderItem; ID tự tăng của Order bắt đầu từ 1.
-- Demo đơn: C01 mua P01 × 2 và P02 × 1 vào `2026-01-15 10:00`, trạng thái ban đầu `PENDING`. Tổng `350000`; sau thành công P01 còn 18, P02 còn 9.
-- Chuyển đơn demo sang `CONFIRMED`. Lưu lại dữ liệu rồi chạy chương trình lần nữa: đơn id 1, trạng thái, thời điểm, hai dòng hàng, tổng `350000` và tồn kho P01=18/P02=9 vẫn còn.
+Ví dụ HitShop: insert Order, insert OrderItem và giảm Product.stock cùng transaction. Hủy đơn và hoàn stock cũng phải là một transaction và không được hoàn kho hai lần.
 
-### Nộp Và Demo
+### Kiến Trúc
 
-- Nộp URL repository, README, schema/database script, dữ liệu khởi tạo và danh sách pull request.
-- Demo một luồng: xem Products → tạo đơn theo dữ liệu chuẩn → xem chi tiết → xem báo cáo → chạy lại để xác nhận dữ liệu còn tồn tại.
-- Script reset/seed chạy trước demo để đưa database về đúng dữ liệu ban đầu ở trên; không chạy lại script giữa các lần khởi động ứng dụng. Sau đơn demo, báo cáo ngày `2026-01-15` và khách C01 đều là `350000`.
-- Trình bày cấu trúc class, quan hệ bảng, ranh giới View/Controller/Service/Repository, phân chia công việc và một lỗi đã xử lý.
+```text
+View → Controller → Service → Repository interface → JDBC implementation → MySQL
+```
 
-## Phần Nâng Cao — Tự Chọn
+- View không chứa SQL hoặc quy tắc nghiệp vụ.
+- Controller chỉ điều phối request/response.
+- Service kiểm tra và điều phối nghiệp vụ, phụ thuộc repository interface.
+- JDBC implementation chịu trách nhiệm SQL và mapping.
+- Một composition root tạo và nối các dependency.
 
-Giao dịch tạo Order và toàn bộ OrderItem phải cùng thành công hoặc cùng rollback khi một bước ghi lỗi. Nếu bỏ qua phần này, các chức năng bắt buộc vẫn được chấm trên luồng dữ liệu hợp lệ khi database hoạt động.
+### Git Và Tài Liệu
 
-## Tiêu Chí Hoàn Thành
+- Repository có `main`, `develop`, `feature/<ten-chuc-nang>`; thay đổi chính được đưa qua pull request.
+- Mỗi thành viên có commit và ít nhất một lần review phần của người khác.
+- README ghi JDK 17, MySQL, cách cấu hình không lộ credential, cách tạo schema/seed, cách chạy, tài khoản hoặc dữ liệu demo và luồng demo.
+- Không commit mật khẩu thật, thư mục build hoặc cấu hình IDE cá nhân không cần thiết.
 
-- Chức năng và kết quả khớp dữ liệu/đặc tả ở trên.
-- OOP có field được đóng gói, quan hệ object đúng; repository/service/view có trách nhiệm riêng.
-- JDBC dùng tham số; lỗi input/database có thông báo; tài nguyên được đóng.
-- Git có commit theo chức năng, PR và review; README đủ để người khác chạy theo cấu hình của mình.
-- Có thể bỏ Swing và các phần nâng cao như transaction, phân trang, batch, Regex hoặc Thread; việc bỏ chúng không làm giảm các yêu cầu core của capstone.
+## 3. Bộ Nghiệm Thu Chung
+
+Nhóm tự chuẩn bị một script reset/seed có thể chạy lặp lại. Buổi demo thực hiện theo thứ tự:
+
+1. Reset database và khởi động ứng dụng.
+2. Liệt kê dữ liệu seed.
+3. Thực hiện CRUD entity chính, gồm cả một input sai bị từ chối.
+4. Tạo một giao dịch nhiều bảng hợp lệ và xem chi tiết.
+5. Mở báo cáo JOIN/aggregate và đối chiếu bằng phép tính tay.
+6. Chạy ca lỗi transaction và chứng minh rollback.
+7. Đóng/mở lại ứng dụng để chứng minh dữ liệu bền vững.
+8. Trình bày một pull request, một nhận xét review và một lỗi nhóm đã sửa.
+
+Mỗi nhóm phải ghi trước dữ liệu đầu vào và kết quả mong đợi của bảy bước đầu trong README; không dùng dữ liệu ngẫu nhiên hoặc thời gian hệ thống nếu điều đó làm kết quả khó lặp lại.
+
+## 4. Đề Tài Tham Khảo: HitShop
+
+Nhóm tiếp tục HitShop có thể giữ hợp đồng từ buổi 11:
+
+- `products`, `customers`, `orders`, `order_items`.
+- Product P01/P02/P03, Customer C01/C02.
+- Order dùng id `BIGINT AUTO_INCREMENT`; OrderItem giữ `unit_price`.
+- Luồng transaction: tạo order + items + giảm stock; hủy order PENDING + hoàn stock.
+- Báo cáo doanh thu theo ngày và khách hàng.
+- Giao diện console hoặc ProductWindow/Swing mở rộng.
+
+Đây là bộ khung tham khảo. Nhóm chọn đề tài khác được quyền đặt tên class, bảng và menu theo miền bài toán của mình miễn đáp ứng các yêu cầu chung.
+
+## 5. Hồ Sơ Nộp
+
+- URL repository và danh sách pull request.
+- Source code, `schema.sql`, `seed.sql` và README.
+- ERD và sơ đồ ngắn luồng View → Controller → Service → Repository.
+- Bảng test case gồm input, kết quả mong đợi và kết quả thực tế.
+- Slide hoặc tài liệu demo tối đa 8 trang nếu nhóm cần; không bắt buộc slide.
+
+## 6. Rubric 100 Điểm
+
+| Nhóm tiêu chí | Điểm | Điều kiện chính |
+|---|---:|---|
+| Chức năng và dữ liệu | 30 | CRUD, luồng nhiều bảng, xem chi tiết, báo cáo đúng |
+| OOP và kiến trúc | 20 | Model/quan hệ hợp lý, phân tầng và dependency rõ |
+| JDBC và transaction | 20 | SQL tham số, đóng tài nguyên, commit/rollback đúng |
+| Kiểm thử và xử lý lỗi | 10 | Test case lặp lại được, input sai không phá dữ liệu |
+| Git collaboration | 10 | Branch, PR, review và lịch sử commit có ý nghĩa |
+| README và demo | 10 | Người khác setup/chạy được, trình bày đúng trọng tâm |
+
+Các phần như tìm kiếm nâng cao, phân trang, batch, export, biểu đồ hoặc giao diện đẹp được tính điểm cộng trong phạm vi từng tiêu chí sau khi yêu cầu lõi đã hoạt động; không bù cho transaction hoặc dữ liệu sai.

@@ -1,182 +1,224 @@
-# Buổi 7: Maven, MySQL và JDBC CRUD Dữ Liệu
+# Buổi 7: Maven, MySQL Và JDBC CRUD Product
 
 ---
 
+> **Hạn chế từ buổi 6:** file text dễ ghi tuần tự nhưng khó tìm, cập nhật một bản ghi và duy trì ràng buộc khi lượng dữ liệu tăng.
+
 ## Mục tiêu buổi học
 
-- Hiểu project Maven và vai trò pom.xml khi thêm thư viện.
-- Tạo MySQL database/table books và kết nối bằng JDBC.
-- Thực hiện SELECT, INSERT, UPDATE, DELETE với PreparedStatement/ResultSet.
-- Không hard-code mật khẩu database trong source code.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** File văn bản phù hợp lưu dữ liệu nhỏ theo dạng tuần tự, nhưng tìm kiếm, cập nhật từng bản ghi và ràng buộc quan hệ trở nên khó khi dữ liệu tăng. Database quan hệ giải quyết các nhu cầu đó bằng bảng, truy vấn SQL và ràng buộc; JDBC là cầu nối từ Java tới database.
+- Cấu hình Maven cho JDK 17 và thêm MySQL Connector/J.
+- Thiết kế bảng `products` tương ứng model Product.
+- Mở kết nối JDBC và thực hiện Create, Read, Update, Delete.
+- Dùng `PreparedStatement`, `ResultSet` và try-with-resources.
+- Tách cấu hình kết nối khỏi source được commit.
 
-## I. Maven Và pom.xml
+> **Kết quả cuối buổi:** chương trình mẫu thực hiện được CRUD Product trong MySQL qua JDBC.
 
-Maven quản lý cấu hình build và thư viện ngoài. File pom.xml khai báo tọa độ project và dependency MySQL Connector/J để Maven tải driver.
+## I. Từ File Text Sang Dữ Liệu Có Cấu Trúc
 
-Maven cần khai báo tọa độ driver trong dependency: groupId là com.mysql, artifactId là mysql-connector-j và version theo phiên bản đã thống nhất cho môi trường lớp. Không hard-code một phiên bản tùy ý nếu giảng viên đang cung cấp cấu hình chung. Sau khi thêm dependency, reload Maven để tải thư viện.
+File buổi 6 phù hợp để học I/O, nhưng tìm Product theo id hoặc cập nhật đúng một dòng sẽ ngày càng khó. Database cung cấp bảng, khóa, ràng buộc và ngôn ngữ truy vấn.
 
-Một dependency được nhận diện bằng tọa độ (groupId, artifactId, version). Maven dùng tọa độ đó để tìm thư viện và các dependency liên quan, đưa chúng vào classpath khi build/chạy. `pom.xml` còn mô tả cấu hình project; nó không thay thế source code và không phải database. Khi lỗi không tìm thấy driver, kiểm tra dependency đã tải và cấu hình URL.
+Buổi này chỉ chuyển **catalog Product** sang MySQL. Order vẫn chưa chuyển vào database; việc chia nhỏ giúp học viên hiểu CRUD một bảng trước khi xử lý quan hệ ở buổi 9.
 
-Trong Maven project, `src/main/java` thường chứa mã nguồn, `src/test/java` dành cho kiểm thử và `pom.xml` nằm ở thư mục gốc. Đây là quy ước để Maven biết vị trí build; IDE có thể hiển thị theo dạng package thay vì cây thư mục thô.
+## II. Maven Quản Lý Build Và Dependency
 
-~~~text
-pom.xml khai báo dependency
-          |
-          v
-Maven tải thư viện vào local repository
-          |
-          v
-Classpath build/run chứa Connector/J
-~~~
+`pom.xml` tối thiểu:
 
-## II. Thiết Kế Một Bảng Quan Hệ
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-~~~sql
-CREATE DATABASE library_db;
-USE library_db;
+    <groupId>vn.edu.hit</groupId>
+    <artifactId>jdbc-product-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
 
-CREATE TABLE books (
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mysql.connector.version>8.4.0</mysql.connector.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>${mysql.connector.version}</version>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+Maven đọc dependency, tải thư viện và đưa nó vào classpath. Học viên chạy `mvn -version` để xác nhận Maven đang dùng Java 17, sau đó reload Maven trong IDE.
+
+Nếu IDE chạy bằng JDK khác với Maven, lỗi có thể chỉ xuất hiện khi build ngoài IDE. Vì vậy kiểm tra cả Project SDK và output `mvn -version`.
+
+## III. Từ Product Sang Bảng `products`
+
+Model hiện có:
+
+```text
+Product(id, name, price, stock)
+```
+
+Schema:
+
+```sql
+CREATE DATABASE IF NOT EXISTS shop_db;
+USE shop_db;
+
+CREATE TABLE products (
     id VARCHAR(20) PRIMARY KEY,
-    title VARCHAR(150) NOT NULL,
-    author VARCHAR(120) NOT NULL,
-    published_year INT NOT NULL,
-    replacement_cost DECIMAL(12,2) NOT NULL CHECK (replacement_cost >= 0)
+    name VARCHAR(150) NOT NULL,
+    price DECIMAL(12, 2) NOT NULL,
+    stock INT NOT NULL,
+    CHECK (price > 0),
+    CHECK (stock >= 0)
 );
-~~~
+```
 
-`PRIMARY KEY` yêu cầu id duy nhất và không null; `NOT NULL` cấm bỏ trống cột; `CHECK` giới hạn miền dữ liệu ngay cả khi có chương trình khác ghi DB. `DECIMAL(12,2)` lưu số thập phân chính xác với tối đa 12 chữ số, trong đó 2 chữ số ở phần thập phân; kiểu này phù hợp số tiền hơn `FLOAT`/`DOUBLE` ở database. Ứng dụng vẫn nên kiểm tra input để trả lỗi dễ hiểu.
+`id` là primary key vì mỗi mã Product phải duy nhất. `DECIMAL` phù hợp hơn FLOAT/DOUBLE cho dữ liệu tiền trong database. Trong Java nhập môn ta vẫn giữ `double` để không mở thêm BigDecimal trong buổi JDBC đầu tiên.
 
-## III. Kết Nối JDBC Và CRUD
+Nạp dữ liệu chuẩn:
 
-JDBC là API Java để gửi SQL tới database. Connection mở kết nối; PreparedStatement chuẩn bị câu lệnh và tham số; ResultSet chứa kết quả truy vấn.
+```sql
+INSERT INTO products(id, name, price, stock) VALUES
+('SP01', 'Sổ tay', 25000, 50),
+('SP02', 'Bút', 10000, 100),
+('SP03', 'Java nhập môn', 90000, 8);
+```
 
-Luồng tổng quát là Java tạo kết nối → gửi câu SQL cùng tham số → MySQL thực thi → JDBC trả số dòng bị ảnh hưởng hoặc ResultSet. Với SELECT, `executeQuery()` trả ResultSet; `next()` dịch con trỏ tới dòng tiếp theo và trả false khi hết. Với INSERT/UPDATE/DELETE, `executeUpdate()` trả số dòng bị tác động. Tham số `?` đánh số từ 1 và nên dùng setter phù hợp kiểu dữ liệu.
+## IV. Kết Nối Và Đóng Tài Nguyên
 
-~~~text
-Java app --Connection--> MySQL
-    |                         |
-    +-- PreparedStatement --->|-- executeQuery() --> ResultSet (SELECT)
-    |                         +-- executeUpdate() -> số dòng đổi (INSERT/UPDATE/DELETE)
-    +-- close resource khi thao tác kết thúc
-~~~
+```java
+String url = System.getenv("SHOP_DB_URL");
+String user = System.getenv("SHOP_DB_USER");
+String password = System.getenv("SHOP_DB_PASSWORD");
 
-~~~java
-String bookId = "B01";
-String sql = "SELECT id, title, author, published_year FROM books WHERE id = ?";
-try (Connection connection = DriverManager.getConnection(url, user, password);
+try (Connection connection = DriverManager.getConnection(url, user, password)) {
+    System.out.println("Kết nối thành công");
+} catch (SQLException e) {
+    System.out.println("Không thể kết nối database: " + e.getMessage());
+}
+```
+
+Không commit mật khẩu thật. README chỉ ghi tên biến môi trường và ví dụ placeholder.
+
+Trong mỗi thao tác JDBC, Connection, PreparedStatement và ResultSet đều là tài nguyên cần đóng. Try-with-resources cho phép thể hiện vòng đời này ngay trong cấu trúc code.
+
+## V. CRUD Theo Một Mẫu Chung
+
+### Create
+
+```java
+String sql = "INSERT INTO products(id, name, price, stock) VALUES (?, ?, ?, ?)";
+
+try (Connection connection = openConnection();
      PreparedStatement statement = connection.prepareStatement(sql)) {
-    statement.setString(1, bookId);
+    statement.setString(1, product.getId());
+    statement.setString(2, product.getName());
+    statement.setDouble(3, product.getPrice());
+    statement.setInt(4, product.getStock());
+    return statement.executeUpdate() == 1;
+}
+```
+
+Dấu `?` tách dữ liệu khỏi câu SQL. Không nối tên Product do người dùng nhập trực tiếp vào SQL.
+
+### Read one
+
+```java
+String sql = "SELECT id, name, price, stock FROM products WHERE id = ?";
+
+try (Connection connection = openConnection();
+     PreparedStatement statement = connection.prepareStatement(sql)) {
+    statement.setString(1, id);
     try (ResultSet result = statement.executeQuery()) {
         if (result.next()) {
-            System.out.println(result.getString("title"));
+            return new Product(
+                    result.getString("id"),
+                    result.getString("name"),
+                    result.getDouble("price"),
+                    result.getInt("stock"));
         }
+        return null;
     }
 }
-~~~
+```
 
-Ví dụ trên thực hiện tìm theo mã: dấu `?` là vị trí tham số, `setString(1, bookId)` gán giá trị đầu tiên, `executeQuery()` chạy SELECT và `next()` kiểm tra có dòng kết quả hay không. Nếu có, các getter của ResultSet đọc từng cột theo tên. Dùng tên cột giúp code dễ đọc hơn số thứ tự cột.
+Buổi 8 sẽ thay `null` bằng Optional và tách đoạn code này vào repository.
 
-Đoạn dưới là phần thân của method thêm Book; giả sử `connection` và `book` đã được truyền vào method. Với thao tác ghi, dùng `executeUpdate()` vì cần biết bao nhiêu dòng bị ảnh hưởng:
+### Read all
 
-~~~java
-double replacementCost = 150000.0;
-String insertSql = "INSERT INTO books(id, title, author, published_year, replacement_cost) VALUES (?, ?, ?, ?, ?)";
-try (PreparedStatement ps = connection.prepareStatement(insertSql)) {
-    ps.setString(1, id);
-    ps.setString(2, title);
-    ps.setString(3, author);
-    ps.setInt(4, publishedYear);
-    ps.setDouble(5, replacementCost); // ánh xạ đơn giản theo phạm vi khóa học
-    int affectedRows = ps.executeUpdate();
-    System.out.println(affectedRows == 1 ? "Đã thêm" : "Không thêm được");
-}
-~~~
+```java
+String sql = "SELECT id, name, price, stock FROM products ORDER BY id";
+```
 
-UPDATE và DELETE dùng cùng nguyên tắc: khai báo SQL với dấu `?`, gán mỗi tham số theo thứ tự từ 1, gọi `executeUpdate()`, rồi xem số dòng bị tác động. Ví dụ `UPDATE books SET title = ?, author = ?, published_year = ?, replacement_cost = ? WHERE id = ?` có năm tham số; mã định danh là điều kiện WHERE để tránh sửa/xóa nhầm toàn bộ bảng.
+Lặp `while (result.next())`, map mỗi row thành Product và thêm vào list. Mapping theo tên cột giúp code dễ đọc hơn index số.
 
-~~~java
-String updateSql = "UPDATE books SET title = ? WHERE id = ?";
-try (PreparedStatement ps = connection.prepareStatement(updateSql)) {
-    ps.setString(1, newTitle);
-    ps.setString(2, bookId);
-    int changed = ps.executeUpdate();
-}
+### Update và Delete
 
-String deleteSql = "DELETE FROM books WHERE id = ?";
-try (PreparedStatement ps = connection.prepareStatement(deleteSql)) {
-    ps.setString(1, bookId);
-    int deleted = ps.executeUpdate();
-}
-~~~
+```sql
+UPDATE products SET name = ?, price = ?, stock = ? WHERE id = ?;
+DELETE FROM products WHERE id = ?;
+```
 
-Các biến `newTitle`, `bookId`, `connection`, `id`, `title`, `author`, `publishedYear`, `replacementCost` là tham số/giá trị do method gọi cung cấp. Ví dụ chỉ trích thân thao tác; phần khai báo method được lược để tập trung vào bind tham số và kết quả. Database dùng `DECIMAL` để lưu tiền chính xác; ánh xạ sang `double` trong khóa này chỉ là giản lược nhập môn, không phù hợp tính tiền trong hệ thống thật.
+`executeUpdate()` trả số row bị ảnh hưởng. `0` nghĩa là không tìm thấy id; không được in “thành công” trong trường hợp đó.
 
-SQL Injection xảy ra khi input được nối trực tiếp vào câu SQL, khiến dữ liệu có thể bị diễn giải như cú pháp. PreparedStatement tách câu lệnh khỏi giá trị bind; nó giảm nguy cơ này nhưng không thay thế validate dữ liệu. Không thể dùng dấu `?` thay tên bảng/cột hoặc từ khóa SQL.
+## VI. Demo Theo Nhịp Nhìn Thấy Dữ Liệu
 
-- INSERT/UPDATE/DELETE dùng `executeUpdate()`; SELECT dùng `executeQuery()`.
-- Dùng dấu ? và setter tương ứng; không nối input người dùng trực tiếp vào SQL.
-- Statement phù hợp câu SQL cố định, không có input; PreparedStatement dùng tham số cho truy vấn có giá trị bên ngoài.
-- try-with-resources đóng Connection, PreparedStatement, ResultSet.
+1. Chạy SELECT trong MySQL client để thấy ba Product seed.
+2. Chạy Java listAll và đối chiếu cùng ba row.
+3. Insert P04 rồi chạy SELECT lại.
+4. Update giá SP01 từ 25000 thành 30000; xác nhận đúng một row đổi.
+5. Tìm P99; giải thích vì sao không phải lỗi SQL.
+6. Delete P04; xác nhận số row bị ảnh hưởng.
 
-~~~java
-try (Connection connection = DriverManager.getConnection(url, user, password);
-     Statement statement = connection.createStatement();
-     ResultSet result = statement.executeQuery("SELECT COUNT(*) FROM books")) {
-    if (result.next()) {
-        System.out.println("Số sách: " + result.getInt(1));
-    }
-}
-~~~
+Sau mỗi thao tác Java, chạy một SELECT độc lập trong MySQL. Cách đối chiếu này giúp phân biệt lỗi mapping, lỗi SQL và lỗi hiển thị.
 
-Đây là câu truy vấn cố định, không nhận dữ liệu ngoài nên `Statement` đủ dùng. Nếu lọc theo mã do người dùng nhập, đổi sang `PreparedStatement` với dấu `?`; không nối input vào SQL.
+## VII. Thực Hành Có Hướng Dẫn
 
-**Khi nào dùng gì?** `Connection` biểu diễn phiên làm việc với database; `PreparedStatement` dùng khi câu lệnh có dữ liệu đầu vào và thường dùng cả cho SQL cố định; `Statement` chỉ phù hợp câu SQL cố định, không có dữ liệu do người dùng cung cấp. `ResultSet` chỉ tồn tại để đọc kết quả truy vấn, vì thế cần xử lý nó trong phạm vi resource đang mở. `executeUpdate()` trả số dòng bị thay đổi: 0 thường nghĩa là không có bản ghi phù hợp, 1 là đúng một bản ghi, lớn hơn 1 cần xem lại điều kiện.
+Học viên hoàn thiện năm method trong một class tạm `ProductJdbcDao`: insert, findAll, findById, update, deleteById. Class này là bước trung gian; buổi 8 sẽ đổi nó thành `JdbcProductRepository` theo interface.
 
-JDBC URL cho biết loại database, máy chủ/cổng và database cần kết nối; username/password xác thực người dùng database. Đọc giá trị từ cấu hình cục bộ hoặc biến môi trường thay vì ghi bí mật vào source. `Statement` phù hợp câu SQL cố định; khi có tham số từ input, ưu tiên `PreparedStatement`.
+Giáo viên kiểm tra hai ca lỗi:
 
-## IV. Thông Tin Kết Nối An Toàn
+- Insert id SP01 lần hai: database từ chối trùng khóa, chương trình báo lỗi dễ hiểu.
+- Update P99: không ném lỗi, trả false vì `executeUpdate()` bằng 0.
 
-Đọc URL, username, password từ file cấu hình cục bộ hoặc biến môi trường; thêm file bí mật vào .gitignore. Commit file cấu hình mẫu không chứa mật khẩu thật. Không in credential ra log.
+## Lỗi thường gặp
 
-## V. Thực Hành Trên Lớp
+| Hiện tượng | Nơi kiểm tra |
+|---|---|
+| `No suitable driver` | Dependency Maven đã tải và reload chưa |
+| Access denied | User/password/quyền database, không sửa bằng cách commit mật khẩu |
+| Unknown database/table | Đã chạy schema ở đúng server chưa |
+| SQL syntax error | Chạy câu SQL với giá trị mẫu trong client |
+| ResultSet sai dữ liệu | Tên cột và kiểu getter khi mapping |
+| Chương trình treo kết nối | Tất cả tài nguyên đã nằm trong try-with-resources chưa |
 
-1. Tạo Maven project và kiểm tra pom.xml.
-2. Tạo database, bảng books và thêm vài dòng dữ liệu.
-3. Kết nối bằng Connection; đọc ResultSet và in tiêu đề sách.
-4. Hoàn thành đủ CRUD bằng PreparedStatement.
-5. Thực hành khoảng 1 giờ theo lộ trình; đóng connection bằng try-with-resources.
+## Tổng kết buổi 7
 
-## Lỗi Thường Gặp
+Maven cung cấp driver, MySQL giữ Product bền vững và JDBC là cầu nối. Mọi thao tác CRUD có cùng nhịp: chuẩn bị SQL, bind tham số, thực thi, đọc kết quả, đóng tài nguyên và diễn giải số row bị ảnh hưởng.
 
-| Lỗi | Nguyên nhân | Cách xử lý |
-|---|---|---|
-| Driver không tìm thấy | Dependency chưa tải/chưa đúng | Kiểm tra pom.xml, reload Maven |
-| Access denied | User/password hoặc quyền sai | Kiểm tra config và quyền database |
-| SQL syntax error | Tên cột/bảng hoặc câu SQL sai | Chạy SQL độc lập và đọc vị trí lỗi |
-| SQL injection | Nối chuỗi input vào query | Dùng PreparedStatement và tham số ? |
-| Connection không đóng | Thiếu đóng resource | Dùng try-with-resources |
+## Bài tập nhỏ trên lớp — JDBC CRUD công việc
 
-## Tổng Kết Buổi 7
+Tạo bảng độc lập:
 
-- Maven khai báo dependency; JDBC dùng Connection, Statement/PreparedStatement, ResultSet và try-with-resources để giao tiếp với database.
-- SELECT trả tập kết quả cần duyệt; INSERT/UPDATE/DELETE báo số dòng bị ảnh hưởng. Tham số hóa ngăn input bị hiểu thành cú pháp SQL.
-- Khi một class vừa viết SQL vừa xử lý quy tắc nghiệp vụ, cần tách trách nhiệm; đó là chủ đề kiến trúc buổi 8.
+```sql
+CREATE TABLE tasks (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(150) NOT NULL,
+    done BOOLEAN NOT NULL
+);
+```
 
-### Câu Hỏi Ôn Tập
+Viết class `TaskJdbcDao` có bốn thao tác: thêm task, liệt kê theo id, đánh dấu hoàn thành và xóa theo id. Mọi input phải truyền qua `PreparedStatement`; Connection, Statement và ResultSet nằm trong try-with-resources.
 
-1. pom.xml dùng để làm gì?
-2. ResultSet và PreparedStatement có vai trò gì?
-3. Khi dùng input người dùng, vì sao chọn PreparedStatement?
-4. DECIMAL khác FLOAT/DOUBLE ở database thế nào ở mức khái niệm?
-5. Vì sao không commit mật khẩu database?
+**Nghiệm thu:** thêm hai task, đánh dấu task đầu hoàn thành, xóa task thứ hai và SELECT còn đúng một dòng `done=true`. Thời gian làm khoảng 20 phút.
 
-## Bài Tập Về Nhà
+## Bài tập về nhà
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 07](../BTVN/buoi-07-btvn.md).
-## Tài Liệu Tham Khảo
-
-- [Apache Maven — Introduction to the POM](https://maven.apache.org/guides/introduction/introduction-to-the-pom.html)
-- [MySQL — Connector/J Developer Guide](https://dev.mysql.com/doc/connector-j/en/)
-- [Oracle — JDBC Basics: Prepared Statements](https://docs.oracle.com/javase/tutorial/jdbc/basics/prepared.html)
+Hoàn thành [BTVN buổi 07](../BTVN/buoi-07-btvn.md). Giữ chữ ký CRUD để buổi 8 tách repository và service mà không đổi hành vi.

@@ -1,236 +1,276 @@
-# Buổi 3: OOP Nhập Môn — Class, Object, Constructor, Getter/Setter và HAS-A
+# Buổi 3: OOP Nhập Môn Qua Product, Customer Và CartItem
 
 ---
 
+> **Hạn chế từ buổi 2:** nhiều danh sách song song phải luôn cùng index và cùng kích thước; chỉ cần quên cập nhật một danh sách là dữ liệu bị ghép sai.
+
 ## Mục tiêu buổi học
 
-- Hiểu vì sao danh sách song song khó quản lý và class/object giải quyết điều đó ra sao.
-- Viết class có field, method, constructor, getter/setter và toString().
-- Phân biệt class, object và instance; hiểu biến object là tham chiếu.
-- Dùng package, this và field private trong model.
-- Tạo Book, Reader, Loan; biểu diễn Loan liên kết một Reader với một Book.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** Buổi 2 đã dùng danh sách để lưu nhiều giá trị, nhưng các dữ liệu liên quan vẫn có thể bị tách rời và khó quản lý cùng nhau. Class/object cung cấp cách mô tả một khái niệm bằng trạng thái và hành vi gắn với nhau. Buổi này tập trung vào nền tảng đó; ví dụ được chọn độc lập theo chủ đề.
+- Giải thích vì sao ba danh sách song song của buổi 2 dễ lệch dữ liệu.
+- Tạo class, object, field, constructor, getter/setter và `toString()`.
+- Dùng quan hệ HAS-A để một CartItem giữ một Product.
+- Refactor giỏ hàng sang `List<CartItem>` mà vẫn giữ hành vi thêm, xóa, in và tính tổng.
+- Phân biệt biến tham chiếu với object và quan sát việc hai biến cùng trỏ một object.
 
-## I. Vấn Đề Của Danh Sách Song Song
+> **Kết quả cuối buổi:** chương trình mẫu dùng Product, Customer và CartItem thay cho ba danh sách song song.
 
-Có thể lưu tên môn, điểm số và số tín chỉ ở ba list riêng. Khi xóa một môn, phải xóa đúng index trong cả ba list; bỏ sót một list làm điểm số bị ghép với sai tên môn. Thêm thuộc tính mới cũng buộc phải đồng bộ nhiều cấu trúc.
+> **Môi trường:** JDK 17.
 
-~~~java
-subjectNames.remove(index);
-scores.remove(index);
-credits.remove(index);
-~~~
+## I. Bắt Đầu Từ Một Lỗi Có Thật
 
-Thay vì truyền ba list và index khắp chương trình, ta muốn thao tác trên một object `Course` chứa tên môn, điểm số và số tín chỉ liên quan.
+Ở buổi 2, mặt hàng tại vị trí `i` được ghép từ ba list:
 
-Đây là ví dụ dẫn nhập từ dữ liệu song song. Cùng vấn đề xuất hiện ở nhiều lĩnh vực: thông tin sách đi cùng mã sách, hoặc tọa độ x phải đi cùng tọa độ y. Phần cốt lõi là cách class/object gom các giá trị mô tả cùng một khái niệm.
+```java
+names.get(i);
+prices.get(i);
+quantities.get(i);
+```
 
-## II. OOP Và Package
+Nếu xóa `names.remove(i)` nhưng quên xóa hai list còn lại, tên của sản phẩm này sẽ bị ghép với giá của sản phẩm khác. Vấn đề không nằm ở vòng lặp; vấn đề là dữ liệu vốn thuộc cùng một mặt hàng lại bị lưu ở ba nơi.
 
-OOP tổ chức chương trình quanh object, mỗi object gắn dữ liệu và hành vi liên quan. Package giúp nhóm class và tránh để toàn bộ source trong một chỗ.
+Ta muốn chương trình diễn đạt trực tiếp ý này:
 
-~~~text
-src/edu/example/library/
-  Main.java
-  model/
-    Book.java
-    Reader.java
-    Loan.java
-~~~
+```text
+Một Product có id, name, price và stock.
+Một CartItem có một Product và quantity.
+```
 
-Khai báo package ở đầu file, ví dụ `package edu.example.library.model;`. Main import model từ package khác. Chữ thường, không dấu, thường dùng tên miền đảo ngược.
+OOP giúp gom dữ liệu liên quan và hành vi của nó vào object. Đây là một cách làm mô hình dễ đọc và khó bị lệch, không chỉ là đổi cú pháp.
 
-## III. Class, Object, Field Và Method
+### Kiểm tra nhanh
 
-- Class là kiểu do người lập trình định nghĩa: nó khai báo mỗi object có dữ liệu nào (field) và có thể thực hiện hành vi nào (method). Class không phải object; nó là mô tả để Java tạo object.
-- `new Book(...)` tạo một object cụ thể trong bộ nhớ. Object đó là một instance của class `Book`; mỗi instance có trạng thái field riêng.
-- Method instance được gọi trên một object cụ thể; bên trong method, `this` chỉ object đang nhận lời gọi. Một method có thể dùng/đổi field của object đó, nhưng không nên gộp mọi trách nhiệm chương trình vào một class.
-- Biến có kiểu class lưu một tham chiếu để truy cập object, chứ không chứa bản sao độc lập của toàn bộ object. Gán `Book second = first;` sao chép tham chiếu, nên sửa object thông qua `second` cũng quan sát được qua `first`. Muốn tạo object khác phải gọi `new`; phép gán không tự sao chép.
-- Field kiểu số/boolean nhận giá trị mặc định khi là field và chưa được gán; field kiểu tham chiếu có thể là `null`. Biến cục bộ trong method không tự được khởi tạo mặc định. Gọi method hoặc đọc field qua `null` gây `NullPointerException`.
+Giáo viên cố ý xóa phần tử index 0 chỉ khỏi `names`, sau đó yêu cầu học viên dự đoán output. Học viên cần chỉ ra được dữ liệu nào đã ghép sai trước khi chuyển sang class.
 
-~~~java
-public class Book {
+## II. Class Product: Từ Bản Thiết Kế Đến Object
+
+Tạo package `model` và file `Product.java`:
+
+```java
+package model;
+
+public class Product {
     private String id;
     private String name;
-    private String author;
-    private int pages;
+    private double price;
+    private int stock;
 
-    public Book(String id, String name, String author, int pages) {
+    public Product(String id, String name, double price, int stock) {
         this.id = id;
         this.name = name;
-        this.author = author;
-        this.pages = pages;
+        this.price = price;
+        this.stock = stock;
     }
 
-    public String getId() { return id; }
-    public String getName() { return name; }
-    public String getAuthor() { return author; }
-    public int getPages() { return pages; }
-
-    public void setName(String name) { this.name = name; }
-    public void setAuthor(String author) { this.author = author; }
-
-    public void printInfo() {
-        System.out.println(id + " - " + name + " - " + author + " - " + pages + " trang");
-    }
-}
-~~~
-
-Không thể gọi instance method `printInfo()` bằng class nếu method không khai báo `static`; cần có object cụ thể như `book.printInfo()`. `static` cấp class là phần nâng cao theo lộ trình, nên buổi này chỉ phân biệt method instance với điểm vào `main` ở mức cần thiết.
-
-~~~text
-Class Book (bản mô tả)         Objects (các instance)
-  id, name, author, pages    b1 ───> Book{B01, Dế Mèn, ...}
-  getName(), printInfo()     b2 ───┘  (b1 và b2 cùng tham chiếu object)
-                              b3 ───> Book{B02, ...}
-~~~
-
-Mỗi object có trạng thái riêng; chỉ phép gán tham chiếu mới làm hai biến cùng trỏ một object. Gọi `new Book(...)` tạo instance mới.
-
-## IV. Constructor, Getter/Setter Và this
-
-Constructor khởi tạo trạng thái ban đầu khi tạo object. Constructor có tên trùng class, không khai báo kiểu trả về và được gọi cùng `new`. Nếu không khai báo constructor nào, compiler cung cấp constructor mặc định không tham số. Một khi đã khai báo bất kỳ constructor nào, compiler không tự thêm constructor đó nữa; nếu vẫn cần tạo object chưa có dữ liệu, phải tự viết constructor không tham số. Nhiều constructor cùng tên nhưng khác danh sách tham số là constructor overloading.
-
-~~~java
-public Book(String id, String name, String author, int pages) {
-    this.id = id;
-    this.name = name;
-    this.author = author;
-    this.pages = pages;
-}
-~~~
-
-Ví dụ constructor không tham số do lập trình viên tự viết:
-
-~~~java
-public Book() {
-    this("UNKNOWN", "Chưa đặt tên", "Chưa rõ", 0);
-}
-~~~
-
-Constructor này gọi constructor có tham số để tránh lặp lại logic khởi tạo. Dùng no-arg khi cần tạo object trước rồi điền dữ liệu sau; nếu object phải luôn hợp lệ ngay từ lúc sinh ra, constructor nhận đủ dữ liệu thường an toàn hơn.
-
-`this.name` là field của object hiện tại; `name` là tham số. Getter đọc field; setter cho phép cập nhật có kiểm soát. Bài chính dùng quy ước field private, method cần gọi từ ngoài public. Các mức access modifier khác là phần nâng cao.
-
-Getter và setter là method truy cập/cập nhật trạng thái. Không phải field nào cũng bắt buộc có setter: nếu một giá trị không nên đổi sau khi khởi tạo, có thể chỉ cung cấp getter. Việc đặt field `private` giúp class làm chủ trạng thái; buổi 4 sẽ đào sâu cách giữ các điều kiện hợp lệ của object.
-
-## V. toString() Và HAS-A
-
-`toString()` được kế thừa từ `Object`; phiên bản mặc định thường in tên class cùng biểu diễn mã băm, không phải bản mô tả dành cho người dùng. Override method này để cung cấp biểu diễn dễ đọc khi debug hoặc in object. Không dùng nội dung `toString()` thay cho định danh dữ liệu hoặc định dạng giao diện ổn định.
-
-Quan hệ HAS-A nghĩa một object giữ tham chiếu tới object khác như một field. Nó mô tả quan hệ giữa các thành phần, không phải quan hệ kế thừa. Hãy đặt dữ liệu vào object mà nó mô tả: thời hạn mượn thuộc một lượt `Loan`, không phải thuộc `Book` nói chung.
-
-~~~java
-public class Loan {
-    private Book book;
-    private Reader reader;
-    private int days;
-
-    public Loan(Book book, Reader reader, int days) {
-        this.book = book;
-        this.reader = reader;
-        this.days = days;
+    public String getId() {
+        return id;
     }
 
-    public Book getBook() { return book; }
-    public Reader getReader() { return reader; }
-    public int getDays() { return days; }
-    public void setDays(int days) { this.days = days; }
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
 
     @Override
     public String toString() {
-        return reader.getName() + " mượn " + book.getName() + " trong " + days + " ngày";
+        return id + " | " + name + " | " + price + " | tồn: " + stock;
     }
 }
-~~~
+```
 
-`Loan` giữ tham chiếu tới một `Book`, một `Reader` và thời hạn mượn. Ta dùng HAS-A vì một lượt mượn liên kết hai object; không dùng kế thừa vì Loan không phải là một loại Book hay Reader. Dữ liệu `days` thuộc về từng lượt mượn, không thuộc riêng về sách hoặc bạn đọc.
+`Product` là bản thiết kế. Mỗi lần gọi constructor, chương trình tạo một object có trạng thái riêng:
 
-Trong ví dụ `Loan`, `@Override` yêu cầu compiler xác nhận method `toString()` đang ghi đè đúng method có sẵn của `Object`. Nếu viết sai tên/chữ ký, compiler báo lỗi ngay thay vì âm thầm tạo một method khác.
+```java
+Product notebook = new Product("SP01", "Sổ tay", 25000, 50);
+Product pen = new Product("SP02", "Bút", 10000, 100);
+```
 
-Trong miền thư viện, `Book` mô tả sách, `Reader` mô tả bạn đọc, còn `Loan` giữ quan hệ giữa bạn đọc và sách đang mượn. Mỗi class có thể được lưu trong file riêng; tên file phải trùng với class public.
+Trong constructor, `this.name` là field của object hiện tại; `name` là tham số được truyền vào. Việc dùng cùng tên giúp đọc rõ “gán dữ liệu đầu vào cho field”, nhưng phải có `this` để phân biệt.
 
-~~~java
-public class Reader {
+`toString()` trả một biểu diễn hữu ích khi in object. Không dùng `toString()` làm nơi tính tổng hoặc thay đổi stock; method này chỉ mô tả object.
+
+## III. Customer Và Trách Nhiệm Của Model
+
+Tạo Customer theo cùng cách:
+
+```java
+package model;
+
+public class Customer {
     private String id;
     private String name;
+    private String phone;
 
-    public Reader(String id, String name) {
+    public Customer(String id, String name, String phone) {
         this.id = id;
         this.name = name;
+        this.phone = phone;
     }
 
     public String getId() { return id; }
     public String getName() { return name; }
+    public String getPhone() { return phone; }
+    public void setName(String name) { this.name = name; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    @Override
+    public String toString() {
+        return id + " | " + name + " | " + phone;
+    }
 }
-~~~
+```
 
-## VI. Ghép Các Object Thành Một Mô Hình
+Ở giai đoạn này, getter/setter giúp code bên ngoài làm việc với field private. Buổi 4 sẽ quay lại câu hỏi quan trọng hơn: setter nào thực sự nên tồn tại và quy tắc nào phải được bảo vệ.
 
-Đây là ví dụ tổng hợp độc lập về các khái niệm vừa học.
+## IV. HAS-A Với CartItem
 
-~~~java
-import java.util.ArrayList;
-import java.util.List;
+Không đưa `quantity` vào Product. Stock mô tả tồn kho; quantity mô tả số lượng một khách đang mua. Hai dữ liệu có vòng đời khác nhau.
 
-// Đặt trong main sau khi đã khai báo Book và Loan.
-Book book = new Book("B01", "Dế Mèn phiêu lưu ký", "Tô Hoài", 224);
-Reader reader = new Reader("R01", "Lan");
-Loan loan = new Loan(book, reader, 14);
-List<Loan> loans = new ArrayList<>();
-loans.add(loan);
-System.out.println(loan); // Lan mượn Dế Mèn phiêu lưu ký trong 14 ngày
-~~~
+```java
+package model;
 
-Trong ví dụ này `book` tham chiếu tới một `Book`; `loan` là object riêng giữ tham chiếu tới cùng cuốn sách. `loans` lưu các lượt mượn. Khi `System.out.println(loan)` chạy, Java gọi `loan.toString()` nên output được xác định bởi method vừa viết.
+public class CartItem {
+    private Product product;
+    private int quantity;
 
-Thay các danh sách song song bằng `ArrayList<Loan>`: mỗi phần tử có kiểu rõ ràng và chứa những dữ liệu liên quan của một lượt mượn.
+    public CartItem(Product product, int quantity) {
+        this.product = product;
+        this.quantity = quantity;
+    }
 
-### Bài Luyện Tập Khái Niệm
+    public Product getProduct() { return product; }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 
-1. Mô tả bằng class `Book` các field và method phù hợp; sau đó tạo hai object có dữ liệu khác nhau.
-2. Giải thích bằng hình vẽ hoặc lời giải thích vì sao `Book second = first;` chưa tạo bản sao object.
-3. Viết constructor không tham số và constructor có tham số; nêu constructor nào được compiler tạo tự động trong từng trường hợp.
-4. Chọn field nào chỉ cần getter, field nào cho phép setter; giải thích theo trạng thái cần bảo vệ.
-5. Override `toString()` cho một class dữ liệu nhỏ và phân biệt mục đích của nó với `equals()` (sẽ học ở buổi 5).
+    public double getTotal() {
+        return product.getPrice() * quantity;
+    }
+}
+```
 
-## Phần Nâng Cao — Tìm Hiểu Thêm
+CartItem **HAS-A** Product: object này giữ tham chiếu tới object kia. `getTotal()` hỏi Product về giá qua getter; không truy cập field private trực tiếp.
 
-- `static` thuộc về class thay vì từng object; các object dùng chung một thành viên static. Có thể dùng bộ đếm để hiểu vòng đời, nhưng cần lưu ý đây là trạng thái dùng chung và mọi object cùng ảnh hưởng giá trị.
-- Access modifier: `private` chỉ trong class, không ghi modifier là package-private, `protected` cho package và lớp con theo quy tắc truy cập Java, `public` cho nơi gọi nhìn thấy. Ưu tiên mức truy cập hẹp nhất đáp ứng nhu cầu.
+### Thí nghiệm về tham chiếu
 
-**Bài tập tự chọn:** Tạo bộ đếm static số instance đã tạo, thử truy cập từ object và từ class; đặt các class vào hai package để quan sát phạm vi truy cập. Đây là bài khám phá, không phải yêu cầu bắt buộc của mô hình cơ bản.
+```java
+Product p = new Product("SP01", "Sổ tay", 25000, 50);
+CartItem item = new CartItem(p, 2);
 
-## Lỗi Thường Gặp
+System.out.println(item.getTotal()); // 50000
+p.setPrice(30000);
+System.out.println(item.getTotal()); // 60000
+```
 
-| Lỗi | Nguyên nhân | Cách sửa |
+CartItem không giữ một bản sao Product; nó giữ tham chiếu tới cùng object `p`. Đây là điều cần hiểu trước khi sang buổi 9, nơi OrderItem phải chốt `unitPrice` riêng để giá lịch sử không đổi.
+
+## V. Refactor Giỏ Hàng Mà Không Đổi Hành Vi
+
+Thay ba list bằng một list:
+
+```java
+private static final List<CartItem> cart = new ArrayList<>();
+```
+
+Các method cũ vẫn giữ mục đích:
+
+```java
+static void addItem(Product product, int quantity) {
+    cart.add(new CartItem(product, quantity));
+}
+
+static void removeItem(int index) {
+    if (index < 0 || index >= cart.size()) {
+        System.out.println("Không tìm thấy mặt hàng.");
+        return;
+    }
+    cart.remove(index);
+}
+
+static void printItems() {
+    for (int i = 0; i < cart.size(); i++) {
+        CartItem item = cart.get(i);
+        System.out.printf("%d. %s | SL: %d | Thành tiền: %.1f%n",
+                i + 1,
+                item.getProduct().getName(),
+                item.getQuantity(),
+                item.getTotal());
+    }
+}
+
+static double calculateTotal() {
+    double total = 0;
+    for (CartItem item : cart) {
+        total += item.getTotal();
+    }
+    return total;
+}
+```
+
+Điểm cần quan sát là phần menu gần như không đổi. Refactor tốt thay cách tổ chức bên trong nhưng giữ kết quả người dùng đang nhận.
+
+## VI. Thực Hành Có Hướng Dẫn
+
+1. Tạo hai Product `SP01`, `SP02` và một Customer `KH01` bằng dữ liệu tự chọn.
+2. In ba object để kiểm tra constructor và `toString()`.
+3. Thêm SP01 × 2, SP02 × 1 vào `List<CartItem>`.
+4. In từng dòng và tự đối chiếu tổng bằng phép tính tay.
+5. Đổi quantity SP01 từ 2 thành 3, chạy lại và giải thích vì sao stock chưa đổi.
+6. Nối list mới vào menu của buổi 2.
+
+Sau mỗi bước, chương trình phải chạy được. Không viết xong cả ba class mới chạy lần đầu, vì khi đó lỗi package, constructor và logic bị trộn vào nhau.
+
+## Lỗi thường gặp
+
+| Lỗi | Nguyên nhân | Cách kiểm tra |
 |---|---|---|
-| field không truy cập được | field private | Dùng getter/setter |
-| field vẫn null/0 | constructor chưa gán field | Dùng this.field = thamSo |
-| new Book() không compile | Chỉ có constructor có tham số | Gọi đúng constructor hoặc tự viết no-arg |
-| in ra tên class và mã lạ | Chưa override toString() | Viết toString() |
+| Không import được model | Sai package hoặc sai thư mục | Đối chiếu dòng `package model;` với cấu trúc source |
+| `getTotal()` không biên dịch | Truy cập `product.price` khi price private | Dùng `product.getPrice()` |
+| In object ra chuỗi khó đọc | Chưa override `toString()` | Thêm method và annotation `@Override` |
+| Đổi quantity làm đổi stock | Gộp hai trách nhiệm | Chỉ CartItem giữ quantity; Product giữ stock |
+| Tổng vẫn sai sau refactor | Menu còn dùng list cũ | Lần theo luồng từ lựa chọn menu tới `List<CartItem>` |
 
-## Tổng Kết Buổi 3
+## Tổng kết buổi 3
 
-- Class mô tả dữ liệu/hành vi; object là instance, có trạng thái riêng và có thể được tham chiếu từ nhiều biến.
-- Constructor khởi tạo trạng thái; getter/setter kiểm soát truy cập; `this` phân biệt field và tham số; `toString()` cung cấp biểu diễn dễ đọc.
-- HAS-A mô tả object giữ tham chiếu tới object khác; Loan/Book là ví dụ minh họa.
-- Giới hạn tiếp theo: khi cùng một nhóm kiểu có phần chung nhưng hành vi khác nhau, cần cách mô hình hóa biến thể và giữ trạng thái hợp lệ; đó là trọng tâm buổi 4.
+Class gom trạng thái và hành vi liên quan; object là một thể hiện cụ thể của class. Product mô tả hàng hóa, Customer mô tả người mua, CartItem nối Product với số lượng mua. Quan hệ HAS-A làm mô hình biểu đạt đúng bài toán và loại bỏ rủi ro lệch ba danh sách song song.
 
-### Câu Hỏi Ôn Tập
+### Câu hỏi chốt buổi
 
-1. Phân biệt class, object, instance.
-2. Vì sao danh sách Loan tránh phải đồng bộ nhiều danh sách song song?
-3. this.field khác tham số cùng tên thế nào?
-4. Java tự thêm constructor không tham số khi nào?
-5. HAS-A biểu diễn điều gì? Vì sao số ngày mượn thuộc Loan thay vì Book?
+1. Vì sao quantity không nên là field dùng chung của Product?
+2. `this.name` và tham số `name` khác nhau thế nào?
+3. CartItem giữ bản sao Product hay tham chiếu tới Product?
+4. Refactor thành object đã giữ lại hành vi nào của buổi 2?
 
-## Bài Tập Về Nhà
+## Bài tập nhỏ trên lớp — Đăng ký khóa học
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 03](../BTVN/buoi-03-btvn.md).
-## Tài Liệu Tham Khảo
+Tạo hai class độc lập với ví dụ trong bài:
 
-- [Oracle — Classes and Objects](https://docs.oracle.com/javase/tutorial/java/javaOO/index.html)
-- [Oracle — Constructors](https://docs.oracle.com/javase/tutorial/java/javaOO/constructors.html)
-- [Oracle — Packages](https://docs.oracle.com/javase/tutorial/java/package/index.html)
+- `Course`: `code`, `name`, `fee`; field private, constructor, getter và `toString()`.
+- `Enrollment`: giữ một `Course` và `studentName`; có `getSummary()` trả thông tin đăng ký.
+- Trong class demo, tạo hai Course và hai Enrollment rồi lưu vào `List<Enrollment>`.
+- In toàn bộ đăng ký và tính tổng học phí bằng getter của Course.
+
+**Nghiệm thu:** học viên phải chỉ ra được quan hệ Enrollment HAS-A Course và không lưu trùng `courseName`/`fee` trong Enrollment. Thời gian làm khoảng 15 phút.
+
+## Bài tập về nhà
+
+Hoàn thành [BTVN buổi 03](../BTVN/buoi-03-btvn.md) và giữ lại toàn bộ source để mở rộng ở buổi 4.

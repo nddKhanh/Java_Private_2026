@@ -1,188 +1,248 @@
-# Buổi 9: JDBC Nhiều Bảng — Loan, LoanItem, JOIN và Thống Kê
+# Buổi 9: JDBC Nhiều Bảng — Order, OrderItem, JOIN Và Báo Cáo
 
 ---
 
+> **Hạn chế từ buổi 8:** repository một bảng chưa biểu diễn được quan hệ Order–OrderItem, khóa sinh tự động, truy vấn JOIN hoặc báo cáo tổng hợp.
+
 ## Mục tiêu buổi học
 
-- Thiết kế quan hệ một-nhiều giữa loans và loan_items.
-- Dùng primary key, foreign key và DATETIME/LocalDateTime.
-- Thêm phiếu mượn và các dòng chi tiết bằng getGeneratedKeys.
-- Truy vấn phiếu bằng JOIN, sắp xếp bằng ORDER BY và tổng hợp bằng GROUP BY.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** Truy vấn một bảng chưa trả lời được câu hỏi cần dữ liệu từ nhiều bảng có quan hệ. Khóa ngoại, JOIN và GROUP BY giúp liên kết các dòng, tạo kết quả chi tiết hoặc tổng hợp. Buổi này tập trung vào mô hình quan hệ và cách truy vấn đó hoạt động.
+- Thiết kế quan hệ Customer–Order–OrderItem–Product bằng khóa ngoại.
+- Lấy generated key khi insert Order và dùng cho OrderItem.
+- Tách giá hiện tại của Product khỏi unit price lịch sử.
+- Nạp chi tiết Order qua nhiều repository và ghép ở Service.
+- Viết JOIN, GROUP BY, ORDER BY cho chi tiết và báo cáo.
+- Giải thích rủi ro ghi nhiều bước và vai trò của transaction.
 
-## I. Mô Hình Dữ Liệu
+> **Kết quả cuối buổi:** chương trình mẫu tạo/xem được đơn nhiều dòng và lập báo cáo doanh thu; Order dùng id `long` do MySQL tự tăng.
 
-Một Loan có nhiều LoanItem; mỗi dòng tham chiếu một Book. Reader có thể gắn với nhiều Loan. Khóa ngoại giữ liên kết hợp lệ.
+> **Môi trường:** JDK 17, Maven và MySQL.
 
-~~~sql
-CREATE TABLE readers (
-    id VARCHAR(20) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL
-);
+## I. Chọn Khóa Cho Dữ Liệu Nhiều Bảng
 
-CREATE TABLE books (
-    id VARCHAR(20) PRIMARY KEY,
-    name VARCHAR(150) NOT NULL
-);
+Trong ví dụ của buổi học, `Product` và `Customer` dùng mã nghiệp vụ dạng chuỗi; `Order` dùng khóa số do database sinh. Vì vậy model Order dùng `long id`, tương ứng `BIGINT AUTO_INCREMENT` trong MySQL.
 
-CREATE TABLE loans (
+Quy ước của ví dụ:
+
+- Model Order dùng `long id`.
+- Product và Customer dùng mã chuỗi như `SP01`, `KH01`.
+- Code lấy khóa Order bằng `getGeneratedKeys()` sau câu INSERT.
+- Không đoán khóa mới bằng `MAX(id)`.
+
+Mỗi entity chỉ nên có một quy ước định danh rõ ràng trong cùng mô hình demo.
+
+## II. Mô Hình Quan Hệ
+
+```text
+customers 1 ─── n orders 1 ─── n order_items n ─── 1 products
+```
+
+```sql
+CREATE TABLE orders (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    reader_id VARCHAR(20) NOT NULL,
+    customer_id VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL,
-    borrowed_at DATETIME NOT NULL,
-    FOREIGN KEY (reader_id) REFERENCES readers(id)
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
 
-CREATE TABLE loan_items (
+CREATE TABLE order_items (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    loan_id BIGINT NOT NULL,
-    book_id VARCHAR(20) NOT NULL,
+    order_id BIGINT NOT NULL,
+    product_id VARCHAR(20) NOT NULL,
     quantity INT NOT NULL,
-    daily_fee DECIMAL(12,2) NOT NULL,
-    FOREIGN KEY (loan_id) REFERENCES loans(id),
-    FOREIGN KEY (book_id) REFERENCES books(id)
+    unit_price DECIMAL(12,2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
 );
-~~~
+```
 
-Lưu `daily_fee` tại thời điểm cho mượn để lịch sử không đổi nếu biểu phí hiện tại thay đổi. `borrowed_at` ánh xạ sang `LocalDateTime`.
+Không lưu danh sách Product vào một cột text trong orders. Bảng `order_items` biểu diễn mỗi dòng hàng và giải quyết quan hệ nhiều-nhiều theo thời gian giữa Order và Product.
 
-Khóa chính (PK) nhận diện một dòng; khóa ngoại (FK) tham chiếu PK ở bảng khác. Quan hệ 1-nhiều được lưu bằng FK ở phía “nhiều”: một reader có nhiều loan thì `loans.reader_id` trỏ tới `readers.id`; một loan có nhiều loan_item thì `loan_items.loan_id` trỏ tới `loans.id`. FK giúp database từ chối liên kết tới bản ghi không tồn tại. `daily_fee` là giá tại thời điểm giao dịch, khác giá hiện hành của Book.
+## III. Vì Sao OrderItem Cần `unitPrice`?
 
-Khi chọn constraint, phân biệt mục tiêu của chúng: `NOT NULL` bắt buộc phải có giá trị; `PRIMARY KEY` định danh duy nhất; `FOREIGN KEY` bảo vệ quan hệ; `CHECK (quantity > 0)` giới hạn miền giá trị. Ràng buộc đặt ở database bảo vệ dữ liệu từ mọi client; Service cũng kiểm tra sớm để trả thông báo dễ hiểu. Không nên chỉ dựa vào giao diện để giữ dữ liệu hợp lệ.
+Product SP01 có thể tăng từ 25000 lên 30000. Order đã mua hôm qua phải giữ tổng cũ.
 
-~~~text
-readers (PK id) 1 ─── N loans (PK id, FK reader_id)
-                              |
-                              1
-                              |
-                              N
-                    loan_items (PK id, FK loan_id, FK book_id)
-                              N
-                              |
-                              1
-                         books (PK id)
-~~~
+```java
+public class OrderItem {
+    private long id;
+    private Product product;
+    private int quantity;
+    private double unitPrice;
 
-## II. Tạo Phiếu Mượn Và Lấy Khóa Sinh Tự Động
-
-Thêm loans trước để lấy ID; sau đó dùng ID đó ghi từng LoanItem. PreparedStatement có tùy chọn trả generated keys.
-
-~~~java
-String sql = "INSERT INTO loans(reader_id, status, borrowed_at) VALUES (?, ?, ?)";
-try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-    ps.setString(1, readerId);
-    ps.setString(2, status.name());
-    ps.setTimestamp(3, Timestamp.valueOf(borrowedAt));
-    ps.executeUpdate();
-    try (ResultSet keys = ps.getGeneratedKeys()) {
-        if (keys.next()) loanId = keys.getLong(1);
+    public double getLineTotal() {
+        return quantity * unitPrice;
     }
 }
-~~~
+```
 
-Đóng mọi resource; giữ SQL parameterized. LoanRepository đọc/ghi bảng; LoanService phối hợp tạo loan và items.
+Khi tạo OrderItem, Service chụp `product.getPrice()` vào `unitPrice`. Khi xem lịch sử, tính bằng field này; không gọi giá hiện tại từ Product để tính lại.
 
-`AUTO_INCREMENT` để MySQL cấp định danh mới; JDBC lấy khóa vừa sinh từ thao tác insert. Vì ID loan cần cho các item nên ghi cha trước, con sau. Việc ghi nhiều bảng có thể dở dang nếu một bước thất bại; transaction là cách bảo vệ tính toàn vẹn đó và được xếp ở phần nâng cao, không phải điều kiện để hiểu JOIN hay generated key.
+Đây là sự khác biệt với CartItem buổi 3: CartItem là giỏ tạm và đọc giá hiện tại; OrderItem là dòng giao dịch đã chốt.
 
-## III. JOIN, GROUP BY, ORDER BY
+## IV. Insert Order Và Lấy Generated Key
 
-- JOIN lấy thông tin loan cùng reader và loan_items/book.
-- ORDER BY sắp xếp phiếu theo thời gian hoặc phí.
-- GROUP BY tổng hợp doanh thu theo ngày hoặc theo khách hàng.
+```java
+String sql = "INSERT INTO orders(customer_id, status, created_at) VALUES (?, ?, ?)";
 
-Ví dụ lấy chi tiết một phiếu mượn cần nối bảng theo khóa ngoại, không dựa vào thứ tự tình cờ của các dòng:
+try (Connection connection = connectionFactory.open();
+     PreparedStatement statement = connection.prepareStatement(
+             sql, Statement.RETURN_GENERATED_KEYS)) {
+    statement.setString(1, customerId);
+    statement.setString(2, status.name());
+    statement.setTimestamp(3, Timestamp.valueOf(createdAt));
 
-~~~sql
-SELECT l.id, r.name AS reader_name, l.status, l.borrowed_at,
-       b.id AS book_id, b.name AS book_name,
-       li.quantity, li.daily_fee
-FROM loans l
-JOIN readers r ON r.id = l.reader_id
-JOIN loan_items li ON li.loan_id = l.id
-JOIN books b ON b.id = li.book_id
-WHERE l.id = ?
-ORDER BY li.id;
-~~~
+    if (statement.executeUpdate() != 1) {
+        throw new DataAccessException("Không tạo được Order");
+    }
 
-Một Loan có ba LoanItem thì truy vấn trả ba dòng: thông tin phiếu mượn/bạn đọc lặp lại, còn sách và số lượng khác nhau. Khi tạo object Loan, nhóm các dòng theo `l.id`; không tạo ba Loan trùng nhau. `JOIN` (inner join) chỉ trả các dòng có quan hệ khớp ở hai phía; dùng khi cần các bản ghi liên quan tồn tại ở cả hai bảng.
-
-~~~sql
-SELECT DATE(l.borrowed_at) AS loan_day, SUM(li.quantity * li.daily_fee) AS fee_total
-FROM loans l
-JOIN loan_items li ON li.loan_id = l.id
-GROUP BY DATE(l.borrowed_at)
-ORDER BY loan_day;
-~~~
-
-`GROUP BY DATE(l.borrowed_at)` gom tất cả phiếu theo ngày; `SUM(quantity × daily_fee)` cộng phí ở từng dòng. Báo cáo theo bạn đọc thay biểu thức nhóm bằng `r.id, r.name` và nối `loans` với `readers`. `WHERE` lọc dòng trước khi gom, còn `HAVING` lọc nhóm sau khi tính tổng. Kết quả báo cáo là các dòng tổng hợp, không phải danh sách Loan đầy đủ.
-
-Khi một phiếu có nhiều dòng, kết quả JOIN có thể lặp thông tin Loan; cần gom kết quả theo loan_id khi dựng object.
-
-## Phần Nâng Cao — Tìm Hiểu Thêm
-
-- `LIMIT` giới hạn số dòng; `OFFSET` bỏ qua một số dòng để phân trang. Luôn sắp xếp theo khóa ổn định trước khi phân trang, nếu không cùng một bản ghi có thể xuất hiện ở trang khác nhau giữa các lần truy vấn.
-- Transaction gom nhiều lệnh thành một đơn vị: `setAutoCommit(false)` bắt đầu, `commit()` xác nhận khi tất cả bước thành công, `rollback()` hoàn tác khi có bước lỗi. ACID gồm Atomicity (tất cả hoặc không), Consistency (giữ ràng buộc hợp lệ), Isolation (các giao dịch đồng thời không nhìn thấy trạng thái dở dang theo mức cô lập), Durability (đã commit thì kết quả bền vững).
-- Batch dùng `addBatch()` để xếp nhiều câu lệnh cùng dạng rồi `executeBatch()` để gửi một lượt; phù hợp nhiều thao tác độc lập/lặp, nhưng cần xem kết quả từng dòng và xử lý lỗi batch.
-- RowMapper là một hàm nhận một dòng `ResultSet` và tạo object tương ứng. Tách ánh xạ khỏi vòng lặp truy vấn giúp dùng lại logic và giảm lặp code.
-
-~~~java
-connection.setAutoCommit(false);
-try {
-    insertLoan();
-    insertLoanItems();
-    connection.commit();
-} catch (SQLException e) {
-    connection.rollback();
-    throw e;
+    try (ResultSet keys = statement.getGeneratedKeys()) {
+        if (!keys.next()) {
+            throw new DataAccessException("Không nhận được Order id");
+        }
+        return keys.getLong(1);
+    }
 }
-~~~
+```
 
-Đây là giả mã trong method có thể ném `SQLException`; cần phục hồi `autoCommit` hoặc đóng connection ở vị trí quản lý vòng đời phù hợp. Mục đích minh họa: nếu ghi các dòng chi tiết thất bại, `rollback()` ngăn database giữ lại một phần phiếu mượn.
+Không dùng `SELECT MAX(id)` vì một người dùng khác có thể insert giữa hai câu lệnh. Generated key thuộc chính lệnh insert vừa thực hiện.
 
-**Bài tập tự chọn:** Thử phân trang danh sách; cố ý làm lỗi khi lưu item để rollback transaction; so sánh insert từng dòng với batch. Các nội dung này là nâng cao, không phải điều kiện hoàn thành chức năng nhiều bảng cơ bản.
+OrderItemRepository nhận id đó:
 
-`JOIN ... ON` ghép dòng dựa trên điều kiện liên kết; nếu một loan có ba item, JOIN tạo ba dòng có thông tin loan lặp lại. `GROUP BY` gom các dòng theo khóa/biểu thức để tính `SUM`, `COUNT`...; `ORDER BY` sắp xếp đầu ra và không thay đổi dữ liệu lưu. Nên chọn cột rõ ràng thay vì `SELECT *` khi ánh xạ sang object. Tính tổng tiền sau JOIN cần chú ý mức chi tiết: nếu JOIN thêm quan hệ một-nhiều khác, một dòng item có thể bị lặp và làm tổng bị nhân lên.
+```java
+for (OrderItem item : items) {
+    statement.setLong(1, orderId);
+    statement.setString(2, item.getProduct().getId());
+    statement.setInt(3, item.getQuantity());
+    statement.setDouble(4, item.getUnitPrice());
+    statement.executeUpdate();
+}
+```
 
-## IV. Thực Hành Trên Lớp
+## V. Nạp Một Order Mà Không Trộn Trách Nhiệm
 
-1. Vẽ quan hệ bảng và kiểm tra khóa chính/ngoại.
-2. Viết LoanRepository tạo phiếu, lấy generated key, ghi LoanItem.
-3. Truy vấn chi tiết phiếu cùng sách/bạn đọc.
-4. Viết báo cáo số lượt mượn theo ngày/bạn đọc.
-5. Thực hành JOIN, GROUP BY, ORDER BY bằng dữ liệu mẫu.
+`OrderRepository.findById(id)` nạp header và Customer, tạo Order với list rỗng. `OrderItemRepository.findByOrderId(id)` nạp item bằng JOIN Product. `OrderService` ghép hai kết quả:
 
-## Lỗi Thường Gặp
+```java
+public Optional<Order> findOrderById(long id) {
+    Optional<Order> found = orderRepository.findById(id);
+    if (found.isEmpty()) {
+        return Optional.empty();
+    }
 
-| Lỗi | Nguyên nhân | Cách xử lý |
+    Order order = found.get();
+    List<OrderItem> items = orderItemRepository.findByOrderId(id);
+    for (OrderItem item : items) {
+        order.addItem(item);
+    }
+    return Optional.of(order);
+}
+```
+
+View chỉ nhận Order đã hoàn chỉnh. Không để View tự gọi hai repository rồi ghép object.
+
+Query item:
+
+```sql
+SELECT oi.id,
+       oi.quantity,
+       oi.unit_price,
+       p.id AS product_id,
+       p.name,
+       p.price,
+       p.stock
+FROM order_items oi
+JOIN products p ON p.id = oi.product_id
+WHERE oi.order_id = ?
+ORDER BY oi.id;
+```
+
+Alias giúp tránh nhầm các cột cùng tên `id`.
+
+## VI. JOIN Và GROUP BY Cho Báo Cáo
+
+### Doanh thu theo ngày
+
+```sql
+SELECT DATE(o.created_at) AS order_day,
+       SUM(oi.quantity * oi.unit_price) AS revenue
+FROM orders o
+JOIN order_items oi ON oi.order_id = o.id
+GROUP BY DATE(o.created_at)
+ORDER BY order_day;
+```
+
+### Doanh thu theo khách hàng
+
+```sql
+SELECT c.id AS customer_id,
+       c.name AS customer_name,
+       SUM(oi.quantity * oi.unit_price) AS revenue
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+JOIN order_items oi ON oi.order_id = o.id
+GROUP BY c.id, c.name
+ORDER BY c.id;
+```
+
+Trước khi chạy, học viên tự tính hai Order mẫu: 60000 + 30000 = 90000. Nếu SQL trả kết quả khác, hãy kiểm tra JOIN có nhân bản row hoặc seed bị chạy lặp.
+
+## VII. Rủi Ro Của Ghi Nhiều Bước
+
+Luồng tạo đơn hiện có ít nhất hai bước:
+
+```text
+INSERT orders
+INSERT order_items...
+```
+
+Nếu insert item thứ hai lỗi sau khi Order đã lưu, database có Order thiếu chi tiết. Transaction giải quyết bằng một Connection dùng chung, `setAutoCommit(false)`, `commit()` khi tất cả thành công và `rollback()` khi có lỗi.
+
+Buổi này giáo viên demo transaction và cho làm ở phần nâng cao để học viên tập trung trước vào generated key/JOIN. Đến capstone, transaction là bắt buộc cho luồng nhiều bảng và cập nhật stock.
+
+## VIII. Demo Dữ Liệu Chuẩn
+
+1. Seed KH01/KH02, SP01/SP02; đổi giá hiện tại SP01 từ 25000 thành 30000.
+2. Tạo Order 1 cho KH01: SP01 × 2 với unit price 25000 và SP02 × 1 với unit price 10000.
+3. Tạo Order 2: KH02 mua SP02 × 3 với unit price 10000.
+4. Xem Order 1; xác nhận tổng 60000 dù Product SP01 hiện tại là 30000.
+5. Chạy hai báo cáo; đối chiếu tổng ngày 90000, KH01 60000, KH02 30000.
+
+## IX. Thực Hành Có Hướng Dẫn
+
+- Vẽ các khóa trước khi viết SQL.
+- Hoàn thiện insert Order và in generated id.
+- Insert hai OrderItem theo id vừa nhận.
+- Viết query item riêng và xác nhận số row.
+- Ghép Order ở Service, sau đó mới làm query báo cáo.
+- Cuối buổi, cố ý làm một item tham chiếu P99 để quan sát vì sao cần rollback.
+
+## Lỗi thường gặp
+
+| Lỗi | Hậu quả | Cách sửa |
 |---|---|---|
-| Không insert được loan_item | loan_id chưa lấy hoặc FK sai | Lấy generated key trước khi ghi chi tiết |
-| Lịch sử tiền thay đổi | Chỉ lưu book_id rồi đọc giá hiện tại | Lưu daily_fee tại thời điểm đặt |
-| Thông tin phiếu bị lặp sau JOIN | Mỗi dòng item tạo một dòng kết quả | Gom dữ liệu theo loan_id |
-| Đóng connection quá sớm | Dùng resource ngoài phạm vi | Bao transaction/resource trong service/repository phù hợp |
+| Dùng MAX(id) | Có thể lấy id của request khác | Dùng generated keys |
+| Tính lịch sử bằng Product.price | Tổng đơn cũ thay đổi | Dùng OrderItem.unitPrice |
+| JOIN thiếu điều kiện | Row bị nhân bản | Kiểm tra từng khóa nối |
+| Repository trả Order thiếu item mà View không biết | Hiển thị tổng 0 | Service chịu trách nhiệm hydrate đầy đủ |
+| Tự đoán id Order bằng `MAX(id)` | Có thể lấy khóa của request khác | Dùng generated key của chính lệnh INSERT |
 
-## Tổng Kết Buổi 9
+## Tổng kết buổi 9
 
-- Quan hệ một-nhiều thường đặt foreign key ở phía nhiều; JOIN ghép dòng theo khóa liên kết.
-- GROUP BY tạo nhóm để tổng hợp; ORDER BY sắp xếp đầu ra; generated keys cung cấp ID cha cho các dòng con.
-- Khi nhiều bảng cùng được cập nhật, cần nghĩ tới tính toàn vẹn của thao tác; transaction là nội dung mở rộng.
+Thiết kế nhiều bảng yêu cầu hiểu khóa, lịch sử giá và thứ tự ghi. Generated key nối Order với OrderItem; JOIN khôi phục object; GROUP BY tạo báo cáo; transaction bảo vệ tính toàn vẹn khi nhiều bước cùng tạo một nghiệp vụ.
 
-### Câu Hỏi Ôn Tập
+## Bài tập nhỏ trên lớp — Đăng ký sinh viên vào lớp học
 
-1. Vì sao loan_items cần foreign key tới loans?
-2. Dùng generated keys trong trường hợp nào?
-3. JOIN khác GROUP BY thế nào?
-4. Vì sao lưu daily_fee trong loan_items?
-5. LocalDateTime ánh xạ với loại cột thời gian nào trong lộ trình?
+Thiết kế ba bảng `students`, `courses`, `enrollments`:
 
-## Bài Tập Về Nhà
+- `enrollments` có khóa ngoại tới student và course.
+- Viết JDBC tạo một course, lấy generated id rồi thêm hai enrollment.
+- Viết một JOIN hiển thị mã sinh viên, tên sinh viên và tên khóa học.
+- Viết GROUP BY đếm số sinh viên của từng khóa, sắp xếp theo course id.
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 09](../BTVN/buoi-09-btvn.md).
-## Tài Liệu Tham Khảo
+**Nghiệm thu:** course có hai enrollment phải xuất hiện một lần trong báo cáo với số lượng 2; JOIN chi tiết có đúng hai dòng. Thời gian làm khoảng 20 phút.
 
-- [Java SE API — Connection Transactions](https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html)
-- [Oracle JDBC — Retrieving Generated Keys](https://docs.oracle.com/javase/tutorial/jdbc/basics/retrieving.html)
+## Bài tập về nhà
 
-- [MySQL Reference Manual — JOIN](https://dev.mysql.com/doc/refman/8.4/en/join.html)
-- [MySQL Reference Manual — GROUP BY](https://dev.mysql.com/doc/refman/8.4/en/group-by-handling.html)
-- [Oracle JDBC — Using Generated Keys](https://docs.oracle.com/javase/tutorial/jdbc/basics/retrieving.html)
+Hoàn thành [BTVN buổi 09](../BTVN/buoi-09-btvn.md). Transaction là phần nâng cao ở bài này nhưng sẽ là yêu cầu bắt buộc của capstone.

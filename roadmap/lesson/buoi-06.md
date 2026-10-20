@@ -1,154 +1,220 @@
-# Buổi 6: Exception, try-with-resources và Lưu Dữ Liệu Ra File
+# Buổi 6: Exception, try-with-resources Và Lưu Order Ra File
 
 ---
 
+> **Hạn chế từ buổi 5:** chương trình mới tập trung vào mô hình và đa hình; dữ liệu sai hoặc lỗi I/O vẫn có thể làm luồng chạy dừng đột ngột, và dữ liệu trong bộ nhớ mất khi tắt ứng dụng.
+
 ## Mục tiêu buổi học
 
-- Giải thích vì sao lỗi input/file không nên làm chương trình dừng đột ngột.
-- Dùng try/catch/finally và throw ở mức cơ bản.
-- Đóng tài nguyên bằng try-with-resources.
-- Đọc/ghi file bằng Files, Path để giữ lại dữ liệu sau khi chương trình kết thúc.
+Sau buổi học, học viên có thể:
 
-> **Cầu nối:** Các object và phép xử lý trước đó thường giả định dữ liệu đầu vào hợp lệ. Khi giả định không đúng hoặc thao tác bên ngoài thất bại, exception giúp kiểm soát luồng và đưa ra cách phục hồi phù hợp. Buổi này xét riêng lỗi, tài nguyên và lưu trữ file.
+- Phân biệt lỗi biên dịch, lỗi runtime và lỗi nghiệp vụ.
+- Dùng `throw`, `throws` và `try/catch` đúng vai trò; nhận biết custom exception như phần mở rộng.
+- Dùng `Path`, `Files` và UTF-8 để ghi/đọc text.
+- Đóng tài nguyên tự động bằng try-with-resources.
+- Lưu Order theo một định dạng text nhỏ, đọc lại và tính tổng từ nội dung file.
 
-## I. Phân Loại Lỗi Qua Ví Dụ
+> **Kết quả cuối buổi:** một Order mẫu hợp lệ được lưu thành khối trong `orders.txt`; order sai không được ghi; lỗi I/O không bị báo thành công.
 
-Lỗi phát sinh khi chạy có thể khiến thao tác hiện tại không hoàn tất. Ví dụ nhập chữ vào chỗ cần số có thể gây `InputMismatchException`; chuyển chuỗi không hợp lệ sang số gây `NumberFormatException`; thao tác file có thể gây `IOException`. Exception là object mang thông tin về tình huống bất thường và luồng xử lý sẽ tìm `catch` phù hợp trên call stack. Nếu không có handler phù hợp, chương trình kết thúc luồng hiện tại và in stack trace.
+## I. Ba Nhóm Lỗi Trong Một Chương Trình Quản Lý
 
-~~~java
-try {
-    int quantity = Integer.parseInt(input);
-    System.out.println("Số lượng: " + quantity);
-} catch (NumberFormatException e) {
-    System.out.println("Số lượng phải là số nguyên.");
-}
-~~~
+### 1. Lỗi biên dịch
 
-`Integer.parseInt(input)` ném `NumberFormatException` nếu chuỗi không biểu diễn số nguyên. Nếu đọc trực tiếp bằng `Scanner.nextInt()`, token không hợp lệ gây `InputMismatchException`; token đó vẫn còn trong scanner nên cần đọc/bỏ nó hoặc chuyển sang đọc cả dòng rồi parse. Hai cách đọc vì vậy có thể phát sinh loại lỗi khác nhau dù người dùng nhập cùng một chữ.
+```java
+double total = order.getTotals();
+```
 
-Không bắt mọi Exception để che lỗi lập trình. Thông báo cho người dùng nên dễ hiểu; log kỹ thuật có thể giữ nguyên nhân để tìm lỗi.
+Nếu Order chỉ có `getTotal()`, compiler dừng trước khi chương trình chạy. Hãy đọc lỗi đầu tiên, sửa tên method rồi compile lại; các lỗi sau có thể chỉ là hệ quả.
 
-~~~text
-method A -> method B -> lỗi phát sinh
-              ^             |
-              |             v
-          catch phù hợp <- exception truyền ngược
-              |
-      xử lý/khôi phục hoặc báo lỗi lên trên
-~~~
+### 2. Lỗi runtime kỹ thuật
 
-## II. try/catch/finally Và throw
+```java
+Files.readAllLines(Path.of("orders.txt"));
+```
 
-- `try` khoanh vùng đoạn có thể phát sinh exception; Java tìm `catch` đầu tiên có kiểu phù hợp. Nên bắt lỗi đủ cụ thể để có thể xử lý, tránh `catch (Exception)` chung chung làm mất tín hiệu lỗi.
-- `finally` chạy khi luồng rời khỏi cấu trúc try/catch bình thường hoặc do exception, thường dùng để dọn dẹp thủ công. Bài nhập môn ưu tiên try-with-resources cho tài nguyên đóng được.
-- `throw` ném một exception object tại vị trí cụ thể. Nó khác `throws` trong khai báo method; lộ trình buổi này yêu cầu `throw` ở mức cơ bản.
-- try-with-resources tự đóng resource implement `AutoCloseable` khi ra khỏi khối, kể cả khi có exception. Nhiều resource được đóng theo thứ tự ngược với khai báo.
+File có thể không tồn tại hoặc không đọc được. Đây là tình huống môi trường mà code phải xử lý tại ranh giới I/O.
 
-Chỉ `catch` ở nơi có thể làm việc hữu ích sau lỗi: hỏi lại input, chọn giá trị thay thế, hoặc báo thao tác lưu thất bại. Nếu method hiện tại không biết cách phục hồi, có thể để exception đi lên caller; `throws IOException` khai báo khả năng đó trong chữ ký method, còn `throw new ...` thực sự ném một lỗi.
+### 3. Lỗi nghiệp vụ
 
-~~~java
-static int parsePositive(String input) {
-    int value = Integer.parseInt(input);
-    if (value <= 0) {
-        throw new IllegalArgumentException("Giá trị phải lớn hơn 0");
+Order không có item vẫn là một object Java hợp lệ về cú pháp, nhưng không hợp lệ để lưu như một đơn hàng. Trong phần lõi, dùng exception có sẵn:
+
+```java
+throw new IllegalArgumentException("Order phải có ít nhất một item");
+```
+
+Phân loại đúng giúp đặt xử lý đúng chỗ. Không bọc toàn bộ chương trình trong một `catch (Exception)` rồi in “Có lỗi”.
+
+## II. `throw`, `throws` Và `catch`
+
+Validator phát hiện và ném lỗi:
+
+```java
+public class OrderValidator {
+    public static void validate(Order order) {
+        if (order == null) {
+            throw new IllegalArgumentException("Order không được null");
+        }
+        if (order.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Order phải có ít nhất một item");
+        }
+        for (CartItem item : order.getItems()) {
+            if (item.getProduct() == null || item.getQuantity() <= 0) {
+                throw new IllegalArgumentException("Item không hợp lệ");
+            }
+        }
     }
-    return value;
 }
-~~~
+```
 
-`NumberFormatException` từ `parseInt` cũng có thể truyền ra nếu chuỗi không biểu diễn số nguyên. `IllegalArgumentException` ở đây do chương trình chủ động ném khi số có dạng hợp lệ nhưng vi phạm điều kiện miền giá trị. Nơi gọi có thể bắt loại lỗi phù hợp để báo rõ nguyên nhân.
+- `throw` tạo luồng lỗi tại nơi phát hiện vi phạm.
+- `throws` công bố cho code gọi biết method có thể thất bại.
+- `catch` xử lý ở nơi có đủ ngữ cảnh để báo cho người dùng hoặc chọn hành động tiếp theo.
 
-`finally` chạy dù khối `try` thành công hay phát sinh exception, nên trước đây thường được dùng để đóng tài nguyên thủ công. Với resource implement `AutoCloseable`, ưu tiên try-with-resources vì nó tự đóng và giảm nguy cơ quên dọn dẹp.
+Không vừa `catch` rồi bỏ qua vừa tiếp tục như thành công. Nếu chưa xử lý được, hãy để exception đi lên tầng gọi.
 
-~~~java
+## III. Định Dạng File Càng Nhỏ Càng Dễ Kiểm Tra
+
+Buổi này không xây một serializer tổng quát. Mỗi Order được ghi thành khối:
+
+```text
+ORDER|DH01|KH01|Nguyễn An|PENDING
+ITEM|SP01|Sổ tay|2|25000.0
+ITEM|SP02|Bút|1|10000.0
+END
+```
+
+Header giữ dữ liệu order/customer cần hiển thị. Mỗi dòng item giữ giá tại lúc lưu. `END` giúp nhận biết khối đã kết thúc.
+
+Trước khi code, học viên trả lời ba câu:
+
+1. Dòng nào biểu diễn bắt đầu một Order?
+2. Làm sao phân biệt item với header?
+3. Khi Product đổi giá, file cũ có đổi không?
+
+Câu trả lời thứ ba chuẩn bị cho `unitPrice` trong OrderItem ở buổi 9.
+
+## IV. Ghi File Bằng try-with-resources
+
+```java
+public void saveOrder(Order order, Path path)
+        throws IOException {
+    OrderValidator.validate(order);
+
+    try (BufferedWriter writer = Files.newBufferedWriter(
+            path,
+            StandardCharsets.UTF_8)) {
+        writer.write("ORDER|" + order.getId()
+                + "|" + order.getCustomer().getId()
+                + "|" + order.getCustomer().getName()
+                + "|" + order.getStatus());
+        writer.newLine();
+
+        for (CartItem item : order.getItems()) {
+            Product product = item.getProduct();
+            writer.write("ITEM|" + product.getId()
+                    + "|" + product.getName()
+                    + "|" + item.getQuantity()
+                    + "|" + product.getPrice());
+            writer.newLine();
+        }
+
+        writer.write("END");
+        writer.newLine();
+    }
+}
+```
+
+Tài nguyên được đóng cả khi một lệnh write ném exception. Không cần `finally` để tự close writer trong ví dụ này.
+
+Validator chạy trước khi mở file. Vì vậy order sai không xóa nội dung cũ rồi mới phát hiện lỗi.
+
+## V. Đọc File Và Báo Lỗi Đúng
+
+```java
+public List<String> loadLines(Path path) throws IOException {
+    if (Files.notExists(path)) {
+        return new ArrayList<>();
+    }
+
+    try (BufferedReader reader = Files.newBufferedReader(
+            path,
+            StandardCharsets.UTF_8)) {
+        return reader.lines().toList();
+    }
+}
+```
+
+`Stream.toList()` dùng được trên JDK 17. Nếu muốn thực hành vòng lặp, có thể đọc từng dòng bằng `readLine()`.
+
+Code giao diện xử lý thông báo:
+
+```java
 try {
-    System.out.println(Integer.parseInt("42"));
-} catch (NumberFormatException e) {
-    System.out.println("Chuỗi không phải số nguyên");
-} finally {
-    System.out.println("Kết thúc thao tác parse");
-}
-~~~
-
-`finally` chạy sau nhánh `try` hoặc `catch`; với input `42`, output gồm `42` rồi `Kết thúc thao tác parse`. Nếu đổi input thành `abc`, `catch` in thông báo lỗi rồi `finally` vẫn chạy.
-
-~~~java
-try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-    writer.write("B01,Dế Mèn phiêu lưu ký,224");
+    store.saveOrder(order, Path.of("orders.txt"));
+    System.out.println("Lưu thành công");
+} catch (IllegalArgumentException e) {
+    System.out.println("Đơn không hợp lệ: " + e.getMessage());
 } catch (IOException e) {
-    System.out.println("Không ghi được dữ liệu.");
+    System.out.println("Không thể ghi file đơn hàng: " + e.getMessage());
 }
-~~~
+```
 
-Nếu muốn báo lại lỗi cho tầng gọi, method có thể ném exception thay vì tự in thông báo rồi tiếp tục như thể thành công. Chọn một nơi chịu trách nhiệm chuyển lỗi kỹ thuật thành thông báo dễ hiểu; không nuốt exception mà không ghi nhận nguyên nhân.
+Thông báo thành công chỉ nằm sau lời gọi đã hoàn tất. Không đặt nó trong `finally`, vì finally chạy cả khi thất bại.
 
-## III. Files, Path Và Định Dạng Lưu
+## VI. Tính Tổng Từ Các Dòng ITEM
 
-`Path` biểu diễn vị trí file một cách độc lập với thao tác đọc/ghi; `Files` cung cấp các method làm việc với đường dẫn đó. Path tương đối được tính từ working directory của tiến trình, không nhất thiết là thư mục chứa source code. Khi lưu văn bản cần chọn charset nhất quán, ví dụ UTF-8, để ký tự được giải mã đúng.
+Mỗi dòng ITEM có năm phần khi tách bằng `split("\\|")`. Quantity ở index 3, unit price ở index 4:
 
-~~~java
-Path path = Paths.get("notes.txt");
-Files.write(path, lines, StandardCharsets.UTF_8);
-List<String> saved = Files.readAllLines(path, StandardCharsets.UTF_8);
-~~~
+```java
+double total = 0;
+for (String line : lines) {
+    if (line.startsWith("ITEM|")) {
+        String[] parts = line.split("\\|");
+        int quantity = Integer.parseInt(parts[3]);
+        double unitPrice = Double.parseDouble(parts[4]);
+        total += quantity * unitPrice;
+    }
+}
+```
 
-Để đoạn trên dùng được, cần import `java.nio.file.Path`, `java.nio.file.Paths`, `java.nio.file.Files`, `java.nio.charset.StandardCharsets` và `java.util.List`; `lines` là một `List<String>` đã tạo trước đó. `Files.write` ghi các phần tử thành các dòng văn bản; `readAllLines` trả danh sách dòng để chương trình xử lý tiếp.
+Phần lõi dùng file do chính chương trình tạo nên có thể giả định định dạng đúng. Parse file hỏng và phục hồi object graph là phần mở rộng, tránh biến buổi exception/I/O thành một bài parser quá lớn.
 
-`Files.write` với cấu hình mặc định tạo file nếu cần và thay nội dung file hiện có; nếu muốn nối thêm phải chỉ rõ open option tương ứng. `readAllLines` nạp toàn bộ dòng vào bộ nhớ nên phù hợp file nhỏ; không nên mặc định cách này phù hợp file rất lớn.
+## VII. Thực Hành Có Hướng Dẫn
 
-CSV đơn giản thường biểu diễn mỗi bản ghi trên một dòng và tách trường bằng dấu phẩy. Nếu giá trị bên trong có dấu phân cách, dấu nháy hoặc xuống dòng thì cần quy tắc escape/quote; không thể luôn tách bằng `split(",")` an toàn. Buổi nhập môn có thể giới hạn dữ liệu mẫu không chứa dấu phẩy, nhưng phải nói rõ đó là giới hạn ví dụ chứ không phải CSV tổng quát.
+1. Tạo Order DH01 hợp lệ bằng dữ liệu mẫu của buổi học và lưu file.
+2. Mở file bằng editor, đối chiếu từng field với object.
+3. Đọc file và tính tổng 60000.
+4. Thử Order rỗng; xác nhận file không bị ghi lại.
+5. Thử quantity 0; xác nhận lỗi nghiệp vụ khác lỗi I/O.
+6. Thử một đường dẫn không ghi được; xác nhận không có dòng “Lưu thành công”.
 
-Đọc lại dữ liệu là bài toán đối xứng với ghi: parse dữ liệu, xác thực trường, xử lý dòng hỏng và quyết định có bỏ qua dòng hay dừng. Mục tiêu là không để một bản ghi lỗi làm mất khả năng xử lý toàn bộ file mà không có thông báo. Với định dạng do chính ứng dụng tạo và file nhỏ, có thể đọc toàn bộ; với file lớn, đọc từng dòng/luồng để tránh giữ tất cả trong bộ nhớ. CSV chuẩn có quy tắc escape riêng, nên ví dụ tự tách bằng dấu phân cách chỉ hợp lệ khi ràng buộc dữ liệu loại trừ dấu đó.
+Mỗi nhóm ghi lại loại exception, nơi ném và nơi bắt của bốn ca. Đây là bằng chứng hiểu luồng lỗi, không chỉ chạy được happy path.
 
-## IV. Thực Hành Khái Niệm
+## Lỗi thường gặp
 
-1. Bọc việc parse một chuỗi thành số bằng `try/catch`; cho phép người dùng sửa input sai.
-2. Viết một method kiểm tra điều kiện dữ liệu và dùng `throw` để báo input không hợp lệ.
-3. Ghi nhiều dòng văn bản UTF-8 vào file rồi đọc lại; so sánh nội dung trước/sau.
-4. Thử file chưa tồn tại, file rỗng, dòng hỏng và đường dẫn không hợp lệ; phân biệt exception nào cần được xử lý.
-5. Vẽ luồng dữ liệu: object/dữ liệu trong chương trình → định dạng text → file → parse → dữ liệu dùng lại.
-
-~~~text
-Dữ liệu trong chương trình -> encode/serialize thành dòng -> file
-File -> đọc dòng -> parse + validate -> dữ liệu trong chương trình
-~~~
-
-## Phần Mở Rộng Và Nâng Cao — Tìm Hiểu Thêm
-
-- **Regex (mở rộng):** biểu thức chính quy mô tả mẫu chuỗi; có thể dùng `String.matches()` cho kiểm tra toàn chuỗi như mã đơn hoặc định dạng cơ bản. Regex xác nhận hình dạng chuỗi, không chứng minh email/số điện thoại thật sự tồn tại. Tránh dạy pattern phức tạp trong buổi nhập môn.
-- **Custom exception (nâng cao):** tạo lớp exception riêng khi muốn gọi tên một lỗi nghiệp vụ như số trang không hợp lệ. Bài tập: tạo `InvalidPageCountException` và ném khi số trang nhỏ hơn 1; bắt lỗi tại nơi gọi để hiển thị thông báo. Đây là bài riêng, không bắt buộc để đọc/ghi file.
-- **Thread (nâng cao, nếu còn thời gian):** một tiến trình có thể có nhiều luồng thực thi; hai luồng chạm cùng trạng thái có thể tạo race condition. Chỉ demo khái niệm qua bộ đếm dùng chung và yêu cầu dự đoán kết quả; không yêu cầu viết đa luồng để hoàn thành ứng dụng.
-
-Các nội dung trên là phần khám phá tùy chọn. Bài thực hành cốt lõi vẫn là xử lý lỗi, quản lý resource và đọc/ghi dữ liệu file.
-
-## Lỗi Thường Gặp
-
-| Lỗi | Nguyên nhân | Cách xử lý |
+| Lỗi | Hậu quả | Cách sửa |
 |---|---|---|
-| Chương trình crash khi nhập chữ | Chuyển số không được bắt | Bắt NumberFormatException và hỏi lại |
-| File không đóng | Resource mở nhưng không đóng | Dùng try-with-resources |
-| Không tìm thấy file | Path tương đối từ working directory khác | In/kiểm tra thư mục chạy và Path |
-| Dữ liệu bị tách sai | CSV đơn giản gặp dấu phẩy trong tên | Giữ giới hạn mẫu hoặc dùng format đúng ở phần sau |
+| `catch (Exception)` cho mọi trường hợp | Không biết lỗi nghiệp vụ hay I/O | Bắt loại cụ thể, theo thứ tự cụ thể trước |
+| Validate sau khi mở writer | Có thể làm mất file cũ | Validate trước I/O |
+| In thành công trong `finally` | Thất bại vẫn báo thành công | Chỉ in sau lời gọi hoàn tất |
+| Không chỉ rõ UTF-8 | Tiếng Việt có thể lỗi | Dùng `StandardCharsets.UTF_8` |
+| Bắt buộc phục hồi mọi object | Quá tải phạm vi buổi học | Lõi chỉ đọc dòng và tính tổng |
 
-## Tổng Kết Buổi 6
+## Tổng kết buổi 6
 
-- Exception chuyển luồng tới handler phù hợp; try-with-resources quản lý vòng đời tài nguyên.
-- Files/Path tách vị trí file khỏi thao tác đọc/ghi; định dạng text cần quy tắc parse/validate rõ.
-- File văn bản phù hợp dữ liệu nhỏ, tuần tự; cần parse và validate khi đọc lại. Truy vấn có cấu trúc là một trong những lý do dùng database.
+Exception là một luồng điều khiển cho tình huống không thể hoàn tất bình thường. Validator chịu trách nhiệm lỗi nghiệp vụ; lớp file chịu trách nhiệm I/O; lớp gọi quyết định thông báo. Try-with-resources bảo đảm đóng tài nguyên và định dạng file nhỏ giúp học viên tập trung đúng mục tiêu. Custom exception được để ở phần mở rộng đúng với lộ trình.
 
-### Câu Hỏi Ôn Tập
+## Bài tập nhỏ trên lớp — Đọc file điểm số
 
-1. try, catch, finally khác vai trò thế nào?
-2. Vì sao try-with-resources phù hợp với file?
-3. Files và Path dùng để làm gì?
-4. Khi nào nên ném lỗi thay vì in thông báo trong setter?
-5. Vì sao file CSV mẫu cần nêu giới hạn dấu phẩy?
+Viết chương trình làm việc với `scores.txt`:
 
-## Bài Tập Về Nhà
+- Mỗi dòng chứa một điểm dạng số; giáo viên chuẩn bị cả một dòng sai định dạng.
+- Đọc file bằng `Files.newBufferedReader` và try-with-resources.
+- Dùng `Double.parseDouble`; bắt `NumberFormatException` cho từng dòng, báo số dòng sai rồi tiếp tục.
+- Tính số dòng hợp lệ và điểm trung bình; file không tồn tại phải được báo bằng thông điệp riêng.
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 06](../BTVN/buoi-06-btvn.md).
-## Tài Liệu Tham Khảo
+**Nghiệm thu:** một dòng hỏng không làm mất kết quả của các dòng hợp lệ và chương trình không báo thành công khi đọc file thất bại. Thời gian làm khoảng 15 phút.
 
-- [Oracle — Exceptions](https://docs.oracle.com/javase/tutorial/essential/exceptions/index.html)
-- [Oracle — File I/O](https://docs.oracle.com/javase/tutorial/essential/io/fileio.html)
-- [Java SE API — Files](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/nio/file/Files.html)
+## Bài tập về nhà
+
+Hoàn thành [BTVN buổi 06](../BTVN/buoi-06-btvn.md). File này chỉ là bước học I/O; từ buổi 7, Product bắt đầu chuyển sang MySQL.
