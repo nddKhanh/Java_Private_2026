@@ -4,16 +4,61 @@
 
 ## Mục tiêu buổi học
 
-- Chạy được chương trình Java trong IntelliJ IDEA sau khi cài JDK.
-- Giải thích cấu trúc class, method main và luồng biên dịch/chạy Java ở mức nhập môn.
-- Nhập dữ liệu bằng Scanner, xuất bằng System.out.println; chọn kiểu dữ liệu, biến, hằng số và toán tử phù hợp.
-- Biết tạo repository, commit và push bài tập lên GitHub.
+Sau buổi học, học viên có thể:
 
-> **Mở đầu khóa học:** Giới thiệu mục tiêu và cách học; làm bài thử đầu vào để nhận biết kiến thức đã có. Trọng tâm buổi này là hiểu và chạy được một chương trình Java tối giản. Ví dụ và bài luyện tập dùng dữ liệu trung tính để học biến, kiểu dữ liệu và toán tử.
+- Kiểm tra JDK, cấu hình Project SDK trong IntelliJ IDEA và chạy một chương trình Java.
+- Giải thích vai trò của class, method `main` và luồng source code → bytecode → JVM.
+- Dùng `Scanner` và `System.out` để nhập, xử lý và xuất dữ liệu trong một chương trình tuần tự.
+- Chọn kiểu dữ liệu phù hợp, khai báo biến/hằng số, đặt tên và viết các biểu thức cơ bản.
+- Tạo repository, commit, push và kiểm tra bài đã xuất hiện trên GitHub.
 
-## I. Cấu Trúc Chương Trình Java Đầu Tiên
+> **Kết quả cuối buổi:** mỗi học viên chạy được một chương trình nhận tên mặt hàng, đơn giá, số lượng và in thành tiền; sau đó đưa source code lên GitHub. Chương trình chỉ xử lý một lần. Điều kiện, vòng lặp và menu được học từ buổi sau.
 
-Java bắt đầu thực thi từ method `main`. Class bao quanh các thành phần của chương trình; câu lệnh trong `main` chạy tuần tự từ trên xuống. Bắt đầu bằng một chương trình ngắn:
+## Chuẩn bị môi trường trước buổi học
+
+Học viên cài **JDK 17**, IntelliJ IDEA và Git ở nhà. Toàn bộ khóa học thống nhất JDK 17 để ví dụ `record`, API và cấu hình Maven không khác nhau giữa các máy. Đầu buổi, không cài lại ngay từ đầu nếu chưa cần; hãy kiểm tra từng lớp để biết lỗi nằm ở công cụ nào.
+
+~~~bash
+java -version
+javac -version
+git --version
+~~~
+
+- `java -version` thành công cho biết máy có công cụ chạy Java.
+- `javac -version` thành công cho biết máy có Java compiler.
+- `git --version` thành công cho biết máy có thể thực hiện phần nộp bài bằng Git.
+- Hai lệnh Java cần hiển thị phiên bản 17. Nếu máy có nhiều JDK, kiểm tra cả `JAVA_HOME` và Project SDK thay vì chỉ nhìn một trong hai nơi.
+
+Trong IntelliJ IDEA, mở **Project Structure** và kiểm tra **Project SDK** đang trỏ tới một JDK hợp lệ. Sau đó tạo Java project, tạo class `Main` và chạy chương trình in một dòng. Chỉ khi bước này thành công mới chuyển sang phần cú pháp.
+
+| Hiện tượng | Vị trí cần kiểm tra đầu tiên |
+|---|---|
+| Terminal không nhận `java` hoặc `javac` | JDK và biến môi trường |
+| Terminal chạy được nhưng IntelliJ không chạy được | Project SDK và cấu hình Run |
+| IntelliJ nhận JDK nhưng code báo đỏ | Tên file, cú pháp và thông báo compiler |
+| Chương trình chạy nhưng kết quả sai | Giá trị biến và biểu thức tính toán |
+
+## I. Chương Trình Cần Làm Gì?
+
+Trước khi học cú pháp, bắt đầu từ một yêu cầu cụ thể: người dùng nhập tên mặt hàng, đơn giá và số lượng; chương trình tính thành tiền rồi in kết quả. Có thể tách yêu cầu này thành ba bước:
+
+~~~text
+Input                         Process                    Output
+Tên, đơn giá, số lượng   →   đơn giá × số lượng   →   thông tin và thành tiền
+~~~
+
+Mô hình **Input – Process – Output** giúp xác định chương trình cần lưu dữ liệu nào và thực hiện phép tính gì. Trong buổi đầu, các câu lệnh chạy lần lượt từ trên xuống:
+
+1. Nhận dữ liệu.
+2. Lưu dữ liệu vào biến.
+3. Tính kết quả.
+4. In kết quả.
+
+Chương trình chưa biết từ chối giá âm, chưa yêu cầu nhập lại và chưa xử lý nhiều mặt hàng. Các hạn chế này là chủ đích: buổi 1 tập trung vào chương trình tuần tự; buổi 2 bổ sung điều kiện, vòng lặp và danh sách.
+
+## II. Chương Trình Java Đầu Tiên
+
+Tạo file `Main.java` và viết chương trình sau:
 
 ~~~java
 public class Main {
@@ -23,79 +68,181 @@ public class Main {
 }
 ~~~
 
-`public class Main` khai báo class tên `Main`; vì class là `public`, tên file phải là `Main.java`. `main` là điểm vào chương trình theo đúng chữ ký mà Java nhận diện. `String[] args` là tham số chứa đối số dòng lệnh; buổi này chỉ nhận biết, chưa cần dùng. `System.out.println` in dữ liệu rồi xuống dòng; `System.out.print` in mà không tự xuống dòng.
+Đọc chương trình từ ngoài vào trong:
+
+- `public class Main` khai báo class tên `Main`. Vì class này là `public`, file phải có tên `Main.java`.
+- Cặp `{ }` xác định phạm vi của class và method. Thiếu hoặc đặt sai dấu ngoặc thường làm compiler báo nhiều lỗi liên tiếp.
+- `public static void main(String[] args)` là điểm Java bắt đầu chạy ứng dụng console. Buổi này chỉ cần dùng đúng chữ ký; ý nghĩa đầy đủ của `public` và `static` sẽ được làm rõ ở phần OOP.
+- `System.out.println(...)` in nội dung rồi xuống dòng. `System.out.print(...)` in nhưng giữ con trỏ ở cùng dòng.
+- Dấu `;` kết thúc một câu lệnh Java.
+
+Khi nhấn Run, Java không chạy trực tiếp nội dung trong file `.java`. Compiler `javac` chuyển source code thành bytecode trong file `.class`; JVM thực thi bytecode đó.
 
 ~~~text
-Main.java
-└── class Main
-    └── main(...)
-        ├── câu lệnh 1
-        ├── câu lệnh 2
-        └── câu lệnh 3
+Main.java --javac--> Main.class --JVM--> Kết quả trên console
 ~~~
 
-Java gọi `main` trước; các câu lệnh bên trong chạy theo thứ tự từ trên xuống, trừ khi cấu trúc điều khiển ở buổi sau làm luồng rẽ nhánh/lặp lại.
+JDK cung cấp compiler và công cụ chạy. JVM thực thi bytecode. IntelliJ IDEA giúp viết, tổ chức và chạy project thuận tiện nhưng không thay thế JDK. Phân biệt ba nhóm lỗi giúp sửa nhanh hơn:
 
-## II. Java Chạy Như Thế Nào?
+- **Lỗi môi trường:** không tìm thấy JDK, SDK hoặc lệnh Java.
+- **Lỗi biên dịch:** sai cú pháp, sai tên biến, thiếu dấu hoặc không khớp kiểu dữ liệu.
+- **Lỗi khi chạy/kết quả:** chương trình đã biên dịch nhưng input gây lỗi hoặc công thức cho kết quả không đúng.
 
-- JDK là bộ công cụ dành cho phát triển Java, gồm compiler `javac` và công cụ chạy. IntelliJ IDEA là IDE: môi trường giúp viết, quản lý và chạy source thuận tiện; IDE không thay thế JDK.
-- Compiler chuyển source `.java` thành bytecode trong file `.class`. JVM đọc và thực thi bytecode trên hệ điều hành tương ứng; vì vậy cùng bytecode có thể chạy trên nhiều hệ thống có JVM phù hợp.
-- Class là đơn vị khai báo kiểu và chứa thành phần chương trình. Điểm vào phổ biến của ứng dụng console là method `main` có chữ ký `public static void main(String[] args)`.
-- Tên file chứa class public phải trùng tên class, ví dụ `Main.java`.
-- Chọn JDK project trong IntelliJ, tạo Java project, tạo class `Main` rồi chạy bằng nút Run.
+### Kiểm tra nhanh
 
-Trình tự khái quát là **source code → biên dịch → bytecode → JVM thực thi**. Khi chương trình không chạy, hãy phân biệt lỗi cấu hình môi trường, lỗi biên dịch và lỗi lúc chạy: kiểm tra JDK/SDK trước, sau đó đọc thông báo lỗi đầu tiên và xác định dòng liên quan. Theo lộ trình, cài JDK và IntelliJ, kiểm tra môi trường chạy Java là phần chuẩn bị ở nhà.
+Trước khi chạy, hãy dự đoán kết quả của đoạn sau rồi kiểm tra trong IntelliJ:
 
-~~~text
-Main.java --javac biên dịch--> Main.class (bytecode) --JVM thực thi--> kết quả
+~~~java
+System.out.print("Java ");
+System.out.println("cơ bản");
+System.out.println("Buổi 1");
 ~~~
 
-## III. Kiểu Dữ Liệu, Biến Và Phép Toán
+Hai lệnh đầu tạo cùng một dòng vì `print` không tự xuống dòng. Thói quen dự đoán trước khi chạy giúp học viên đọc code thay vì chỉ thử ngẫu nhiên.
 
-| Kiểu | Ví dụ dùng trong ứng dụng |
-|---|---|
-| `int` | số lần thử hoặc số học viên |
-| `long` | số nguyên cần phạm vi lớn hơn `int` |
-| `double` | nhiệt độ hoặc điểm trung bình có phần thập phân |
-| `char` | một ký tự |
-| `boolean` | còn hàng hay không |
-| `String` | họ tên hoặc một dòng văn bản |
+## III. Kiểu Dữ Liệu Và Biến
 
-Java phân biệt kiểu nguyên thủy như `int`, `double`, `boolean`, `char` với kiểu tham chiếu như `String`. Biến có khai báo kiểu nên chỉ nhận giá trị phù hợp với kiểu đó; kiểu dữ liệu giúp compiler phát hiện một số lỗi trước khi chạy. `int` phù hợp số nguyên trong phạm vi của kiểu; `long` có phạm vi lớn hơn; `double` biểu diễn số thực gần đúng; `boolean` chỉ nhận `true/false`; `char` lưu một đơn vị mã ký tự. `String` lưu chuỗi văn bản và là kiểu tham chiếu.
+Chương trình cần giữ lại dữ liệu để sử dụng ở bước sau. Biến là một tên đại diện cho giá trị có kiểu xác định. Ví dụ:
 
-Biến là tên gắn với một vùng lưu giá trị trong chương trình. Khai báo như `int quantity = 3;` vừa tạo biến, vừa gán giá trị ban đầu. Biến thường có thể được gán lại; hằng số dùng `final` chỉ được gán một lần. Tên biến/method viết camelCase, tên class viết PascalCase; chọn tên thể hiện ý nghĩa như `quantity` thay vì `x`.
+~~~java
+String productName = "Áo thun";
+double unitPrice = 150000;
+int quantity = 2;
+~~~
 
-Các phép toán số học gồm `+ - * / %`; chia hai số nguyên cho kết quả nguyên nên phần thập phân bị bỏ. Nếu cần kết quả thực, ít nhất một toán hạng phải là số thực hoặc cần ép kiểu phù hợp. Phép so sánh `> < >= <= == !=` tạo kết quả boolean; logic `&& || !` ghép điều kiện. Khi một biểu thức có nhiều toán tử, thứ tự ưu tiên ảnh hưởng kết quả; dùng ngoặc đơn để làm rõ ý định và tránh đọc nhầm.
+Mỗi câu lệnh gồm kiểu dữ liệu, tên biến và giá trị ban đầu. Sau khi khai báo, Java dùng kiểu dữ liệu để kiểm tra các phép gán và phép toán có phù hợp hay không.
+
+| Kiểu | Dùng cho | Ví dụ |
+|---|---|---|
+| `int` | Số nguyên trong phạm vi thông dụng | `int quantity = 2;` |
+| `long` | Số nguyên cần phạm vi lớn hơn `int` | `long viewCount = 3_000_000_000L;` |
+| `double` | Số có phần thập phân hoặc phép tính gần đúng | `double score = 8.5;` |
+| `char` | Một ký tự đặt trong nháy đơn | `char size = 'M';` |
+| `boolean` | Trạng thái đúng hoặc sai | `boolean available = true;` |
+| `String` | Chuỗi văn bản đặt trong nháy kép | `String name = "Áo thun";` |
+
+`int`, `long`, `double`, `char` và `boolean` là các kiểu nguyên thủy. `String` là kiểu tham chiếu, nhưng ở buổi này học viên chỉ cần biết cách khai báo, nhập và nối chuỗi để hiển thị.
+
+### Khai báo, gán lại và hằng số
+
+~~~java
+int quantity = 2;  // khai báo và gán giá trị ban đầu
+quantity = 3;      // gán lại giá trị
+
+final double VAT_RATE = 0.10;
+~~~
+
+Biến thông thường có thể nhận giá trị mới phù hợp với kiểu đã khai báo. Biến có `final` chỉ được gán một lần, phù hợp với giá trị không được thay đổi trong quá trình chạy. Cố gán lại `VAT_RATE` sẽ gây lỗi biên dịch.
+
+Giá tiền dùng `double` trong khóa học để giữ bài tập đơn giản. `double` biểu diễn số thực gần đúng nên không phù hợp cho tính tiền chính xác trong hệ thống thực tế; `BigDecimal` nằm ngoài phạm vi khóa học này.
+
+### Quy tắc đặt tên
+
+- Tên biến và method dùng `camelCase`: `unitPrice`, `calculateTotal`.
+- Tên class dùng `PascalCase`: `Main`, `OrderCalculator`.
+- Hằng số thường dùng chữ hoa và dấu gạch dưới: `VAT_RATE`, `SHIPPING_FEE`.
+- Tên không bắt đầu bằng chữ số, không chứa khoảng trắng và không trùng từ khóa Java.
+- Ưu tiên tên nói rõ ý nghĩa. `quantity` dễ hiểu hơn `q` hoặc `x`.
+
+### Kiểm tra nhanh
+
+Đoạn nào dưới đây không biên dịch được, và vì sao?
+
+~~~java
+int quantity = 2;
+quantity = 5;
+
+final double SHIPPING_FEE = 20000;
+SHIPPING_FEE = 30000;
+
+int productName = "Áo thun";
+~~~
+
+Hai lỗi cần nhận ra là gán lại hằng số và gán một `String` vào biến `int`. Compiler phát hiện các lỗi này trước khi chương trình chạy.
+
+## IV. Toán Tử Và Biểu Thức
+
+Biểu thức kết hợp giá trị, biến và toán tử để tạo ra một kết quả mới. Bài toán của buổi học dùng phép nhân:
+
+~~~java
+double subtotal = unitPrice * quantity;
+~~~
+
+### Toán tử số học
+
+| Toán tử | Ý nghĩa | Ví dụ |
+|---|---|---|
+| `+` | Cộng số hoặc nối chuỗi | `price + fee`, `"Tên: " + name` |
+| `-` | Trừ | `stock - quantity` |
+| `*` | Nhân | `unitPrice * quantity` |
+| `/` | Chia | `total / count` |
+| `%` | Lấy phần dư | `number % 2` |
+
+Phép chia hai số nguyên cho kết quả nguyên và bỏ phần thập phân:
 
 ~~~java
 int count = 5;
-int groups = count / 2;          // 2: phép chia số nguyên
-double average = (double) count / 2; // 2.5: ép kiểu trước khi chia
-boolean inRange = count >= 1 && count <= 10;
+int groups = count / 2;               // 2
+double average = (double) count / 2;  // 2.5
 ~~~
 
-> ⚠️ Giá dùng `double` chỉ để đơn giản hóa bài học. Sai số số thực và cách dùng `BigDecimal` không nằm trong phạm vi khóa học này.
+Ép `count` sang `double` trước khi chia khiến Java thực hiện phép chia số thực. Khi một biểu thức có nhiều toán tử, dùng ngoặc đơn để thể hiện rõ thứ tự mong muốn:
 
-## IV. GitHub Cơ Bản
-
-Repository là nơi lưu source code và lịch sử thay đổi. `clone` tạo bản làm việc trên máy; `commit` ghi nhận một nhóm thay đổi vào lịch sử cục bộ; `push` gửi commit lên remote GitHub. Các thao tác này khác nhau và không tự thay thế nhau. Commit message nên ngắn, nói rõ nội dung, ví dụ `Add first Java program`.
-
-Không đưa mật khẩu, token hay thông tin cá nhân vào repository. Học viên cần kiểm tra repo sau khi push để chắc rằng bài đã được nộp.
-
-~~~text
-Working directory --commit--> Local repository --push--> GitHub remote
+~~~java
+final double VAT_RATE = 0.10;
+double shippingFee = 20000;
+double total = subtotal + (subtotal * VAT_RATE) + shippingFee;
 ~~~
 
-## V. Thực Hành Có Hướng Dẫn
+### Toán tử so sánh và logic
 
-1. Tạo Java project, kiểm tra JDK/SDK và chạy chương trình in một dòng chào.
-2. Thêm Scanner để nhập một chuỗi và một số; đối chiếu kiểu nhập với method đọc dữ liệu.
-3. Tạo các biến số nguyên/số thực, dùng toán tử và in kết quả; thử phép chia nguyên và phép chia có ép kiểu.
-4. Tạo repository, clone, commit một thay đổi rồi push; xác nhận commit đã xuất hiện trên GitHub.
+Các toán tử `>`, `<`, `>=`, `<=`, `==`, `!=` tạo ra kết quả `boolean`. `&&` yêu cầu cả hai điều kiện đúng, `||` yêu cầu ít nhất một điều kiện đúng và `!` đảo giá trị boolean.
 
-### Ví Dụ Nhập Và Tính Toán Hoàn Chỉnh
+~~~java
+boolean validPrice = unitPrice > 0;
+boolean validQuantity = quantity > 0;
+boolean validItem = validPrice && validQuantity;
+~~~
 
-Ví dụ dưới đây có thể chạy độc lập. `Scanner` đọc dữ liệu từ bàn phím; `nextLine()` đọc cả dòng tên, còn `nextInt()` đọc số nguyên. Hai giá trị đơn giá và số lượng được đưa vào biến có kiểu phù hợp, sau đó chương trình tính thành tiền.
+Đoạn code mới chỉ **tính ra** `true` hoặc `false`; nó chưa thay đổi luồng chương trình. Buổi 2 sẽ dùng kết quả boolean trong `if/else` để quyết định có tiếp tục tính tiền hay không.
+
+## V. Nhập Và Xuất Dữ Liệu Với `Scanner`
+
+Dữ liệu đang được viết cố định trong source code. Để người dùng nhập từ bàn phím, import `Scanner` và tạo một scanner đọc `System.in`:
+
+~~~java
+import java.util.Scanner;
+
+Scanner scanner = new Scanner(System.in);
+~~~
+
+Mỗi kiểu dữ liệu có cách đọc phù hợp:
+
+| Dữ liệu cần đọc | Lệnh thường dùng |
+|---|---|
+| Cả một dòng văn bản | `scanner.nextLine()` |
+| Số nguyên | `scanner.nextInt()` |
+| Số thực | `scanner.nextDouble()` |
+| Giá trị boolean | `scanner.nextBoolean()` |
+
+Luôn in lời nhắc trước khi đọc để người dùng biết cần nhập gì:
+
+~~~java
+System.out.print("Tên mặt hàng: ");
+String productName = scanner.nextLine();
+
+System.out.print("Đơn giá: ");
+double unitPrice = scanner.nextDouble();
+
+System.out.print("Số lượng: ");
+int quantity = scanner.nextInt();
+~~~
+
+Ví dụ cố ý đọc chuỗi trước các giá trị số để tránh phải xử lý ký tự xuống dòng còn lại. Nếu người dùng nhập chữ tại vị trí chương trình đang chờ số, chương trình có thể phát sinh lỗi. Buổi này giả định input hợp lệ; xử lý input sai và yêu cầu nhập lại được học sau.
+
+## VI. Demo Hoàn Chỉnh: Tính Tiền Một Mặt Hàng
+
+Ghép các phần đã học thành một chương trình hoàn chỉnh:
 
 ~~~java
 import java.util.Scanner;
@@ -103,53 +250,160 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        System.out.print("Tên học viên: ");
-        String name = scanner.nextLine();
-        System.out.print("Điểm kiểm tra: ");
-        double score = scanner.nextDouble();
-        System.out.print("Số lần làm bài: ");
-        int attempts = scanner.nextInt();
 
-        System.out.println(name + " đạt " + score + " điểm sau " + attempts + " lần làm.");
+        System.out.print("Tên mặt hàng: ");
+        String productName = scanner.nextLine();
+
+        System.out.print("Đơn giá: ");
+        double unitPrice = scanner.nextDouble();
+
+        System.out.print("Số lượng: ");
+        int quantity = scanner.nextInt();
+
+        double subtotal = unitPrice * quantity;
+
+        System.out.println("Tên mặt hàng: " + productName);
+        System.out.println("Đơn giá: " + unitPrice);
+        System.out.println("Số lượng: " + quantity);
+        System.out.println("Thành tiền: " + subtotal);
+
+        scanner.close();
     }
 }
 ~~~
 
-Với input `Lan`, `8.5`, `2`, output là `Lan đạt 8.5 điểm sau 2 lần làm.` Ví dụ cố ý chỉ nhận input hợp lệ; cách xử lý input sai và lặp hỏi lại sẽ được học sau.
+Với dữ liệu `Áo thun`, `150000`, `2`, có thể lần theo trạng thái của chương trình:
 
-## Lỗi Thường Gặp
+| Biến | Giá trị sau khi nhập |
+|---|---:|
+| `productName` | `"Áo thun"` |
+| `unitPrice` | `150000.0` |
+| `quantity` | `2` |
+| `subtotal` | `300000.0` |
 
-| Lỗi | Nguyên nhân | Cách xử lý |
+Điểm quan trọng không phải là nhớ nguyên đoạn code, mà là giải thích được dữ liệu đi qua chương trình như thế nào: input được lưu vào biến, biểu thức dùng các biến để tạo kết quả, sau đó output đọc kết quả đó để hiển thị.
+
+### Thực hành có hướng dẫn
+
+1. Chạy chương trình với bộ dữ liệu mẫu và đối chiếu thành tiền.
+2. Đổi đơn giá thành `99000` và số lượng thành `3`; dự đoán kết quả trước khi chạy.
+3. Thêm biến `final double SHIPPING_FEE = 20000;`, tính và in tổng sau phí vận chuyển.
+4. Tạo một biến boolean kiểm tra đơn giá và số lượng đều lớn hơn 0; chỉ in giá trị boolean, chưa dùng `if`.
+5. Đổi tên biến `subtotal` thành `totalPrice` bằng chức năng Rename của IDE và chạy lại để xác nhận chương trình không đổi hành vi.
+
+## VII. Git Và GitHub Cơ Bản
+
+Source code chỉ nằm trên máy chưa được xem là đã nộp. Git lưu lịch sử thay đổi; GitHub lưu repository từ xa để chia sẻ và kiểm tra bài.
+
+~~~text
+GitHub --git clone--> Thư mục làm việc
+
+File thay đổi --git add--> Staging --git commit--> Local repository --git push--> GitHub
+~~~
+
+- `clone` tải repository và cấu hình liên kết với remote.
+- `status` cho biết file nào mới hoặc đã thay đổi.
+- `add` chọn thay đổi đưa vào lần commit tiếp theo.
+- `commit` lưu một mốc lịch sử trong repository trên máy.
+- `push` gửi các commit chưa có trên GitHub lên remote.
+
+### Quy trình nộp bài
+
+1. Tạo một repository mới trên GitHub và sao chép URL. Với bài đầu tiên, nên tạo repository rỗng để quy trình clone và push dễ theo dõi.
+2. Clone repository, sau đó mở đúng thư mục vừa clone bằng IntelliJ IDEA:
+
+~~~bash
+git clone <repository-url>
+cd <repository-name>
+~~~
+
+3. Tạo source code bên trong repository. Dùng `git status` để chắc rằng Git nhìn thấy file:
+
+~~~bash
+git status
+~~~
+
+4. Đưa thay đổi vào staging, tạo commit rồi push:
+
+~~~bash
+git add .
+git commit -m "Add lesson 1 homework"
+git push -u origin main
+~~~
+
+Nếu branch hiện tại không phải `main`, xem tên bằng `git branch --show-current` và push đúng branch đó. Không sao chép token, mật khẩu hoặc thông tin cá nhân vào source code và repository.
+
+5. Mở repository trên GitHub, tải lại trang và kiểm tra ba điều:
+
+- File Java đã xuất hiện.
+- Commit mới có đúng message.
+- Link repository mở được và trỏ đúng bài cần nộp.
+
+`commit` thành công không có nghĩa bài đã lên GitHub. Học viên chỉ hoàn thành việc nộp khi đã `push` và kiểm tra trên trang repository.
+
+## VIII. Lỗi Thường Gặp Và Cách Đọc Lỗi
+
+| Hiện tượng | Nguyên nhân thường gặp | Cách kiểm tra |
 |---|---|---|
-| IntelliJ không tìm thấy JDK | Chưa cài hoặc chưa chọn JDK | Cài JDK và chọn SDK trong project settings |
-| Không chạy được main | Chữ ký method sai hoặc file không đúng class | Dùng đúng chữ ký main; kiểm tra tên file/class |
-| Nhập chữ ở nơi cần số | Scanner đang đọc kiểu số | Nhập đúng kiểu theo lời nhắc |
-| Push bị từ chối | Chưa pull hoặc remote chưa khớp | Đọc thông báo Git, kiểm tra remote và lịch sử trước khi sửa |
+| IntelliJ không tìm thấy JDK | Chưa cài hoặc chưa chọn Project SDK | Chạy `java -version`, `javac -version`, sau đó kiểm tra Project SDK |
+| Không chạy được `main` | Sai chữ ký method hoặc sai tên file/class | So sánh với mẫu; kiểm tra `Main.java` và `class Main` |
+| Báo `cannot find symbol` | Viết sai tên hoặc dùng biến trước khi khai báo | Đọc tên được nhắc trong lỗi và tìm dòng khai báo |
+| Báo `incompatible types` | Gán giá trị không phù hợp với kiểu biến | Đối chiếu kiểu ở hai phía của dấu `=` |
+| Nhập chữ khi chương trình chờ số | `nextInt()`/`nextDouble()` cần dữ liệu số | Chạy lại và nhập đúng kiểu; xử lý lỗi học ở buổi sau |
+| Thành tiền sai | Chọn sai biến hoặc sai toán tử | In từng biến và tính tay với cùng input |
+| Commit xong nhưng GitHub chưa có bài | Chưa push | Chạy `git status`, push rồi kiểm tra trang GitHub |
+| Push không đúng branch | Tên branch khác `main` | Chạy `git branch --show-current` |
+
+Khi compiler báo nhiều lỗi, xử lý lỗi đầu tiên trước rồi biên dịch lại. Một dấu ngoặc hoặc dấu chấm phẩy sai có thể kéo theo nhiều thông báo ở các dòng phía sau.
 
 ## Tổng Kết Buổi 1
 
-| Hạng mục | Trạng thái |
-|---|---|
-| Nền tảng | JDK, IDE, compile/run và cấu trúc class/main |
-| Ngôn ngữ | Nhập/xuất, kiểu dữ liệu, biến, hằng số, quy tắc tên, toán tử |
-| Công cụ cộng tác | Repository, clone, commit, push và nộp bài |
-| Nội dung tiếp theo | Điều kiện, vòng lặp và method để điều khiển luồng và tránh lặp code |
+Một chương trình console cơ bản có thể được đọc theo mạch sau:
 
-### Câu Hỏi Ôn Tập
+~~~text
+Yêu cầu
+  ↓
+Chọn kiểu dữ liệu và biến
+  ↓
+Nhập dữ liệu bằng Scanner
+  ↓
+Tính toán bằng biểu thức
+  ↓
+Xuất kết quả bằng System.out
+  ↓
+Commit và push source code lên GitHub
+~~~
 
-1. JDK và IntelliJ có vai trò gì?
-2. Method main dùng để làm gì?
-3. Khi nào dùng int, double, String và boolean?
-4. `final` khác biến thường thế nào?
-5. Commit và push khác nhau thế nào?
+Học viên đạt yêu cầu buổi học khi có thể tự giải thích và thực hiện toàn bộ mạch này, không chỉ chạy được đoạn code sao chép từ ví dụ.
+
+### Câu hỏi ôn tập
+
+1. JDK, JVM và IntelliJ IDEA có vai trò khác nhau như thế nào?
+2. Vì sao file chứa `public class Main` phải có tên `Main.java`?
+3. `int`, `double`, `boolean` và `String` phù hợp với loại dữ liệu nào?
+4. `final` thay đổi cách một biến được sử dụng như thế nào?
+5. Vì sao `5 / 2` và `(double) 5 / 2` cho kết quả khác nhau?
+6. Biểu thức `unitPrice > 0 && quantity > 0` trả về kiểu gì?
+7. `git add`, `git commit` và `git push` thực hiện ba việc khác nhau nào?
+8. Làm thế nào để xác nhận bài đã thực sự được nộp lên GitHub?
+
+## Bài tập nhỏ trên lớp — Tính diện tích hình chữ nhật
+
+Viết chương trình `RectangleCalculator`:
+
+- Nhập chiều dài và chiều rộng kiểu `double` bằng `Scanner`.
+- Tính chu vi và diện tích bằng hai biểu thức riêng.
+- In lại hai giá trị đã nhập, chu vi và diện tích với nhãn rõ ràng.
+- Giả định dữ liệu nhập hợp lệ; chưa dùng `if`, vòng lặp hoặc class model.
+
+**Nghiệm thu:** với chiều dài `8.5` và chiều rộng `4`, chương trình in diện tích `34.0` và chu vi `25.0`. Thời gian làm khoảng 10 phút.
 
 ## Bài Tập Về Nhà
 
-Yêu cầu bài tập bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 01](../BTVN/buoi-01-btvn.md).
+Yêu cầu bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 01](../BTVN/buoi-01-btvn.md).
 
 ## Tài Liệu Tham Khảo
 
 - [Oracle — Getting Started with Java](https://docs.oracle.com/javase/tutorial/getStarted/index.html)
 - [Oracle — Variables](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/variables.html)
 - [GitHub Docs — Hello World](https://docs.github.com/en/get-started/start-your-journey/hello-world)
-

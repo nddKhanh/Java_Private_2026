@@ -8,8 +8,9 @@ Viết chương trình console nhận thông tin của một mặt hàng đượ
 
 ### Dữ Liệu Và Ràng Buộc
 
+- Bài chạy bằng JDK 17.
 - Thông tin cần nhập: tên mặt hàng (`String`), đơn giá (`double`) và số lượng (`int`).
-- Tên mặt hàng không để trống; đơn giá lớn hơn 0; số lượng là số nguyên dương. Buổi này chỉ cần nhập dữ liệu hợp lệ, chưa yêu cầu lặp nhập lại khi sai.
+- Tên mặt hàng không để trống; đơn giá lớn hơn 0; số lượng là số nguyên dương. Trong buổi này, giả định người dùng luôn nhập dữ liệu hợp lệ; chưa yêu cầu viết `if` để kiểm tra hoặc lặp nhập lại khi dữ liệu sai.
 - Thành tiền được xác định duy nhất bằng `đơn giá × số lượng`.
 - Chương trình phải có class chứa `main`; không bắt buộc tạo thêm class model.
 - Tên class chạy chương trình là `HitShop`; file là `HitShop.java`.
