@@ -12,7 +12,7 @@ Sau buổi học, học viên có thể:
 - Chọn kiểu dữ liệu phù hợp, khai báo biến/hằng số, đặt tên và viết các biểu thức cơ bản.
 - Tạo repository, commit, push và kiểm tra bài đã xuất hiện trên GitHub.
 
-> **Kết quả cuối buổi:** mỗi học viên chạy được một chương trình nhận tên mặt hàng, đơn giá, số lượng và in thành tiền; sau đó đưa source code lên GitHub. Chương trình chỉ xử lý một lần. Điều kiện, vòng lặp và menu được học từ buổi sau.
+> **Kết quả cuối buổi:** mỗi học viên chạy được một chương trình nhận tên mặt hàng, đơn giá, số lượng và in thành tiền; sau đó đưa source code lên GitHub.
 
 ## Chuẩn bị môi trường trước buổi học
 
@@ -54,8 +54,6 @@ Mô hình **Input – Process – Output** giúp xác định chương trình c�
 3. Tính kết quả.
 4. In kết quả.
 
-Chương trình chưa biết từ chối giá âm, chưa yêu cầu nhập lại và chưa xử lý nhiều mặt hàng. Các hạn chế này là chủ đích: buổi 1 tập trung vào chương trình tuần tự; buổi 2 bổ sung điều kiện, vòng lặp và danh sách.
-
 ## II. Chương Trình Java Đầu Tiên
 
 Tạo file `Main.java` và viết chương trình sau:
@@ -72,7 +70,7 @@ public class Main {
 
 - `public class Main` khai báo class tên `Main`. Vì class này là `public`, file phải có tên `Main.java`.
 - Cặp `{ }` xác định phạm vi của class và method. Thiếu hoặc đặt sai dấu ngoặc thường làm compiler báo nhiều lỗi liên tiếp.
-- `public static void main(String[] args)` là điểm Java bắt đầu chạy ứng dụng console. Buổi này chỉ cần dùng đúng chữ ký; ý nghĩa đầy đủ của `public` và `static` sẽ được làm rõ ở phần OOP.
+- `public static void main(String[] args)` là điểm Java bắt đầu chạy ứng dụng console.
 - `System.out.println(...)` in nội dung rồi xuống dòng. `System.out.print(...)` in nhưng giữ con trỏ ở cùng dòng.
 - Dấu `;` kết thúc một câu lệnh Java.
 
@@ -98,7 +96,7 @@ System.out.println("cơ bản");
 System.out.println("Buổi 1");
 ~~~
 
-Hai lệnh đầu tạo cùng một dòng vì `print` không tự xuống dòng. Thói quen dự đoán trước khi chạy giúp học viên đọc code thay vì chỉ thử ngẫu nhiên.
+Hai lệnh đầu tạo cùng một dòng vì `print` không tự xuống dòng.
 
 ## III. Kiểu Dữ Liệu Và Biến
 
@@ -121,7 +119,7 @@ Mỗi câu lệnh gồm kiểu dữ liệu, tên biến và giá trị ban đầ
 | `boolean` | Trạng thái đúng hoặc sai | `boolean available = true;` |
 | `String` | Chuỗi văn bản đặt trong nháy kép | `String name = "Áo thun";` |
 
-`int`, `long`, `double`, `char` và `boolean` là các kiểu nguyên thủy. `String` là kiểu tham chiếu, nhưng ở buổi này học viên chỉ cần biết cách khai báo, nhập và nối chuỗi để hiển thị.
+`int`, `long`, `double`, `char` và `boolean` là các kiểu nguyên thủy. `String` là kiểu tham chiếu dùng để lưu và xử lý chuỗi ký tự.
 
 ### Khai báo, gán lại và hằng số
 
@@ -204,7 +202,7 @@ boolean validQuantity = quantity > 0;
 boolean validItem = validPrice && validQuantity;
 ~~~
 
-Đoạn code mới chỉ **tính ra** `true` hoặc `false`; nó chưa thay đổi luồng chương trình. Buổi 2 sẽ dùng kết quả boolean trong `if/else` để quyết định có tiếp tục tính tiền hay không.
+Đoạn code tính ra giá trị `true` hoặc `false`; bản thân biểu thức boolean không thay đổi luồng chương trình.
 
 ## V. Nhập Và Xuất Dữ Liệu Với `Scanner`
 
@@ -238,7 +236,7 @@ System.out.print("Số lượng: ");
 int quantity = scanner.nextInt();
 ~~~
 
-Ví dụ cố ý đọc chuỗi trước các giá trị số để tránh phải xử lý ký tự xuống dòng còn lại. Nếu người dùng nhập chữ tại vị trí chương trình đang chờ số, chương trình có thể phát sinh lỗi. Buổi này giả định input hợp lệ; xử lý input sai và yêu cầu nhập lại được học sau.
+Ví dụ đọc chuỗi trước các giá trị số để tránh phải xử lý ký tự xuống dòng còn lại.
 
 ## VI. Demo Hoàn Chỉnh: Tính Tiền Một Mặt Hàng
 
@@ -281,14 +279,14 @@ Với dữ liệu `Áo thun`, `150000`, `2`, có thể lần theo trạng thái 
 | `quantity` | `2` |
 | `subtotal` | `300000.0` |
 
-Điểm quan trọng không phải là nhớ nguyên đoạn code, mà là giải thích được dữ liệu đi qua chương trình như thế nào: input được lưu vào biến, biểu thức dùng các biến để tạo kết quả, sau đó output đọc kết quả đó để hiển thị.
+Input được lưu vào biến, biểu thức dùng các biến để tạo kết quả, sau đó output đọc kết quả đó để hiển thị.
 
 ### Thực hành có hướng dẫn
 
 1. Chạy chương trình với bộ dữ liệu mẫu và đối chiếu thành tiền.
 2. Đổi đơn giá thành `99000` và số lượng thành `3`; dự đoán kết quả trước khi chạy.
 3. Thêm biến `final double SHIPPING_FEE = 20000;`, tính và in tổng sau phí vận chuyển.
-4. Tạo một biến boolean kiểm tra đơn giá và số lượng đều lớn hơn 0; chỉ in giá trị boolean, chưa dùng `if`.
+4. Tạo một biến boolean kiểm tra đơn giá và số lượng đều lớn hơn 0, sau đó in giá trị boolean.
 5. Đổi tên biến `subtotal` thành `totalPrice` bằng chức năng Rename của IDE và chạy lại để xác nhận chương trình không đổi hành vi.
 
 ## VII. Git Và GitHub Cơ Bản
@@ -349,7 +347,7 @@ Nếu branch hiện tại không phải `main`, xem tên bằng `git branch --sh
 | Không chạy được `main` | Sai chữ ký method hoặc sai tên file/class | So sánh với mẫu; kiểm tra `Main.java` và `class Main` |
 | Báo `cannot find symbol` | Viết sai tên hoặc dùng biến trước khi khai báo | Đọc tên được nhắc trong lỗi và tìm dòng khai báo |
 | Báo `incompatible types` | Gán giá trị không phù hợp với kiểu biến | Đối chiếu kiểu ở hai phía của dấu `=` |
-| Nhập chữ khi chương trình chờ số | `nextInt()`/`nextDouble()` cần dữ liệu số | Chạy lại và nhập đúng kiểu; xử lý lỗi học ở buổi sau |
+| Nhập chữ khi chương trình chờ số | `nextInt()`/`nextDouble()` cần dữ liệu số | Kiểm tra dữ liệu trước khi chuyển đổi |
 | Thành tiền sai | Chọn sai biến hoặc sai toán tử | In từng biến và tính tay với cùng input |
 | Commit xong nhưng GitHub chưa có bài | Chưa push | Chạy `git status`, push rồi kiểm tra trang GitHub |
 | Push không đúng branch | Tên branch khác `main` | Chạy `git branch --show-current` |
@@ -383,8 +381,8 @@ Học viên đạt yêu cầu buổi học khi có thể tự giải thích và 
 3. `int`, `double`, `boolean` và `String` phù hợp với loại dữ liệu nào?
 4. `final` thay đổi cách một biến được sử dụng như thế nào?
 5. Vì sao `5 / 2` và `(double) 5 / 2` cho kết quả khác nhau?
-6. Biểu thức `unitPrice > 0 && quantity > 0` trả về kiểu gì?
-7. `git add`, `git commit` và `git push` thực hiện ba việc khác nhau nào?
+6. Biểu thức `unitPrice > 0 && quantity > 0` trả về kiểu dữ liệu nào?
+7. `git add`, `git commit` và `git push` khác nhau như thế nào?
 8. Làm thế nào để xác nhận bài đã thực sự được nộp lên GitHub?
 
 ## Bài tập nhỏ trên lớp — Tính diện tích hình chữ nhật
@@ -394,13 +392,12 @@ Viết chương trình `RectangleCalculator`:
 - Nhập chiều dài và chiều rộng kiểu `double` bằng `Scanner`.
 - Tính chu vi và diện tích bằng hai biểu thức riêng.
 - In lại hai giá trị đã nhập, chu vi và diện tích với nhãn rõ ràng.
-- Giả định dữ liệu nhập hợp lệ; chưa dùng `if`, vòng lặp hoặc class model.
 
 **Nghiệm thu:** với chiều dài `8.5` và chiều rộng `4`, chương trình in diện tích `34.0` và chu vi `25.0`. Thời gian làm khoảng 10 phút.
 
 ## Bài Tập Về Nhà
 
-Yêu cầu bắt buộc và phần tự chọn được tách riêng tại [Bài tập về nhà Buổi 01](../BTVN/buoi-01-btvn.md).
+Hoàn thành [Bài tập về nhà Buổi 01](../BTVN/buoi-01-btvn.md).
 
 ## Tài Liệu Tham Khảo
 

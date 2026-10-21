@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 6:** file text dễ ghi tuần tự nhưng khó tìm, cập nhật một bản ghi và duy trì ràng buộc khi lượng dữ liệu tăng.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -20,7 +18,7 @@ Sau buổi học, học viên có thể:
 
 File buổi 6 phù hợp để học I/O, nhưng tìm Product theo id hoặc cập nhật đúng một dòng sẽ ngày càng khó. Database cung cấp bảng, khóa, ràng buộc và ngôn ngữ truy vấn.
 
-Buổi này chỉ chuyển **catalog Product** sang MySQL. Order vẫn chưa chuyển vào database; việc chia nhỏ giúp học viên hiểu CRUD một bảng trước khi xử lý quan hệ ở buổi 9.
+Catalog Product được lưu trong MySQL. Các thao tác trong bài làm việc với bảng `products`.
 
 ## II. Maven Quản Lý Build Và Dependency
 
@@ -149,8 +147,6 @@ try (Connection connection = openConnection();
 }
 ```
 
-Buổi 8 sẽ thay `null` bằng Optional và tách đoạn code này vào repository.
-
 ### Read all
 
 ```java
@@ -181,9 +177,9 @@ Sau mỗi thao tác Java, chạy một SELECT độc lập trong MySQL. Cách đ
 
 ## VII. Thực Hành Có Hướng Dẫn
 
-Học viên hoàn thiện năm method trong một class tạm `ProductJdbcDao`: insert, findAll, findById, update, deleteById. Class này là bước trung gian; buổi 8 sẽ đổi nó thành `JdbcProductRepository` theo interface.
+Hoàn thiện năm method trong class `ProductJdbcDao`: insert, findAll, findById, update, deleteById.
 
-Giáo viên kiểm tra hai ca lỗi:
+Kiểm tra hai ca lỗi:
 
 - Insert id SP01 lần hai: database từ chối trùng khóa, chương trình báo lỗi dễ hiểu.
 - Update P99: không ném lỗi, trả false vì `executeUpdate()` bằng 0.
@@ -221,4 +217,4 @@ Viết class `TaskJdbcDao` có bốn thao tác: thêm task, liệt kê theo id, 
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 07](../BTVN/buoi-07-btvn.md). Giữ chữ ký CRUD để buổi 8 tách repository và service mà không đổi hành vi.
+Hoàn thành [BTVN buổi 07](../BTVN/buoi-07-btvn.md).

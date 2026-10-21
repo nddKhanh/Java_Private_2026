@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 8:** repository một bảng chưa biểu diễn được quan hệ Order–OrderItem, khóa sinh tự động, truy vấn JOIN hoặc báo cáo tổng hợp.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -194,12 +192,13 @@ Luồng tạo đơn hiện có ít nhất hai bước:
 
 ```text
 INSERT orders
-INSERT order_items...
+INSERT order_items (dòng 1)
+INSERT order_items (dòng 2)
 ```
 
 Nếu insert item thứ hai lỗi sau khi Order đã lưu, database có Order thiếu chi tiết. Transaction giải quyết bằng một Connection dùng chung, `setAutoCommit(false)`, `commit()` khi tất cả thành công và `rollback()` khi có lỗi.
 
-Buổi này giáo viên demo transaction và cho làm ở phần nâng cao để học viên tập trung trước vào generated key/JOIN. Đến capstone, transaction là bắt buộc cho luồng nhiều bảng và cập nhật stock.
+Transaction bảo đảm thao tác ghi Order và toàn bộ OrderItem cùng commit hoặc cùng rollback.
 
 ## VIII. Demo Dữ Liệu Chuẩn
 
@@ -245,4 +244,4 @@ Thiết kế ba bảng `students`, `courses`, `enrollments`:
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 09](../BTVN/buoi-09-btvn.md). Transaction là phần nâng cao ở bài này nhưng sẽ là yêu cầu bắt buộc của capstone.
+Hoàn thành [BTVN buổi 09](../BTVN/buoi-09-btvn.md).

@@ -4,7 +4,7 @@
 
 ### Kế Thừa Từ Buổi 02
 
-Tiếp tục `HitShop.java`, menu và dữ liệu giỏ của repository cũ bằng JDK 17. Ở buổi này, bổ sung mã `P01`, `P02` khi tạo Product. Không tạo app mới. Bốn method `addItem`, `removeItem`, `printItems`, `calculateTotal` vẫn giữ tên; tham số và dữ liệu bên trong đổi từ ba list song song sang `Product`/`CartItem`.
+Tiếp tục `HitShop.java`, menu và dữ liệu giỏ của repository cũ bằng JDK 17. Bổ sung mã `P01`, `P02` khi tạo Product. Giữ tên bốn method `addItem`, `removeItem`, `printItems`, `calculateTotal`; đổi tham số và dữ liệu bên trong từ ba list song song sang `Product`/`CartItem`.
 
 ### Bài Toán
 
@@ -31,19 +31,13 @@ Hình thoi tại `HitShop` thể hiện chương trình giữ nhiều `CartItem`
 - Customer: `C01 / Linh Nguyễn / 0900000001`.
 - Giỏ mẫu: `P01 × 2`, `P02 × 1`. Khi in giỏ, mỗi dòng phải có mã/tên sản phẩm, số lượng và thành tiền; tổng giỏ là `350000`.
 - Một `CartItem` chỉ chứa đúng một `Product` và một số lượng. Khi thay đổi quantity của CartItem, stock của Product không tự đổi.
-- Nộp toàn bộ source theo đúng package; không dùng database, kế thừa, interface hoặc ID tự tăng trong phần bắt buộc.
+- Nộp toàn bộ source theo đúng package.
 
 ### Nộp Bài
 
 Nộp source của `HitShop` và ba class model; kèm output giỏ chuẩn có tổng `350000`.
 
-## Mốc Bàn Giao Cho Buổi 04
-
-Giữ ba model, giỏ hàng, menu và bốn method giỏ hàng. Buổi 4 mở rộng Product bằng lớp con và thêm Order; các chức năng thêm/xóa/in/tính tổng hiện có vẫn phải chạy.
-
 ## Nâng Cao — Bài Tự Chọn
 
-- `Product` có thể có `static` ID tuần tự và getter tĩnh `getCount()`. Hai sản phẩm được tạo ngoài dữ liệu mẫu phải nhận các ID tiếp theo theo thứ tự tạo. Phần này không thay thế được mã nhập thủ công trong bài lõi.
-- Phần access modifier: ghi nhận class/field/method nào truy cập được trong cùng package và từ package khác; không thay đổi các field private bắt buộc của model.
-
-Các phần nâng cao không ảnh hưởng khả năng chạy giỏ hàng core nếu không làm.
+- Bổ sung field `static int count` để đếm số đối tượng `Product` đã tạo. Constructor tăng `count` sau mỗi lần tạo đối tượng; method tĩnh `getCount()` trả về giá trị hiện tại. Sau khi tạo P01 và P02, `Product.getCount()` trả về `2`.
+- Lập bảng phạm vi truy cập của các class, field và method khi được gọi trong cùng package hoặc từ package khác; các field bắt buộc của model vẫn là `private`.

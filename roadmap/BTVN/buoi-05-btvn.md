@@ -9,7 +9,7 @@ Tiếp tục repository `HitShop` bằng JDK 17. Giữ Product P01/P02/P03, Cust
 ### 1. Hợp Đồng Thanh Toán
 
 - Tạo interface `PaymentMethod` với method `String pay(double amount)`.
-- `CashPayment` và `BankTransferPayment` cùng implements `PaymentMethod`.
+- `CashPayment` và `BankTransferPayment` đều triển khai `PaymentMethod`.
 - `CashPayment.pay(350000)` trả `Đã nhận tiền mặt: 350000.0`.
 - `BankTransferPayment.pay(350000)` trả `Đã tạo yêu cầu chuyển khoản: 350000.0`.
 - Nơi gọi chỉ giữ biến kiểu `PaymentMethod` và gọi `pay`; không dùng `if/else` để kiểm tra class cụ thể.
@@ -38,18 +38,16 @@ Các lớp thanh toán và giao hàng phụ thuộc vào interface tương ứng
 
 - `P01 / Áo thun / 150000` và `P01 / Áo thun bản cập nhật / 160000` bằng nhau.
 - `P02 / Bình nước / 50000` không bằng P01.
-- Hai payment trả đúng chuỗi chuẩn với amount `350000.0`.
-- Hai delivery trả đúng chuỗi chuẩn với Order O01.
+- `CashPayment` và `BankTransferPayment` trả đúng chuỗi chuẩn khi nhận amount `350000.0`.
+- `StandardDelivery` và `ExpressDelivery` trả đúng chuỗi chuẩn khi nhận Order O01.
 - Xóa một Product P01 bằng object khác instance nhưng cùng id phải loại đúng P01 khỏi danh sách.
 
 ### Nộp Bài
 
-Nộp source của hai interface, bốn implementation, Product đã cập nhật và `HitShop`; kèm output nghiệm thu. Không yêu cầu database, Stream, factory hoặc custom exception trong phần bắt buộc.
+Nộp source của hai interface, bốn implementation, Product đã cập nhật và `HitShop`; kèm output nghiệm thu.
 
 ## Mở Rộng — Bài Tự Chọn
 
 - Tạo abstract class `BaseDeliveryMethod` giữ `fee`, kiểm tra `fee >= 0` và cung cấp `getFee()`; hai delivery kế thừa class này đồng thời implements `DeliveryMethod`.
 - Viết `findProductById` trả `Optional<Product>`.
 - Tạo generic class `Box<T>` giữ một giá trị và trả lại đúng kiểu qua `getValue()`.
-
-Phần tự chọn không được làm thay đổi hợp đồng bắt buộc ở trên.

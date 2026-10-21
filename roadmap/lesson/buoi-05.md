@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 4:** kế thừa giải quyết được quan hệ IS-A, nhưng các nhóm class không cùng họ vẫn cần một hợp đồng chung; object khác instance cũng chưa được so sánh theo định danh nghiệp vụ.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -64,7 +62,7 @@ static void checkout(PaymentMethod paymentMethod, double amount) {
 }
 ```
 
-Giáo viên gọi `checkout` lần lượt với hai object. Điểm quan trọng không phải output khác nhau; điểm quan trọng là chữ ký và thân của `checkout` không đổi.
+Gọi `checkout` lần lượt với hai object. Chữ ký và thân của `checkout` không thay đổi khi implementation được thay thế.
 
 ## II. Áp Dụng Lần Hai Với DeliveryMethod
 
@@ -123,7 +121,7 @@ public abstract class BaseDeliveryMethod implements DeliveryMethod {
 
 Class trừu tượng có thể giữ `fee` và constructor dùng chung; interface chỉ nêu hành vi `deliver`. Một class chỉ kế thừa một class nhưng có thể implements nhiều interface.
 
-Trong bài lõi, Product vẫn là class concrete vì ta còn tạo trực tiếp áo thun và bình nước. Không biến Product thành abstract chỉ để “có dùng abstract class”, vì điều đó làm hỏng dữ liệu từ buổi 3–4.
+Product là class concrete khi chương trình cần tạo trực tiếp các đối tượng Product. Một class chỉ nên được khai báo `abstract` khi không cần khởi tạo trực tiếp và các lớp con phải cung cấp hành vi chuyên biệt.
 
 ## IV. Product Equality: Bằng Nhau Theo Điều Gì?
 
@@ -185,7 +183,7 @@ products.remove(searchKey);
 4. Dùng một Product khác instance để tìm và xóa SP01 trong `ArrayList`.
 5. Gọi payment/delivery từ một class demo, không đưa logic lựa chọn UI vào implementation.
 
-Giáo viên yêu cầu mỗi nhóm trả lời: phần nào thay đổi khi thêm `QrPayment`, và phần nào không được thay đổi? Câu trả lời đúng phải nêu implementation mới và điểm khởi tạo/lựa chọn, không sửa `checkout`.
+Xác định phần thay đổi khi thêm `QrPayment`: bổ sung implementation mới và cập nhật điểm khởi tạo hoặc lựa chọn; không sửa `checkout`.
 
 ## Lỗi thường gặp
 
@@ -199,7 +197,7 @@ Giáo viên yêu cầu mỗi nhóm trả lời: phần nào thay đổi khi thê
 
 ## Tổng kết buổi 5
 
-Interface tách “có thể làm gì” khỏi “làm bằng cách nào”. Abstract class chia sẻ trạng thái/implementation cho một họ lớp. Equality biến định danh nghiệp vụ thành quy tắc mà collection hiểu được. Ba ý này chuẩn bị trực tiếp cho repository interface và dependency inversion ở các buổi sau.
+Interface tách “có thể làm gì” khỏi “làm bằng cách nào”. Abstract class chia sẻ trạng thái/implementation cho một họ lớp. Equality biến định danh nghiệp vụ thành quy tắc mà collection hiểu được.
 
 ## Bài tập nhỏ trên lớp — Gửi thông báo
 

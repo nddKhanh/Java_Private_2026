@@ -8,7 +8,7 @@ Tiếp tục `HitShop` bằng JDK 17 và dùng nguyên các model Product, Custo
 
 ### Bài Toán
 
-Kiểm tra một Order trước khi lưu, ghi nội dung dễ đọc vào `orders.txt`, sau đó đọc lại các dòng để hiển thị. Mục tiêu của bài là xử lý lỗi và tài nguyên file; chưa yêu cầu khôi phục toàn bộ object graph từ file.
+Kiểm tra một Order trước khi lưu, ghi nội dung dễ đọc vào `orders.txt`, sau đó đọc lại các dòng để hiển thị.
 
 ### Định Dạng File
 
@@ -28,7 +28,7 @@ END
 
 ### Class Và Hành Vi Bắt Buộc
 
-- Tạo `OrderValidator.validate(Order order)`; ném `IllegalArgumentException` nếu order null, không có item, quantity không dương hoặc Product null.
+- Tạo `OrderValidator.validate(Order order)`; ném `IllegalArgumentException` nếu `order` là null, danh sách item rỗng, hoặc có `CartItem` chứa Product null hay quantity không dương.
 - Tạo `OrderFileStore` với:
   - `void saveOrder(Order order, Path path) throws IOException`;
   - `List<String> loadLines(Path path) throws IOException`.
@@ -36,13 +36,13 @@ END
 - Dùng `Files.newBufferedWriter`/`Files.newBufferedReader` trong try-with-resources. Không tự gọi `close()` trong nhiều nhánh.
 - Nếu file chưa tồn tại, `loadLines` trả danh sách rỗng và thông báo `Chưa có dữ liệu đơn hàng.`.
 - Nếu lưu thất bại, không in thông báo thành công. Thông báo lỗi phải nêu thao tác nào thất bại nhưng không in mật khẩu hay thông tin nhạy cảm.
-- Khi đọc, in lần lượt các dòng của file và tính lại tổng từ các dòng `ITEM`. Không bắt buộc dựng lại Product, Customer và Order từ text trong phần lõi.
+- Khi đọc, in lần lượt các dòng của file và tính lại tổng từ các dòng `ITEM`.
 
 ### Sơ Đồ Lớp Và Quan Hệ
 
 ![Sơ đồ lớp BTVN buổi 06](assets/buoi-06-class-diagram.svg)
 
-`OrderFileStore` dùng `OrderValidator` trước khi ghi và đọc dữ liệu từ mô hình `Order` hiện có; không tạo một model Order thứ hai cho file.
+`OrderFileStore` dùng `OrderValidator` trước khi ghi một `Order`; `loadLines` đọc file và trả về các dòng văn bản. Không tạo thêm một model Order dành riêng cho file.
 
 ### Dữ Liệu Nghiệm Thu
 
@@ -56,11 +56,9 @@ Kiểm tra thêm ba trường hợp:
 
 ### Nộp Bài
 
-Nộp source, file `orders.txt` mẫu và output của bốn ca kiểm tra. Không yêu cầu Regex, thread, CSV library hoặc phục hồi toàn bộ object graph.
+Nộp source, file `orders.txt` mẫu và output của bốn ca kiểm tra.
 
 ## Mở Rộng — Bài Tự Chọn
 
 - Tạo `InvalidOrderException` riêng thay cho `IllegalArgumentException` và cập nhật chữ ký method phù hợp.
 - Viết `OrderFileParser` để chuyển một khối hợp lệ trở lại thành Order bằng catalog Product và danh sách Customer đang có. Dòng sai phải báo số dòng và không làm mất các khối hợp lệ khác.
-
-Đây là phần mở rộng, không phải điều kiện hoàn thành bài lõi.

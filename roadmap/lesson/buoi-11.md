@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 10:** code đã được phân tầng nhưng khi nhiều người cùng sửa một repository vẫn dễ đè thay đổi, conflict và thiếu review; giao diện console cũng chưa minh họa cách tái sử dụng Service trong desktop UI.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -57,11 +55,11 @@ PR `Add product management window` cần có:
 
 Reviewer kiểm tra theo thứ tự:
 
-1. Có build/run trên JDK 17 không?
-2. Bảng có lấy dữ liệu qua ProductService không?
+1. Dự án có build và chạy thành công trên JDK 17 không?
+2. Bảng có lấy dữ liệu thông qua ProductService không?
 3. Swing View có gọi JDBC trực tiếp không?
-4. View Swing có làm thay đổi hành vi console cũ không?
-5. Tên/format có làm code khó đọc không?
+4. Swing View có làm thay đổi hành vi của giao diện console hiện có không?
+5. Tên định danh và định dạng code có rõ ràng, nhất quán không?
 
 Nhận xét nên chỉ vị trí, vấn đề và kết quả mong đợi. Ví dụ: “View Swing đang tự tạo danh sách dữ liệu trong constructor; hãy inject ProductService và dùng `findAllProducts()` để UI hiển thị từ cùng nguồn.”
 
@@ -126,8 +124,6 @@ public class ProductManagementFrame extends JFrame {
         JTextField priceField = new JTextField(10);
         JButton addButton = new JButton("Thêm");
         addButton.setEnabled(false);
-        addButton.setToolTipText("Thực hiện ở phần mở rộng");
-
         formPanel.add(new JLabel("Tên sản phẩm"));
         formPanel.add(nameField);
         formPanel.add(new JLabel("Giá"));
@@ -146,7 +142,7 @@ public class ProductManagementFrame extends JFrame {
 }
 ```
 
-Nút Add bị disabled trong phần lõi để giao diện không hứa một hành vi chưa tồn tại. Phần mở rộng sẽ kích hoạt nút và gắn listener.
+Nút Add bị vô hiệu hóa bằng `setEnabled(false)`. Một `ActionListener` được gắn vào nút để xử lý sự kiện khi chức năng thêm được triển khai.
 
 ## VI. Nạp Dữ Liệu Qua Service
 
@@ -166,9 +162,9 @@ private void loadProducts() {
 
 Không khởi tạo dữ liệu mẫu ngay trong cửa sổ. Nếu console và Swing dùng hai list khác nhau, hai giao diện sẽ cho kết quả không nhất quán. ProductService là nguồn use case chung; repository phía sau có thể là JDBC hoặc memory khi demo.
 
-Giáo viên chuẩn bị ba Product bất kỳ trong repository demo để kiểm tra bảng. Dữ liệu này chỉ phục vụ buổi học và không phụ thuộc kết quả BTVN của học viên.
+Khởi tạo ba Product trong repository để kiểm tra dữ liệu hiển thị trên bảng.
 
-## VII. Event Handling Là Phần Mở Rộng Có Kiểm Soát
+## VII. Event Handling
 
 Khi thêm event:
 
@@ -178,14 +174,14 @@ addButton.addActionListener(event -> handleAddProduct());
 
 `handleAddProduct()` đọc text, parse giá, gọi ProductService rồi reload bảng. Không viết INSERT SQL trong listener. Input sai giữ nguyên bảng và hiện thông báo rõ.
 
-Mã P04 không nên được tạo bằng `products.size() + 1` nếu danh sách có thể xóa. Đây là một điểm thảo luận về chiến lược id; bài mở rộng dùng “mã lớn nhất + 1” cho dữ liệu lớp nhỏ.
+Không tạo mã P04 bằng `products.size() + 1` vì thao tác xóa có thể làm trùng mã. Có thể lấy mã lớn nhất hiện có rồi cộng 1.
 
 ## VIII. Thực Hành Nhóm
 
 1. Một thành viên tạo layout và commit.
 2. Một thành viên nối ProductService và commit riêng.
 3. Thành viên khác review PR theo checklist.
-4. Giáo viên tạo một thay đổi nhỏ trên develop để nhóm thực hành conflict.
+4. Tạo một thay đổi nhỏ trên develop để thực hành xử lý conflict.
 5. Nhóm chạy lại console và Swing trước khi merge.
 
 Mỗi nhóm phải cho thấy `git log --oneline --graph --all` và giải thích nhánh nào chứa thay đổi nào.
@@ -203,7 +199,7 @@ Mỗi nhóm phải cho thấy `git log --oneline --graph --all` và giải thíc
 
 ## Tổng kết buổi 11
 
-Git flow làm thay đổi nhỏ, review được và tích hợp có kiểm soát. Swing chỉ là một View mới; kiến trúc đúng cho phép nó dùng lại Service/Repository từ console. Một UI đơn giản nhưng dùng đúng nguồn dữ liệu có giá trị hơn một form nhiều nút nhưng bỏ qua tầng nghiệp vụ.
+Git flow chia thay đổi thành các phần nhỏ để review và tích hợp có kiểm soát. Swing là một View sử dụng lại Service/Repository của ứng dụng console.
 
 ## Bài tập nhỏ trên lớp — Cửa sổ danh bạ
 
@@ -218,4 +214,4 @@ Thực hiện trên nhánh `feature/contact-window`:
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 11](../BTVN/buoi-11-btvn.md) bằng PR vào develop. Phần event handler là tự chọn.
+Hoàn thành [BTVN buổi 11](../BTVN/buoi-11-btvn.md) bằng PR vào develop.

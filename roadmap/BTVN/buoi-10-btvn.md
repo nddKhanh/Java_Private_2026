@@ -13,6 +13,7 @@ src/main/java/
 ├── app/HitShop.java
 ├── controller/ShopController.java
 ├── view/ConsoleView.java
+├── dto/OrderItemInput.java
 ├── service/ProductService.java
 ├── service/CustomerService.java
 ├── service/OrderService.java
@@ -24,7 +25,10 @@ src/main/java/
 ├── repository/jdbc/JdbcCustomerRepository.java
 ├── repository/jdbc/JdbcOrderRepository.java
 ├── repository/jdbc/JdbcOrderItemRepository.java
-└── model/...
+├── model/Product.java
+├── model/Customer.java
+├── model/Order.java
+└── model/OrderItem.java
 ```
 
 ### Trách Nhiệm
@@ -38,7 +42,7 @@ src/main/java/
 
 ### Dữ Liệu Nhập Đơn
 
-View không được tạo `OrderItem` hoàn chỉnh vì chưa chịu trách nhiệm tra Product hoặc chốt giá. Tạo record:
+View không tạo `OrderItem` hoàn chỉnh vì việc tra Product và chốt giá thuộc trách nhiệm của Service. Tạo record trong package `dto`:
 
 ```java
 public record OrderItemInput(String productId, int quantity) {}
@@ -50,7 +54,9 @@ public record OrderItemInput(String productId, int quantity) {}
 
 - `ShopController.run(): void`, `handleChoice(int): void`.
 - `ConsoleView.showMenu(): void`, `readChoice(): int`, `readProduct(): Product`, `readCustomerId(): String`, `readOrderItems(): List<OrderItemInput>`, `readCreatedAt(): LocalDateTime` và các method hiển thị.
-- Giữ hợp đồng ProductService, CustomerService, OrderService và repository của buổi 8–9, ngoại trừ overload tạo đơn nhận `List<OrderItemInput>` ở biên controller/service.
+- Giữ các hợp đồng ProductService, CustomerService và repository của buổi 8–9.
+- Thay chữ ký tạo đơn của `OrderService` bằng `createOrder(String customerId, List<OrderItemInput> inputs, LocalDateTime createdAt): long`.
+- Không khai báo đồng thời hai method chỉ khác nhau ở kiểu generic `List<OrderItem>` và `List<OrderItemInput>` vì hai chữ ký có cùng kiểu sau type erasure.
 - `OrderService.findOrderById(long)` vẫn trả Order đã có đầy đủ items.
 
 ### Sơ Đồ Lớp Và Quan Hệ
@@ -62,10 +68,10 @@ public record OrderItemInput(String productId, int quantity) {}
 ### Nghiệm Thu Refactor
 
 1. CRUD Product với P01/P02/P03 cho kết quả như trước refactor.
-2. Tạo và xem Order id 1 trả đúng Customer, items, unit price và tổng.
-3. Một luồng gọi có thể chỉ ra rõ: View → Controller → Service → Repository interface → JDBC implementation.
-4. Tìm toàn repository không có SQL trong `view`, `controller`, `service` hoặc `model`.
-5. Tạo `MemoryProductRepository implements ProductRepository`, khởi tạo P01/P02; truyền nó vào ProductService và chạy tìm/list mà không sửa code Service.
+2. Tạo Order id 1 và xem lại đúng Customer, danh sách item, unit price và tổng tiền.
+3. Chỉ ra được một luồng gọi hoàn chỉnh: View → Controller → Service → Repository interface → JDBC implementation.
+4. Tìm trên toàn bộ repository và xác nhận không có SQL trong `view`, `controller`, `service` hoặc `model`.
+5. Tạo `MemoryProductRepository implements ProductRepository`, khởi tạo P01/P02, truyền repository này vào ProductService rồi chạy chức năng tìm và liệt kê mà không sửa code Service.
 6. README mô tả cấu hình database và hai cách chạy: JDBC repository và memory repository.
 
 ### Nộp Bài
@@ -76,5 +82,3 @@ Nộp source theo package, README và output so sánh trước/sau refactor. Kh�
 
 - `PaymentMethodFactory` nhận `CASH`/`BANK` và trả implementation tương ứng.
 - Một lớp cấu hình duy nhất đọc credential từ biến môi trường hoặc file bị `.gitignore`; không hard-code mật khẩu.
-
-Pattern chỉ được thêm khi làm code gọi rõ hơn; không thay thế repository/service/MVC bắt buộc.

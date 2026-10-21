@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 11:** học viên đã có các kỹ thuật riêng lẻ nhưng chưa tự chốt phạm vi, mô hình dữ liệu, transaction, phân công và tiêu chí demo cho một sản phẩm nhóm.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, mỗi nhóm có thể:
@@ -42,7 +40,7 @@ Các kiến thức nền nằm trong luồng đó:
 - MVC/SOLID đặt trách nhiệm và dependency.
 - Git/PR cho phép nhiều người cộng tác.
 
-Mỗi nhóm chọn một chức năng đã làm và kể lại toàn bộ đường đi này. Nếu một bước không chỉ ra được class chịu trách nhiệm, đó là điểm cần sửa trước capstone.
+Mỗi nhóm chọn một chức năng và mô tả toàn bộ đường đi của dữ liệu. Mỗi bước phải xác định được class chịu trách nhiệm.
 
 ## II. Chọn Đề Tài Từ Vấn Đề, Không Từ Danh Sách Công Nghệ
 
@@ -65,7 +63,7 @@ Nhóm hoàn thành mẫu:
 Ứng dụng giúp [người dùng] thực hiện [ba chức năng chính].
 Luồng quan trọng nhất là [tên luồng], ghi vào [các bảng].
 Sản phẩm demo bằng [console hoặc Swing].
-Các chức năng chưa làm trong phiên bản đầu: [...].
+Các chức năng nằm ngoài phiên bản đầu: [danh sách chức năng].
 ```
 
 Nếu câu trả lời vượt một trang hoặc có hơn năm chức năng chính, phạm vi đang quá rộng.
@@ -137,7 +135,7 @@ Sau đó ghi class vào từng hộp. Nếu một class nằm ở hai hộp, tr�
 
 Chia việc theo vertical slice nhỏ sẽ giảm conflict hơn chia “một người làm toàn model, một người làm toàn SQL”. Ví dụ:
 
-- Feature product/customer CRUD.
+- Feature CRUD cho Product hoặc Customer.
 - Feature tạo giao dịch nhiều bảng.
 - Feature xem chi tiết và báo cáo.
 - Feature giao diện/tài liệu tích hợp.
@@ -184,21 +182,21 @@ Nhóm ghi input và output mong đợi cho từng bước. Tránh dùng thời g
 
 ### Vòng 1 — Phạm vi
 
-- Ba chức năng chính có demo được không?
-- Có phần nào chỉ “cho đẹp” nhưng chưa phục vụ use case?
-- Có chức năng nào nên chuyển thành nâng cao?
+- Ba chức năng chính có thể được demo đầy đủ không?
+- Có chức năng nào không phục vụ use case cốt lõi không?
+- Có chức năng nào nên chuyển sang phạm vi nâng cao không?
 
 ### Vòng 2 — Dữ liệu và transaction
 
-- Khóa chính/ngoại có rõ không?
-- Có snapshot dữ liệu lịch sử cần thiết không?
-- Transaction gồm chính xác các bước nào?
-- Ca rollback chứng minh bằng query nào?
+- Khóa chính và khóa ngoại đã được xác định rõ chưa?
+- Những giá trị lịch sử nào cần được snapshot?
+- Transaction gồm chính xác những bước nào?
+- Dùng câu query nào để chứng minh transaction đã rollback?
 
 ### Vòng 3 — Kiến trúc và cộng tác
 
-- Dependency có đi đúng tầng không?
-- Task/branch có đủ nhỏ để review không?
+- Quan hệ phụ thuộc có đi đúng thứ tự giữa các tầng không?
+- Mỗi task/branch có đủ nhỏ để review độc lập không?
 - README và seed do ai chịu trách nhiệm?
 - Ai review chéo feature nào?
 
@@ -230,7 +228,7 @@ Mentor chỉ duyệt khi phạm vi, dữ liệu đầu vào và kết quả nghi
 
 ## Tổng kết khóa học
 
-Mục tiêu không phải nhớ mọi API mà là biết đưa một yêu cầu đi từ input đến model, nghiệp vụ, dữ liệu và output với trách nhiệm rõ. Capstone là nơi chứng minh chuỗi đó hoạt động, có thể kiểm tra, có rollback khi lỗi và có lịch sử cộng tác qua Git.
+Một yêu cầu đi từ input đến model, nghiệp vụ, dữ liệu và output qua các tầng có trách nhiệm rõ ràng. Luồng nhiều bước dùng transaction để rollback khi lỗi; lịch sử Git ghi lại quá trình cộng tác và review.
 
 ## Bài tập nhỏ trên lớp — Đề cương quản lý bãi xe
 

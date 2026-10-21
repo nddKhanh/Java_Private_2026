@@ -38,7 +38,7 @@ CREATE TABLE order_items (
 - `OrderRepository.findById(long id): Optional<Order>` nạp phần header và Customer, khởi tạo items rỗng.
 - `OrderItemRepository.insertAll(long orderId, List<OrderItem> items): void`.
 - `OrderItemRepository.findByOrderId(long orderId): List<OrderItem>` JOIN Product để tạo từng OrderItem.
-- `OrderService.createOrder(String customerId, List<OrderItem> items, LocalDateTime createdAt): long` tạo Order trước rồi gắn generated id cho các item.
+- `OrderService.createOrder(String customerId, List<OrderItem> items, LocalDateTime createdAt): long` tạo Order, nhận generated id rồi truyền id đó cho `OrderItemRepository.insertAll` để lưu các dòng hàng.
 - `OrderService.findOrderById(long id): Optional<Order>` gọi cả hai repository và gắn danh sách item trước khi trả kết quả. View không tự ghép dữ liệu.
 - `OrderRepository.findRevenueByDay(): List<DailyRevenue>`.
 - `OrderRepository.findRevenueByCustomer(): List<CustomerRevenue>`.
@@ -56,7 +56,6 @@ CREATE TABLE order_items (
 - SQL nhận input dùng `PreparedStatement`.
 - Xem đơn in id, Customer, thời gian, trạng thái, từng dòng hàng và tổng.
 - Báo cáo ngày sắp xếp ngày tăng dần; báo cáo khách sắp xếp customer id tăng dần. Tổng là `SUM(quantity * unit_price)`.
-- Phần bắt buộc được nghiệm thu với dữ liệu hợp lệ và database hoạt động ổn định. Transaction được thực hành ở phần nâng cao buổi này và trở thành yêu cầu bắt buộc ở capstone.
 
 ### Dữ Liệu Chuẩn
 

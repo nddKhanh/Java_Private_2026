@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 2:** nhiều danh sách song song phải luôn cùng index và cùng kích thước; chỉ cần quên cập nhật một danh sách là dữ liệu bị ghép sai.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -41,7 +39,7 @@ OOP giúp gom dữ liệu liên quan và hành vi của nó vào object. Đây l
 
 ### Kiểm tra nhanh
 
-Giáo viên cố ý xóa phần tử index 0 chỉ khỏi `names`, sau đó yêu cầu học viên dự đoán output. Học viên cần chỉ ra được dữ liệu nào đã ghép sai trước khi chuyển sang class.
+Xóa phần tử ở index 0 chỉ khỏi `names`, dự đoán output và xác định dữ liệu bị ghép sai.
 
 ## II. Class Product: Từ Bản Thiết Kế Đến Object
 
@@ -140,7 +138,7 @@ public class Customer {
 }
 ```
 
-Ở giai đoạn này, getter/setter giúp code bên ngoài làm việc với field private. Buổi 4 sẽ quay lại câu hỏi quan trọng hơn: setter nào thực sự nên tồn tại và quy tắc nào phải được bảo vệ.
+Getter và setter cho phép code bên ngoài đọc hoặc cập nhật field `private` theo các method được công khai.
 
 ## IV. HAS-A Với CartItem
 
@@ -181,7 +179,7 @@ p.setPrice(30000);
 System.out.println(item.getTotal()); // 60000
 ```
 
-CartItem không giữ một bản sao Product; nó giữ tham chiếu tới cùng object `p`. Đây là điều cần hiểu trước khi sang buổi 9, nơi OrderItem phải chốt `unitPrice` riêng để giá lịch sử không đổi.
+CartItem không giữ một bản sao Product; nó giữ tham chiếu tới cùng object `p`.
 
 ## V. Refactor Giỏ Hàng Mà Không Đổi Hành Vi
 
@@ -226,7 +224,7 @@ static double calculateTotal() {
 }
 ```
 
-Điểm cần quan sát là phần menu gần như không đổi. Refactor tốt thay cách tổ chức bên trong nhưng giữ kết quả người dùng đang nhận.
+Phần menu gần như không đổi. Quá trình refactor thay cách tổ chức bên trong nhưng giữ nguyên kết quả người dùng nhận được.
 
 ## VI. Thực Hành Có Hướng Dẫn
 
@@ -255,10 +253,10 @@ Class gom trạng thái và hành vi liên quan; object là một thể hiện c
 
 ### Câu hỏi chốt buổi
 
-1. Vì sao quantity không nên là field dùng chung của Product?
-2. `this.name` và tham số `name` khác nhau thế nào?
-3. CartItem giữ bản sao Product hay tham chiếu tới Product?
-4. Refactor thành object đã giữ lại hành vi nào của buổi 2?
+1. Vì sao số lượng mua không nên được lưu trong field của `Product`?
+2. `this.name` và tham số `name` khác nhau như thế nào?
+3. `CartItem` giữ một bản sao của `Product` hay giữ tham chiếu tới đối tượng `Product`?
+4. Khi refactor dữ liệu giỏ hàng thành object, những hành vi nào của chương trình buổi 2 được giữ nguyên?
 
 ## Bài tập nhỏ trên lớp — Đăng ký khóa học
 

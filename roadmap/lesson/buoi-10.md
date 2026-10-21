@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 9:** chức năng đã chạy qua nhiều repository nhưng ranh giới giao diện, điều phối và nghiệp vụ chưa đồng đều; dependency cụ thể khiến code khó thay thế và kiểm thử.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -35,9 +33,9 @@ case 7 -> {
 
 Đặt ba câu hỏi:
 
-1. Nếu đổi console thành Swing, đoạn nào phải đổi?
-2. Nếu đổi MySQL thành memory test, đoạn nào phải đổi?
-3. Nếu quy tắc stock đổi, ta sửa ở đâu?
+1. Nếu thay giao diện console bằng Swing, những thành phần nào phải thay đổi?
+2. Nếu thay MySQL bằng repository in-memory để kiểm thử, những thành phần nào phải thay đổi?
+3. Nếu quy tắc tồn kho thay đổi, tầng nào cần được sửa?
 
 Nếu câu trả lời đều là “sửa case 7”, code chưa phân trách nhiệm.
 
@@ -52,7 +50,7 @@ OrderService
     ↓ gọi hợp đồng
 OrderRepository + OrderItemRepository + ProductRepository
     ↓
-Jdbc...Repository
+JdbcXxxRepository
     ↓
 MySQL
 ```
@@ -61,7 +59,7 @@ Kết quả đi ngược lại qua cùng các tầng. MVC trong ứng dụng nà
 
 ## III. View Không Tạo Entity Khi Chưa Có Đủ Ngữ Cảnh
 
-Người dùng chỉ nhập product id và quantity. View không nên tự tra Product hoặc quyết định unit price. Tạo input record:
+Người dùng chỉ nhập product id và quantity. View không tự tra Product hoặc quyết định unit price. Tạo input record trong package `dto`:
 
 ```java
 public record OrderItemInput(String productId, int quantity) {}
@@ -247,7 +245,7 @@ Không đánh giá refactor bằng số package nhiều hơn. Đánh giá bằng
 |---|---|---|
 | Chỉ chia package, code vẫn gọi chéo | View import JdbcRepository | Kiểm tra dependency theo sơ đồ |
 | Controller chứa nghiệp vụ | Tính tổng/stock trong controller | Chuyển sang Service/Model |
-| Service `new Jdbc...` | Không thay repository được | Inject interface qua constructor |
+| Service tự tạo `new JdbcProductRepository(...)` | Không thay repository được | Inject interface qua constructor |
 | View trả OrderItem đầy đủ | View phải tra Product/chốt giá | Trả OrderItemInput |
 | Refactor làm đổi dữ liệu mẫu | Khó biết lỗi do đâu | Giữ bộ nghiệm thu trước/sau |
 

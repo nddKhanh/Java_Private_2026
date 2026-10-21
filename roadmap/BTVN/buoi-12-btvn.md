@@ -15,7 +15,7 @@ Trước khi code, nhóm nộp một trang mô tả:
 - Danh sách entity, quan hệ giữa các entity và ERD dự kiến.
 - Một luồng nghiệp vụ cốt lõi ghi vào ít nhất hai bảng liên quan.
 - Phân công thành viên và danh sách feature branch dự kiến.
-- Giao diện chọn một trong hai: console hoàn chỉnh hoặc Swing. Không bắt buộc làm cả hai.
+- Chọn một giao diện: console hoàn chỉnh hoặc Swing.
 
 Mentor chốt phạm vi theo tiêu chí “demo được, dữ liệu đúng, trách nhiệm rõ”. Nhóm không cộng thêm chức năng khi luồng lõi chưa hoàn thành.
 
@@ -31,14 +31,14 @@ Mentor chốt phạm vi theo tiêu chí “demo được, dữ liệu đúng, tr
 ### JDBC Và Chức Năng
 
 - Có CRUD đầy đủ cho ít nhất một entity chính.
-- Có tạo và xem chi tiết cho luồng nghiệp vụ nhiều bảng.
+- Có chức năng tạo và xem chi tiết một giao dịch thuộc luồng nghiệp vụ nhiều bảng.
 - Có ít nhất một truy vấn JOIN và một báo cáo dùng `GROUP BY` hoặc phép tổng hợp tương đương.
 - SQL nhận input phải dùng `PreparedStatement`; tài nguyên được đóng bằng try-with-resources.
 - Dữ liệu vẫn còn sau khi đóng và chạy lại ứng dụng.
 
 ### Transaction
 
-Luồng nghiệp vụ ghi nhiều bảng phải chạy trong một transaction. Tất cả bước cùng commit hoặc cùng rollback. Nhóm phải demo một ca cố ý làm bước giữa thất bại và chứng minh database không còn dữ liệu dở dang.
+Luồng nghiệp vụ ghi nhiều bảng phải chạy trong một transaction. Tất cả các bước cùng commit hoặc cùng rollback. Nhóm phải demo một ca cố ý làm một bước ở giữa thất bại và chứng minh database không còn dữ liệu dở dang.
 
 Ví dụ HitShop: insert Order, insert OrderItem và giảm Product.stock cùng transaction. Hủy đơn và hoàn stock cũng phải là một transaction và không được hoàn kho hai lần.
 
@@ -87,7 +87,7 @@ Nhóm tiếp tục HitShop có thể giữ hợp đồng từ buổi 11:
 - Báo cáo doanh thu theo ngày và khách hàng.
 - Giao diện console hoặc ProductWindow/Swing mở rộng.
 
-Đây là bộ khung tham khảo. Nhóm chọn đề tài khác được quyền đặt tên class, bảng và menu theo miền bài toán của mình miễn đáp ứng các yêu cầu chung.
+Nhóm chọn đề tài khác được đặt tên class, bảng và menu theo miền bài toán của mình, đồng thời đáp ứng các yêu cầu chung.
 
 ## 5. Hồ Sơ Nộp
 
@@ -95,7 +95,7 @@ Nhóm tiếp tục HitShop có thể giữ hợp đồng từ buổi 11:
 - Source code, `schema.sql`, `seed.sql` và README.
 - ERD và sơ đồ ngắn luồng View → Controller → Service → Repository.
 - Bảng test case gồm input, kết quả mong đợi và kết quả thực tế.
-- Slide hoặc tài liệu demo tối đa 8 trang nếu nhóm cần; không bắt buộc slide.
+- Slide hoặc tài liệu demo, nếu có, dài tối đa 8 trang.
 
 ## 6. Rubric 100 Điểm
 
@@ -108,4 +108,4 @@ Nhóm tiếp tục HitShop có thể giữ hợp đồng từ buổi 11:
 | Git collaboration | 10 | Branch, PR, review và lịch sử commit có ý nghĩa |
 | README và demo | 10 | Người khác setup/chạy được, trình bày đúng trọng tâm |
 
-Các phần như tìm kiếm nâng cao, phân trang, batch, export, biểu đồ hoặc giao diện đẹp được tính điểm cộng trong phạm vi từng tiêu chí sau khi yêu cầu lõi đã hoạt động; không bù cho transaction hoặc dữ liệu sai.
+Tìm kiếm nâng cao, phân trang, batch, export, biểu đồ hoặc cải thiện giao diện được tính điểm cộng. Transaction và tính đúng đắn của dữ liệu vẫn phải đạt yêu cầu tương ứng trong rubric.

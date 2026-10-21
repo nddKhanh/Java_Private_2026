@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 7:** SQL, mapping, kiểm tra dữ liệu và giao diện dễ bị trộn trong cùng class; code JDBC bắt đầu lặp và khó thay nguồn dữ liệu.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -12,7 +10,7 @@ Sau buổi học, học viên có thể:
 - Đặt validation và use case ở Service thay vì View/Repository.
 - Trả kết quả tìm kiếm bằng `Optional` thay cho null.
 - Dùng `OrderStatus` enum thay chuỗi trạng thái tự do.
-- Thêm Customer CRUD theo cùng cấu trúc Product và nhận ra code lặp cần kiểm soát.
+- Thêm các chức năng tạo, liệt kê và tìm Customer theo cùng cấu trúc Product.
 
 > **Kết quả cuối buổi:** giao diện console gọi ProductService/CustomerService; service gọi repository interface; status của Order là enum.
 
@@ -151,14 +149,14 @@ CREATE TABLE customers (
 );
 ```
 
-Sau đó tạo `CustomerRepository`, `JdbcCustomerRepository`, `CustomerService`. Việc lặp lại mô hình với entity thứ hai giúp học viên phân biệt phần ổn định của kiến trúc với field riêng của từng entity.
+Tạo `CustomerRepository`, `JdbcCustomerRepository`, `CustomerService` theo cùng cấu trúc. Repository và Service giữ vai trò ổn định; các field và quy tắc dữ liệu thay đổi theo từng entity.
 
 Luồng thêm Customer:
 
 ```text
-Console đọc KH01/Nguyễn An/090...
+Console đọc KH01/Nguyễn An/0900000001
     → CustomerService kiểm tra field
-    → CustomerRepository kiểm tra/insert
+    → CustomerRepository kiểm tra dữ liệu hiện có và insert
     → Console nhận boolean hoặc lỗi để hiển thị
 ```
 
@@ -190,7 +188,7 @@ public void confirm() {
 
 Khi đọc/ghi database ở buổi 9, dùng `status.name()` để lưu và `OrderStatus.valueOf(text)` để phục hồi. Enum thu hẹp tập giá trị hợp lệ ngay ở hệ thống kiểu.
 
-## VII. DTO/record: Giới Thiệu Đúng Mức
+## VII. DTO/record
 
 JDK 17 hỗ trợ record. Khi màn hình chỉ cần ba field:
 
@@ -198,11 +196,11 @@ JDK 17 hỗ trợ record. Khi màn hình chỉ cần ba field:
 public record ProductSummary(String id, String name, double price) {}
 ```
 
-Record hữu ích để vận chuyển dữ liệu chỉ đọc, nhưng không bắt buộc trong bài lõi. Không thay toàn bộ entity bằng DTO trong một buổi khi học viên còn đang ổn định repository/service.
+Record phù hợp để vận chuyển dữ liệu chỉ đọc. Entity biểu diễn dữ liệu và hành vi nghiệp vụ; DTO mang dữ liệu cần thiết qua ranh giới giữa các tầng.
 
 ## VIII. Demo Trước Và Sau Khi Tách Tầng
 
-Giáo viên lấy chức năng “tìm Product theo id” của buổi 7 và refactor theo ba commit nhỏ:
+Refactor chức năng “tìm Product theo id” theo ba commit nhỏ:
 
 1. Di chuyển SQL vào `JdbcProductRepository`, kết quả vẫn giữ nguyên.
 2. Thêm `ProductService`, console gọi service.
@@ -230,7 +228,7 @@ Sau mỗi commit chạy SP01 và mã không tồn tại SP99. Việc giữ test 
 
 ## Tổng kết buổi 8
 
-Repository che chi tiết lưu trữ, Service giữ nghiệp vụ, Optional mô tả kết quả có thể vắng mặt và enum bảo vệ tập trạng thái. Đây là nền tảng để buổi 9 mở rộng Order nhiều bảng mà không đưa JOIN và transaction vào giao diện.
+Repository che chi tiết lưu trữ, Service giữ nghiệp vụ, Optional mô tả kết quả có thể vắng mặt và enum bảo vệ tập trạng thái. JOIN và transaction không thuộc trách nhiệm của giao diện.
 
 ## Bài tập nhỏ trên lớp — Tách tầng quản lý công việc
 
@@ -246,4 +244,4 @@ Refactor bài `tasks` thành:
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 08](../BTVN/buoi-08-btvn.md). ProductSummary/record là phần tự chọn; ProductService và CustomerService là bắt buộc.
+Hoàn thành [BTVN buổi 08](../BTVN/buoi-08-btvn.md).

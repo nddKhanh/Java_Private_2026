@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 1:** chương trình mới chỉ chạy tuần tự một lần; chưa thể chọn chức năng, lặp thao tác hoặc quản lý nhiều giá trị cùng loại.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -146,7 +144,7 @@ static double calculateLineTotal(double price, int quantity) {
 - `void` dùng khi method thực hiện hành động và không trả kết quả.
 - Kiểu trả về như `double` buộc method trả một giá trị tương ứng.
 - Tham số là dữ liệu method cần; tránh để mọi method phụ thuộc quá nhiều biến toàn cục.
-- Trong phạm vi buổi này, các method được gọi trực tiếp từ `main` nên khai báo `static`. OOP sẽ giải thích method gắn với object từ buổi 3.
+- Các method được gọi trực tiếp từ `main` được khai báo `static`.
 
 ## V. String: So Sánh Nội Dung, Không So Sánh Tham Chiếu
 
@@ -164,12 +162,12 @@ if (input.equalsIgnoreCase("áo thun")) {
 
 Không dùng `==` để so sánh nội dung String. `==` kiểm tra hai biến có trỏ cùng object hay không; `equals()` kiểm tra nội dung.
 
-Các method đủ dùng cho buổi này:
+Chương trình sử dụng các method sau:
 
 - `isBlank()` kiểm tra chuỗi rỗng hoặc chỉ có khoảng trắng.
 - `trim()` bỏ khoảng trắng đầu/cuối.
 - `equals()` và `equalsIgnoreCase()` so sánh nội dung.
-- `contains()` hỗ trợ tìm kiếm ở phần mở rộng.
+- `contains()` kiểm tra chuỗi có chứa một chuỗi con hay không.
 
 Sau `scanner.nextInt()` hoặc `nextDouble()`, gọi thêm `scanner.nextLine()` để tiêu thụ ký tự xuống dòng trước khi đọc tên bằng `nextLine()`.
 
@@ -206,7 +204,7 @@ static void removeItem(int index) {
 }
 ```
 
-Nếu quên xóa một list, dữ liệu sẽ lệch. Đây là giới hạn có chủ đích để buổi 3 dẫn sang Product và CartItem.
+Nếu quên xóa một phần tử ở bất kỳ danh sách nào, dữ liệu giữa ba danh sách sẽ lệch nhau.
 
 ## VII. In Giỏ Và Tính Tổng
 
@@ -266,7 +264,7 @@ switch (choice) {
 }
 ```
 
-Các method `readAnd...` chỉ đọc input rồi gọi method xử lý. Việc tách này giúp phần thêm/xóa có thể được gọi bằng dữ liệu mẫu mà không phải gõ lại toàn bộ menu.
+Các method `readAndAddItem` và `readAndRemoveItem` chỉ đọc input rồi gọi method xử lý. Việc tách này giúp phần thêm/xóa có thể được gọi bằng dữ liệu mẫu mà không phải gõ lại toàn bộ menu.
 
 ## IX. Debug Có Mục Tiêu
 
@@ -291,10 +289,10 @@ Nếu xóa sai dòng, đặt breakpoint trước `remove` và so sánh số th�
 
 ### Câu hỏi chốt buổi
 
-1. Vì sao menu hợp với do-while?
-2. Khi nào dùng switch thay vì if/else?
-3. Vì sao String không so sánh bằng `==`?
-4. Số thứ tự dòng 1 tương ứng index nào?
+1. Vì sao vòng lặp `do-while` phù hợp để xây dựng menu?
+2. Khi nào nên dùng `switch` thay cho `if/else`?
+3. Vì sao không nên dùng `==` để so sánh nội dung của hai `String`?
+4. Dòng có số thứ tự 1 tương ứng với index nào trong `ArrayList`?
 5. Điều gì xảy ra nếu chỉ xóa `names` mà không xóa `prices`?
 
 ## Bài tập nhỏ trên lớp — Thống kê điểm
@@ -310,4 +308,4 @@ Viết chương trình quản lý một `ArrayList<Double>` điểm số:
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 02](../BTVN/buoi-02-btvn.md). Không tạo class model ở bài lõi; buổi 3 sẽ học cách chuyển dữ liệu rời thành object.
+Hoàn thành [BTVN buổi 02](../BTVN/buoi-02-btvn.md).

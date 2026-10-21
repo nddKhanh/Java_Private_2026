@@ -1,6 +1,6 @@
 # Hợp Đồng Xuyên Suốt Dự Án Thực Hành
 
-Tài liệu này chỉ là điểm tham chiếu cho chuỗi **BTVN** từ buổi 1 đến buổi 11. Dự án bài tập mang tên `HitShop`; mỗi BTVN mở rộng kết quả bài trước. Giáo án trên lớp không giả định học viên đã hoàn thành HitShop và chỉ mở đầu bằng hạn chế kiến thức của buổi trước.
+Dự án bài tập mang tên `HitShop`; mỗi BTVN từ buổi 1 đến buổi 11 mở rộng kết quả của bài trước.
 
 ## Nền tảng dùng chung
 
@@ -21,7 +21,7 @@ Tài liệu này chỉ là điểm tham chiếu cho chuỗi **BTVN** từ buổi
 | 5 | `PaymentMethod`, `DeliveryMethod`, equality của Product | Nơi sử dụng phụ thuộc interface; Product bằng nhau theo id |
 | 6 | Xử lý lỗi và lưu đơn ra `orders.txt` | File chỉ là bước học I/O; model Order không bị thay thế |
 | 7 | Maven, MySQL, JDBC CRUD Product | Product chuyển sang lưu trong bảng `products`; câu SQL dùng tham số |
-| 8 | Repository, Service, Optional, enum | Thêm Customer CRUD; `OrderStatus` thay chuỗi trạng thái; console gọi Service |
+| 8 | Repository, Service, Optional, enum | Thêm luồng tạo/liệt kê/tìm Customer; `OrderStatus` thay chuỗi trạng thái; console gọi Service |
 | 9 | Order/OrderItem nhiều bảng, JOIN và báo cáo | `orders.id` chuyển sang `long` tự tăng; `unit_price` giữ giá lúc mua |
 | 10 | MVC, SOLID và refactor | View → Controller → Service → Repository interface → JDBC implementation |
 | 11 | Git flow và Swing cơ bản | `ProductWindow` lấy dữ liệu từ cùng `ProductService`, không tạo kho dữ liệu riêng |

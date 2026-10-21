@@ -4,7 +4,7 @@
 
 ### Kế Thừa Từ Buổi 07
 
-Tiếp tục `HitShop` bằng JDK 17, bảng `products` và JDBC CRUD đã có. Buổi này không viết lại SQL theo một ứng dụng mới; hãy đưa code hiện có vào repository và để console đi qua service.
+Tiếp tục `HitShop` bằng JDK 17, bảng `products` và JDBC CRUD đã có. Đưa code truy cập dữ liệu hiện có vào repository và để console gọi qua service.
 
 ### Luồng Bắt Buộc
 
@@ -30,7 +30,6 @@ Console không gọi repository trực tiếp. Service không chứa SQL. JDBC i
 - `CustomerService` nhận `CustomerRepository` qua constructor, kiểm tra id/name/phone không rỗng rồi mới thêm; cung cấp `addCustomer`, `findAllCustomers`, `findCustomerById`.
 - `findById` và method tìm tương ứng của service trả `Optional.empty()` khi không có dữ liệu; không trả null.
 - Tạo enum `OrderStatus { PENDING, CONFIRMED, CANCELLED }` và đổi field status của Order từ String sang enum; `getStatus()` đổi kiểu trả về thành `OrderStatus`. Các chuyển trạng thái của buổi 4 phải tiếp tục đúng.
-- File `orders.txt` không còn là nguồn dữ liệu nghiệp vụ sau khi Order được chuyển vào MySQL ở buổi 9.
 
 ### Sơ Đồ Lớp Và Quan Hệ
 
@@ -42,8 +41,8 @@ Console gọi service; service nhận repository interface qua constructor; lớ
 
 - Product: P01, P02, P03 như các buổi trước.
 - Customer: `C01 / Linh Nguyễn / 0900000001`, `C02 / Minh Trần / 0900000002`.
-- Tìm P01/C01 trả object đúng; tìm P99/C99 trả `Optional.empty()` và console báo rõ không tìm thấy.
-- Product giá 0 hoặc Customer có phone rỗng bị service từ chối và không xuất hiện trong database.
+- Tìm P01 trả đúng Product và tìm C01 trả đúng Customer. Tìm P99 hoặc C99 trả `Optional.empty()`; console hiển thị thông báo không tìm thấy.
+- Product có giá 0 hoặc Customer có số điện thoại rỗng bị service từ chối và không được ghi vào database.
 - Order mới có status `PENDING`; xác nhận thành `CONFIRMED`; không thể hủy lại order đã xác nhận.
 
 ### Nộp Bài
@@ -52,8 +51,6 @@ Nộp schema customers, source repository/service, enum và output chạy qua me
 
 ## Mở Rộng — Bài Tự Chọn
 
-- Tạo record `ProductSummary(String id, String name, double price)` và method chuyển Product thành dữ liệu chỉ đọc để hiển thị.
+- Tạo record `ProductSummary(String id, String name, double price)` và method chuyển một `Product` thành `ProductSummary` để hiển thị.
 - Viết unit test service bằng một repository in-memory.
 - Chuẩn hóa lỗi nghiệp vụ bằng custom exception.
-
-`record`/DTO chỉ là phần giới thiệu ở buổi này; không làm không ảnh hưởng yêu cầu lõi.

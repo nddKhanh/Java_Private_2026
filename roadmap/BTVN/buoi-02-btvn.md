@@ -30,14 +30,10 @@ Khi lần lượt thêm `Áo thun / 150000 / 2`, `Bình nước / 50000 / 1`, da
 
 ### Nộp Bài
 
-Nộp source Java và link repository GitHub. Bài bắt buộc chưa dùng class tự tạo, database hoặc file lưu trữ.
-
-### Mốc Bàn Giao Cho Buổi 03
-
-Giữ tên bốn method `addItem`, `removeItem`, `printItems`, `calculateTotal` và giữ cách dùng menu. Buổi 3 thay dữ liệu ba list song song bằng object Product/CartItem; các method tiếp tục phục vụ cùng chức năng giỏ hàng.
+Nộp source Java và link repository GitHub.
 
 ## Bài Tự Chọn — Mở Rộng
 
-- Tìm theo tên không phân biệt hoa/thường; kết quả là mọi dòng khớp chính xác với tên tìm kiếm. Không tìm thấy thì in `Không tìm thấy mặt hàng.`
+- Tìm theo tên không phân biệt chữ hoa và chữ thường; trả về mọi dòng có tên bằng tên cần tìm sau khi bỏ qua khác biệt hoa/thường. Không tìm thấy thì in `Không tìm thấy mặt hàng.`
 - VAT cố định 10% trên tổng tiền hàng; phí vận chuyển cố định 20000 nếu giỏ có ít nhất một dòng, bằng 0 nếu giỏ rỗng. In riêng tiền hàng, VAT, phí vận chuyển và tổng thanh toán.
-- Debug là phần tự chọn: nộp ảnh breakpoint/Variables hoặc ghi ngắn một lỗi index đã phát hiện. Không cần bổ sung chức năng core.
+- Nộp ảnh cửa sổ Breakpoints/Variables khi debug hoặc mô tả ngắn một lỗi về index đã phát hiện.

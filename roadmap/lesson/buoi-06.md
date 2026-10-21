@@ -2,14 +2,12 @@
 
 ---
 
-> **Hạn chế từ buổi 5:** chương trình mới tập trung vào mô hình và đa hình; dữ liệu sai hoặc lỗi I/O vẫn có thể làm luồng chạy dừng đột ngột, và dữ liệu trong bộ nhớ mất khi tắt ứng dụng.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
 
 - Phân biệt lỗi biên dịch, lỗi runtime và lỗi nghiệp vụ.
-- Dùng `throw`, `throws` và `try/catch` đúng vai trò; nhận biết custom exception như phần mở rộng.
+- Dùng `throw`, `throws` và `try/catch` đúng vai trò; nhận biết custom exception.
 - Dùng `Path`, `Files` và UTF-8 để ghi/đọc text.
 - Đóng tài nguyên tự động bằng try-with-resources.
 - Lưu Order theo một định dạng text nhỏ, đọc lại và tính tổng từ nội dung file.
@@ -36,7 +34,7 @@ File có thể không tồn tại hoặc không đọc được. Đây là tình
 
 ### 3. Lỗi nghiệp vụ
 
-Order không có item vẫn là một object Java hợp lệ về cú pháp, nhưng không hợp lệ để lưu như một đơn hàng. Trong phần lõi, dùng exception có sẵn:
+Order không có item vẫn là một object Java hợp lệ về cú pháp, nhưng không hợp lệ để lưu như một đơn hàng. Có thể dùng exception có sẵn:
 
 ```java
 throw new IllegalArgumentException("Order phải có ít nhất một item");
@@ -74,7 +72,7 @@ Không vừa `catch` rồi bỏ qua vừa tiếp tục như thành công. Nếu 
 
 ## III. Định Dạng File Càng Nhỏ Càng Dễ Kiểm Tra
 
-Buổi này không xây một serializer tổng quát. Mỗi Order được ghi thành khối:
+Mỗi Order được ghi thành một khối:
 
 ```text
 ORDER|DH01|KH01|Nguyễn An|PENDING
@@ -87,11 +85,9 @@ Header giữ dữ liệu order/customer cần hiển thị. Mỗi dòng item gi�
 
 Trước khi code, học viên trả lời ba câu:
 
-1. Dòng nào biểu diễn bắt đầu một Order?
-2. Làm sao phân biệt item với header?
-3. Khi Product đổi giá, file cũ có đổi không?
-
-Câu trả lời thứ ba chuẩn bị cho `unitPrice` trong OrderItem ở buổi 9.
+1. Dòng nào đánh dấu phần bắt đầu của một Order?
+2. Dựa vào đâu để phân biệt dòng `ITEM` với dòng `ORDER`?
+3. Khi giá của Product thay đổi sau khi lưu, nội dung file cũ có thay đổi không?
 
 ## IV. Ghi File Bằng try-with-resources
 
@@ -177,8 +173,6 @@ for (String line : lines) {
 }
 ```
 
-Phần lõi dùng file do chính chương trình tạo nên có thể giả định định dạng đúng. Parse file hỏng và phục hồi object graph là phần mở rộng, tránh biến buổi exception/I/O thành một bài parser quá lớn.
-
 ## VII. Thực Hành Có Hướng Dẫn
 
 1. Tạo Order DH01 hợp lệ bằng dữ liệu mẫu của buổi học và lưu file.
@@ -198,17 +192,16 @@ Mỗi nhóm ghi lại loại exception, nơi ném và nơi bắt của bốn ca.
 | Validate sau khi mở writer | Có thể làm mất file cũ | Validate trước I/O |
 | In thành công trong `finally` | Thất bại vẫn báo thành công | Chỉ in sau lời gọi hoàn tất |
 | Không chỉ rõ UTF-8 | Tiếng Việt có thể lỗi | Dùng `StandardCharsets.UTF_8` |
-| Bắt buộc phục hồi mọi object | Quá tải phạm vi buổi học | Lõi chỉ đọc dòng và tính tổng |
 
 ## Tổng kết buổi 6
 
-Exception là một luồng điều khiển cho tình huống không thể hoàn tất bình thường. Validator chịu trách nhiệm lỗi nghiệp vụ; lớp file chịu trách nhiệm I/O; lớp gọi quyết định thông báo. Try-with-resources bảo đảm đóng tài nguyên và định dạng file nhỏ giúp học viên tập trung đúng mục tiêu. Custom exception được để ở phần mở rộng đúng với lộ trình.
+Exception là một luồng điều khiển cho tình huống không thể hoàn tất bình thường. Validator chịu trách nhiệm lỗi nghiệp vụ; lớp file chịu trách nhiệm I/O; lớp gọi quyết định thông báo. Try-with-resources bảo đảm đóng tài nguyên.
 
 ## Bài tập nhỏ trên lớp — Đọc file điểm số
 
 Viết chương trình làm việc với `scores.txt`:
 
-- Mỗi dòng chứa một điểm dạng số; giáo viên chuẩn bị cả một dòng sai định dạng.
+- Mỗi dòng chứa một điểm dạng số; thêm một dòng sai định dạng để kiểm tra xử lý lỗi.
 - Đọc file bằng `Files.newBufferedReader` và try-with-resources.
 - Dùng `Double.parseDouble`; bắt `NumberFormatException` cho từng dòng, báo số dòng sai rồi tiếp tục.
 - Tính số dòng hợp lệ và điểm trung bình; file không tồn tại phải được báo bằng thông điệp riêng.
@@ -217,4 +210,4 @@ Viết chương trình làm việc với `scores.txt`:
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 06](../BTVN/buoi-06-btvn.md). File này chỉ là bước học I/O; từ buổi 7, Product bắt đầu chuyển sang MySQL.
+Hoàn thành [BTVN buổi 06](../BTVN/buoi-06-btvn.md).

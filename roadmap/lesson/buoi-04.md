@@ -2,8 +2,6 @@
 
 ---
 
-> **Hạn chế từ buổi 3:** class đã gom được dữ liệu nhưng setter còn có thể làm trạng thái sai; khi xuất hiện nhiều loại object, code dễ lặp field/method và dùng nhiều nhánh theo loại.
-
 ## Mục tiêu buổi học
 
 Sau buổi học, học viên có thể:
@@ -42,7 +40,7 @@ public void decreaseStock(int quantity) {
 
 ### Thảo luận
 
-Giáo viên đưa hai cách gọi `product.setStock(product.getStock() - quantity)` và `product.decreaseStock(quantity)`. Học viên chỉ ra cách thứ hai tập trung được kiểm tra nào và giảm lặp ra sao.
+So sánh `product.setStock(product.getStock() - quantity)` với `product.decreaseStock(quantity)`; xác định cách thứ hai tập trung kiểm tra dữ liệu và giảm lặp như thế nào.
 
 ## II. Khi Nào Book Là Một Product?
 
@@ -145,7 +143,7 @@ public class Order {
 }
 ```
 
-Không cung cấp `setStatus(String)` tự do. Nếu có, code bên ngoài có thể gán `DONE`, `ABC` hoặc đưa đơn đã xác nhận về PENDING. `confirm()` và `cancel()` biểu đạt đúng hai chuyển trạng thái được phép. Buổi 8 sẽ thay các chuỗi này bằng enum để compiler kiểm soát tốt hơn.
+Không cung cấp `setStatus(String)` tự do. Nếu có, code bên ngoài có thể gán `DONE`, `ABC` hoặc đưa đơn đã xác nhận về PENDING. `confirm()` và `cancel()` biểu đạt đúng hai chuyển trạng thái được phép.
 
 ## V. Demo Xuyên Suốt
 
@@ -173,7 +171,7 @@ Order DH01 ── Customer KH01
     └── CartItem ── Product SP02
 ```
 
-Sơ đồ giúp thấy rõ HAS-A và tránh tạo các field trùng lặp như `customerName` trong Order hoặc `productName` trong CartItem ở giai đoạn này.
+Sơ đồ HAS-A giúp tránh các field trùng lặp như `customerName` trong Order hoặc `productName` trong CartItem.
 
 ## VI. Thực Hành Có Hướng Dẫn
 

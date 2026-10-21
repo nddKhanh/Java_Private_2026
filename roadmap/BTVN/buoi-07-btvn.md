@@ -4,7 +4,7 @@
 
 ### Kế Thừa Từ Buổi 06
 
-Tiếp tục repository `HitShop` bằng JDK 17 và Product P01/P02/P03 đã dùng trong các buổi trước. Giữ nguyên model Product `(id, name, price, stock)`; thay nguồn lưu Product của ứng dụng bằng MySQL để các chức năng giỏ/đơn tiếp tục dùng đúng mã sản phẩm. File Order ở buổi 6 chỉ còn là bài thực hành I/O, không phải nguồn dữ liệu của catalog.
+Tiếp tục repository `HitShop` bằng JDK 17 và Product P01/P02/P03 đã dùng trong các buổi trước. Giữ nguyên model Product `(id, name, price, stock)`; thay nguồn lưu Product của ứng dụng bằng MySQL để các chức năng giỏ/đơn tiếp tục dùng đúng mã sản phẩm.
 
 ### Bài Toán
 
@@ -16,7 +16,12 @@ Thay nguồn đọc/ghi Product bằng MySQL. Chương trình console phải th�
 - Cột: `id VARCHAR(20) PRIMARY KEY`, `name VARCHAR(150) NOT NULL`, `price DECIMAL(12,2) NOT NULL`, `stock INT NOT NULL`.
 - `id` không rỗng và duy nhất; `name` không rỗng; `price > 0`; `stock >= 0`.
 - JDBC URL, username, password được cung cấp qua cấu hình cục bộ, không viết mật khẩu thật trong source và không đưa file bí mật lên repository.
-- Lớp thao tác tên `ProductJdbc`; các method là `boolean add(Connection, Product)`, `List<Product> findAll(Connection)`, `Product findById(Connection, String)` (trả `null` nếu không tồn tại), `boolean update(Connection, Product)` và `boolean deleteById(Connection, String)`.
+- Lớp thao tác dữ liệu tên `ProductJdbc`.
+  - `boolean add(Connection, Product)`;
+  - `List<Product> findAll(Connection)`;
+  - `Product findById(Connection, String)`, trả `null` nếu không tồn tại;
+  - `boolean update(Connection, Product)`;
+  - `boolean deleteById(Connection, String)`.
 - Class chạy là `HitShop`; menu cố định: `1` thêm, `2` liệt kê, `3` tìm theo mã, `4` cập nhật, `5` xóa, `0` thoát. Lựa chọn khác báo `Lựa chọn không hợp lệ.` và hiện lại menu.
 - Connection, PreparedStatement/Statement và ResultSet phải được giải phóng sau thao tác. Input được truyền dưới dạng tham số SQL, không ghép trực tiếp vào câu lệnh.
 - Thao tác liệt kê dùng `Statement` cho câu SQL cố định; các thao tác có dữ liệu nhập dùng `PreparedStatement`.
@@ -45,8 +50,8 @@ Thay nguồn đọc/ghi Product bằng MySQL. Chương trình console phải th�
 | P02 | Bình nước | 50000.00 | 10 |
 | P03 | Java cơ bản | 120000.00 | 5 |
 
-Sau khi thêm P04 `/ Sổ tay / 30000 / 15`, danh sách có 4 dòng. Cập nhật P04 thành giá `35000`, stock `12`; xóa P04 thì danh sách lại còn P01, P02 và P03 như trước. Tìm P99 phải báo không tìm thấy. Các bài kiểm tra CRUD không làm biến đổi bộ dữ liệu chuẩn dùng cho buổi sau.
+Sau khi thêm P04 `/ Sổ tay / 30000 / 15`, danh sách có 4 dòng. Cập nhật P04 thành giá `35000`, stock `12`; xóa P04 thì danh sách lại còn P01, P02 và P03 như trước. Tìm P99 phải báo không tìm thấy. Sau các ca kiểm thử, dữ liệu trở về đúng ba Product P01, P02 và P03.
 
 ### Nộp Bài
 
-Repository gồm source, script tạo database/bảng và dữ liệu chuẩn; tài liệu cấu hình mẫu không chứa credential thật. Không yêu cầu Repository/Service hay bảng khách hàng ở buổi này.
+Repository gồm source, script tạo database/bảng và dữ liệu chuẩn; tài liệu cấu hình mẫu không chứa credential thật.
