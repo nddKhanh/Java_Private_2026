@@ -1,25 +1,157 @@
 # Bài Tập Về Nhà — Buổi 03
 
-## Bài Bắt Buộc — Mô Hình Hóa Mặt Hàng Và Giỏ Hàng Bằng Object
+## I. Tổng Kết Bài Tập Về Nhà Buổi 02
 
-### Kế Thừa Từ Buổi 02
+Sau bài tập buổi 2, chương trình `HitShop` đã quản lý được nhiều dòng hàng bằng ba `ArrayList` song song.
 
-Tiếp tục đúng file `HitShop.java`, menu và repository đã dùng ở buổi 2; bài chạy bằng JDK 17. Giữ các chức năng thêm, xóa, xem giỏ và tính tổng, nhưng thay ba list song song bằng các object `Product` và `CartItem`. Bổ sung `Customer` để biểu diễn người đang sở hữu giỏ hàng.
+Chương trình có menu lặp để thêm mặt hàng, xóa theo số thứ tự, xem giỏ, tính tổng tiền và thoát.
 
-### Bài Toán
+### 1. Các Thành Phần Phải Có
 
-Thay dữ liệu rời của giỏ hàng buổi 2 bằng các object có trách nhiệm riêng. Chương trình vẫn chạy trên console; phạm vi gồm hai sản phẩm có sẵn, một khách hàng hiện tại và một giỏ hàng.
+- Ba danh sách `ArrayList<String> names`, `ArrayList<Double> prices`, `ArrayList<Integer> quantities` luôn có cùng số phần tử.
+- Bốn method `addItem(String name, double price, int quantity)`, `removeItem(int index)`, `printItems()` và `calculateTotal()`.
+- Menu gồm các lựa chọn `1`, `2`, `3`, `4`, `0`; lựa chọn khác phải báo `Lựa chọn không hợp lệ.`.
+- Số thứ tự hiển thị bắt đầu từ `1`; index trong `ArrayList` bắt đầu từ `0`.
 
-### Các Class Và Quan Hệ Bắt Buộc
+### 2. Các Test Case Phải Chạy Được
 
-- `Product`: field `id`, `name`, `price`, `stock`, đều private. Constructor nhận đủ bốn giá trị. Có getter cho cả bốn field; chỉ `name`, `price`, `stock` có setter. `toString()` trả dạng `P01 | Áo thun | 150000.0 | tồn: 20`.
-- `Customer`: field `id`, `name`, `phone`, đều private. Constructor nhận đủ ba giá trị; có getter cho cả ba và setter cho `name`, `phone`. `toString()` trả dạng `C01 | Linh Nguyễn | 0900000001`.
-- `CartItem`: field `product` kiểu `Product` và `quantity` kiểu `int`, đều private. Constructor nhận hai giá trị; có `getProduct()`, `getQuantity()`, `setQuantity(int quantity)` và `getTotal()` trả kết quả của `product.getPrice() * quantity`.
-- Quan hệ: `CartItem` HAS-A `Product`; giỏ hàng là `List<CartItem>`. Chương trình giữ đúng một biến `currentCustomer` kiểu `Customer` và một list giỏ hàng; không tạo class `Cart` hoặc lưu số lượng mua trong `Product`.
-- Tạo package `model` cho ba class trên. `HitShop` nằm ngoài package `model`, import và sử dụng các object thông qua constructor/method `public`.
-- Tên class chạy chương trình vẫn là `HitShop`; giỏ được giữ trong một `List<CartItem>`.
+Mỗi test case bắt đầu từ một lần chạy mới, trừ khi phần thao tác ghi rõ các bước liên tiếp.
 
-### Cấu Trúc Source
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC02-01` | Khi giỏ đang rỗng, chọn `4` | Tổng tiền bằng `0` |
+| `TC02-02` | Chọn `1`, thêm `Áo thun / 150000 / 2`, sau đó chọn `3` | Giỏ có một dòng `Áo thun`, đơn giá `150000`, số lượng `2` |
+| `TC02-03` | Thêm lần lượt `Áo thun / 150000 / 2` và `Bình nước / 50000 / 1`, sau đó chọn `4` | Tổng tiền bằng `350000` |
+| `TC02-04` | Từ giỏ của `TC02-03`, chọn `2` và xóa dòng số `1` | Chỉ còn `Bình nước / 50000 / 1`, tổng tiền bằng `50000` |
+| `TC02-05` | Khi giỏ có hai dòng, yêu cầu xóa số thứ tự không tồn tại | In `Không tìm thấy mặt hàng.` và giỏ không thay đổi |
+| `TC02-06` | Nhập một lựa chọn menu khác `0`, `1`, `2`, `3`, `4` | In `Lựa chọn không hợp lệ.` rồi tiếp tục hiển thị menu |
+| `TC02-07` | Chọn `0` | Chương trình kết thúc |
+
+### 3. Cây Thư Mục Sau Buổi 02
+
+Cấu trúc source tối thiểu sau khi hoàn thành bài tập buổi 2:
+
+```text
+src/
+└── HitShop.java
+```
+
+Buổi 3 tiếp tục trên chính chương trình này, không tạo một project mới.
+
+## II. Bài Bắt Buộc — Mô Hình Hóa Mặt Hàng Và Giỏ Hàng Bằng Object
+
+### 1. Bài Toán
+
+Thay ba danh sách song song của buổi 2 bằng các object có dữ liệu và trách nhiệm rõ ràng.
+
+Chương trình vẫn chạy trên console bằng JDK 17 và giữ các chức năng thêm, xóa, xem giỏ, tính tổng tiền.
+
+Phạm vi bài gồm hai sản phẩm có sẵn, một khách hàng hiện tại và một giỏ hàng.
+
+Tên class chạy chương trình vẫn là `HitShop`.
+
+### 2. Các Class Cần Có
+
+#### Class `Product`
+
+| Thuộc tính | Kiểu dữ liệu | Ý nghĩa |
+|---|---|---|
+| `id` | `String` | Mã sản phẩm |
+| `name` | `String` | Tên sản phẩm |
+| `price` | `double` | Đơn giá |
+| `stock` | `int` | Số lượng đang có trong kho |
+
+Tất cả thuộc tính đều là `private`.
+
+Constructor nhận đủ bốn thuộc tính:
+
+```java
+public Product(String id, String name, double price, int stock)
+```
+
+Cần có getter cho cả bốn thuộc tính; chỉ `name`, `price`, `stock` có setter.
+
+Ngoài ra, class có phương thức:
+
+| Phương thức | Ý nghĩa |
+|---|---|
+| `public String toString()` | Trả về thông tin sản phẩm theo dạng `P01 \| Áo thun \| 150000.0 \| tồn: 20` |
+
+#### Class `Customer`
+
+| Thuộc tính | Kiểu dữ liệu | Ý nghĩa |
+|---|---|---|
+| `id` | `String` | Mã khách hàng |
+| `name` | `String` | Tên khách hàng |
+| `phone` | `String` | Số điện thoại |
+
+Tất cả thuộc tính đều là `private`.
+
+Constructor nhận đủ ba thuộc tính:
+
+```java
+public Customer(String id, String name, String phone)
+```
+
+Cần có getter cho cả ba thuộc tính; chỉ `name`, `phone` có setter.
+
+Ngoài ra, class có phương thức:
+
+| Phương thức | Ý nghĩa |
+|---|---|
+| `public String toString()` | Trả về thông tin khách hàng theo dạng `C01 \| Linh Nguyễn \| 0900000001` |
+
+#### Class `CartItem`
+
+| Thuộc tính | Kiểu dữ liệu | Ý nghĩa |
+|---|---|---|
+| `product` | `Product` | Sản phẩm được giữ trong dòng giỏ hàng |
+| `quantity` | `int` | Số lượng khách muốn mua |
+
+Tất cả thuộc tính đều là `private`.
+
+Constructor nhận đủ hai thuộc tính:
+
+```java
+public CartItem(Product product, int quantity)
+```
+
+Cần có `getProduct()`, `getQuantity()` và `setQuantity(int quantity)`.
+
+Ngoài ra, class có phương thức:
+
+| Phương thức | Ý nghĩa |
+|---|---|
+| `public double getTotal()` | Trả về `product.getPrice() * quantity` |
+
+`CartItem` HAS-A `Product`: mỗi dòng giỏ hàng giữ tham chiếu đến đúng một object `Product`.
+
+Thay đổi `quantity` của `CartItem` không được tự làm thay đổi `stock` của `Product`.
+
+#### Class `HitShop`
+
+`HitShop` nằm ngoài package `model` và giữ hai field chính:
+
+```java
+private static final Customer currentCustomer =
+        new Customer("C01", "Linh Nguyễn", "0900000001");
+private static final List<CartItem> cart = new ArrayList<>();
+```
+
+Chương trình giữ đúng một biến `currentCustomer` và một `List<CartItem>`.
+
+Không tạo class `Cart` và không lưu số lượng mua trong `Product`.
+
+Giữ đúng bốn method sau:
+
+| Phương thức | Ý nghĩa |
+|---|---|
+| `static void addItem(Product product, int quantity)` | Tạo một `CartItem` mới và thêm vào giỏ |
+| `static void removeItem(int index)` | Xóa dòng giỏ hàng tại index được truyền vào |
+| `static void printItems()` | In khách hàng hiện tại và các dòng trong giỏ |
+| `static double calculateTotal()` | Trả về tổng thành tiền của toàn bộ giỏ |
+
+### 3. Cấu Trúc Source Và Package
 
 Tổ chức source tối thiểu như sau:
 
@@ -32,53 +164,88 @@ src/
     └── CartItem.java
 ```
 
-Ba file trong thư mục `model` phải có dòng `package model;`. `HitShop.java` import `model.Product`, `model.Customer`, `model.CartItem`, `java.util.List` và `java.util.ArrayList`.
+Ba file trong thư mục `model` phải có dòng:
 
-### Sơ Đồ Lớp Và Quan Hệ
+```java
+package model;
+```
+
+`HitShop.java` import các class và collection cần dùng:
+
+```java
+import model.Product;
+import model.Customer;
+import model.CartItem;
+import java.util.List;
+import java.util.ArrayList;
+```
+
+### 4. Sơ Đồ Lớp Và Quan Hệ
 
 ![Sơ đồ lớp BTVN buổi 03](assets/buoi-03-class-diagram.svg)
 
-Hình thoi tại `HitShop` thể hiện chương trình giữ nhiều `CartItem`; mỗi `CartItem` tham chiếu đúng một `Product`. Không tạo thêm class `Cart`.
+Hình thoi tại `HitShop` thể hiện chương trình giữ nhiều `CartItem`.
 
-### Method Và Hành Vi Menu
+Mỗi `CartItem` tham chiếu đúng một `Product`.
 
-Giữ đúng bốn method sau:
+### 5. Dữ Liệu Ban Đầu
 
-```java
-static void addItem(Product product, int quantity)
-static void removeItem(int index)
-static void printItems()
-static double calculateTotal()
+| Object | Mã | Tên | Giá / Số điện thoại | Tồn kho |
+|---|---|---|---|---|
+| Product 1 | `P01` | `Áo thun` | `150000` | `20` |
+| Product 2 | `P02` | `Bình nước` | `50000` | `10` |
+| Customer | `C01` | `Linh Nguyễn` | `0900000001` | — |
+
+Tạo hai object `Product` đúng một lần khi chương trình bắt đầu.
+
+Khi thêm sản phẩm vào giỏ, phải tái sử dụng đúng object `P01` hoặc `P02` đã tạo.
+
+### 6. Menu Và Hành Vi Bắt Buộc
+
+Menu tiếp tục có các lựa chọn:
+
+```text
+1. Thêm mặt hàng
+2. Xóa mặt hàng
+3. Xem giỏ hàng
+4. Xem tổng tiền
+0. Thoát
 ```
 
-Hai field chính trong `HitShop`:
+1. **Thêm mặt hàng**
 
-```java
-private static final Customer currentCustomer =
-        new Customer("C01", "Linh Nguyễn", "0900000001");
-private static final List<CartItem> cart = new ArrayList<>();
-```
+   - In mã và tên của hai sản phẩm có sẵn.
+   - Yêu cầu nhập mã sản phẩm và số lượng.
+   - Có thể dùng `if/else` hoặc `switch` để chọn object theo mã.
+   - Mã khác `P01`, `P02` phải in `Không tìm thấy sản phẩm.` và không thay đổi giỏ.
+   - Số lượng nhỏ hơn hoặc bằng `0` phải in `Số lượng phải lớn hơn 0.` và không thay đổi giỏ.
+   - Mỗi lần thêm tạo một `CartItem` mới; chưa gộp các dòng dùng cùng một `Product`.
 
-- Tạo hai object `Product` `P01`, `P02` một lần khi chương trình bắt đầu và tái sử dụng đúng các object này khi thêm vào giỏ.
-- Lựa chọn `1` in mã/tên hai sản phẩm, yêu cầu nhập mã và số lượng, sau đó gọi `addItem(product, quantity)`. Có thể dùng `if/else` hoặc `switch` để chọn object theo mã.
-- Mã khác `P01`, `P02` phải báo `Không tìm thấy sản phẩm.` và không thay đổi giỏ. Nếu số lượng nhập vào nhỏ hơn hoặc bằng 0, báo `Số lượng phải lớn hơn 0.` và không thay đổi giỏ.
-- Mỗi lần thêm tạo một `CartItem` mới; chưa gộp các dòng có cùng Product.
-- Lựa chọn `2` nhận số thứ tự đang hiển thị và gọi `removeItem(displayNumber - 1)`. Số thứ tự không tồn tại phải báo `Không tìm thấy mặt hàng.` và không thay đổi giỏ.
-- Lựa chọn `3` in `currentCustomer` trước, sau đó in các dòng giỏ. Nếu giỏ rỗng, báo `Giỏ hàng đang trống.`.
-- Lựa chọn `4` in tổng do `calculateTotal()` trả về; giỏ rỗng có tổng bằng `0`.
-- Giữ cách xử lý lựa chọn menu sai và lựa chọn `0` của buổi 2.
+2. **Xóa mặt hàng**
 
-Buổi này chưa kiểm tra `quantity` có vượt `stock` và chưa trừ tồn kho khi thêm vào giỏ. Thay đổi quantity của `CartItem` không được tự làm thay đổi stock của `Product`; quy tắc cập nhật tồn kho sẽ được phát triển ở buổi sau.
+   - Hiển thị số thứ tự của từng dòng trong giỏ, bắt đầu từ `1`.
+   - Nhận số thứ tự người dùng nhập và gọi `removeItem(displayNumber - 1)`.
+   - Số thứ tự không tồn tại phải in `Không tìm thấy mặt hàng.` và không thay đổi giỏ.
 
-### Dữ Liệu Chuẩn Và Kết Quả
+3. **Xem giỏ hàng**
 
-- Product: `P01 / Áo thun / 150000 / 20`; `P02 / Bình nước / 50000 / 10`.
-- Customer: `C01 / Linh Nguyễn / 0900000001`.
-- Khai báo đúng một biến `currentCustomer` giữ object Customer chuẩn ở trên.
-- Giỏ mẫu: `P01 × 2`, `P02 × 1`. Khi in giỏ, mỗi dòng phải có số thứ tự, mã, tên, đơn giá, số lượng và thành tiền; tổng giỏ là `350000`.
-- Một `CartItem` chỉ chứa đúng một `Product` và một số lượng. Khi thay đổi quantity của CartItem, stock của Product không tự đổi.
+   - In `currentCustomer` trước, sau đó in các dòng giỏ hàng.
+   - Mỗi dòng phải có số thứ tự, mã, tên, đơn giá, số lượng và thành tiền.
+   - Nếu giỏ rỗng, in `Giỏ hàng đang trống.`.
 
-Output tối thiểu của giỏ mẫu:
+4. **Xem tổng tiền**
+
+   - In tổng do `calculateTotal()` trả về.
+   - Giỏ rỗng có tổng bằng `0`.
+
+5. **Lựa chọn khác và thoát**
+
+   - Lựa chọn ngoài `0`, `1`, `2`, `3`, `4` phải in `Lựa chọn không hợp lệ.` rồi tiếp tục menu.
+   - Chọn `0` để kết thúc chương trình.
+
+### 7. Kết Quả Mẫu
+
+Với giỏ gồm `P01 × 2` và `P02 × 1`, output tối thiểu là:
 
 ```text
 Khách hàng: C01 | Linh Nguyễn | 0900000001
@@ -87,12 +254,76 @@ Khách hàng: C01 | Linh Nguyễn | 0900000001
 Tổng tiền: 350000.0
 ```
 
-### Nộp Bài
+### 8. Phạm Vi Chưa Thực Hiện Trong Buổi 03
 
-Nộp toàn bộ source của `HitShop` và ba class model theo đúng package, link repository GitHub và ảnh chụp hoặc nội dung output giỏ chuẩn có tổng `350000`.
+- Chưa kiểm tra `quantity` có vượt `stock`.
+- Chưa trừ tồn kho khi thêm vào giỏ.
+- Chưa gộp các dòng có cùng `Product`.
+- Chưa tạo class `Cart`.
 
-## Nâng Cao — Bài Tự Chọn
+Các quy tắc cập nhật và bảo vệ tồn kho sẽ được phát triển ở buổi sau.
 
-- Bổ sung field `private static int count` để đếm số đối tượng `Product` đã tạo. Constructor tăng `count` sau mỗi lần tạo đối tượng; method `public static int getCount()` trả về giá trị hiện tại. Sau khi tạo P01 và P02, `Product.getCount()` trả về `2`.
-- Thêm kiểm tra trong setter: `name` không được rỗng, `price` phải lớn hơn 0 và `stock` không được âm. Phần bắt buộc chưa yêu cầu xử lý exception cho dữ liệu nhập từ bàn phím.
-- Lập bảng so sánh `private`, default, `protected`, `public` khi thành viên được dùng trong cùng class, cùng package, class con khác package hoặc nơi khác; các field bắt buộc của model vẫn là `private`.
+### 9. Nộp Bài
+
+Nộp toàn bộ source của `HitShop` và ba class trong package `model`.
+
+Nộp link repository GitHub và ảnh chụp hoặc nội dung output của giỏ chuẩn có tổng `350000`.
+
+## III. Bài Tự Chọn — Mở Rộng
+
+1. Bổ sung field `private static int count` trong `Product` để đếm số object `Product` đã tạo.
+
+   Constructor tăng `count` sau mỗi lần tạo object.
+
+   Method `public static int getCount()` trả về giá trị hiện tại.
+
+   Sau khi tạo `P01` và `P02`, `Product.getCount()` phải trả về `2`.
+
+2. Thêm kiểm tra trong setter của `Product`:
+
+   - `name` không được rỗng.
+   - `price` phải lớn hơn `0`.
+   - `stock` không được âm.
+
+   Phần bắt buộc chưa yêu cầu xử lý exception cho dữ liệu nhập từ bàn phím.
+
+3. Lập bảng so sánh `private`, default, `protected`, `public` khi thành viên được dùng trong cùng class, cùng package, class con khác package hoặc nơi khác.
+
+   Các field bắt buộc của ba class model vẫn phải là `private`.
+
+## IV. Tổng Kết Bài Tập Về Nhà Buổi 03
+
+Sau bài tập buổi 3, dữ liệu của chương trình không còn nằm trong ba danh sách song song.
+
+Mỗi loại dữ liệu được biểu diễn bằng class riêng; `HitShop` quản lý một khách hàng và một `List<CartItem>`.
+
+### 1. Các Test Case Phải Chạy Được
+
+Mỗi test case bắt đầu từ một lần chạy mới, trừ khi phần thao tác ghi rõ các bước liên tiếp.
+
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC03-01` | Khi giỏ đang rỗng, chọn `3`, sau đó chọn `4` | In khách hàng hiện tại, in `Giỏ hàng đang trống.`, tổng tiền bằng `0` |
+| `TC03-02` | Chọn `1`, nhập mã không phải `P01` hoặc `P02` | In `Không tìm thấy sản phẩm.` và giỏ vẫn rỗng |
+| `TC03-03` | Chọn `1`, nhập `P01` với số lượng `0` hoặc số âm | In `Số lượng phải lớn hơn 0.` và giỏ vẫn rỗng |
+| `TC03-04` | Thêm lần lượt `P01 × 2` và `P02 × 1`, sau đó chọn `3` và `4` | Giỏ có đúng hai dòng theo output mẫu; tổng tiền bằng `350000` |
+| `TC03-05` | Thêm `P01 × 1` hai lần | Giỏ có hai `CartItem` riêng, mỗi dòng tham chiếu sản phẩm `P01`; không gộp thành một dòng |
+| `TC03-06` | Khi giỏ có hai dòng, yêu cầu xóa số thứ tự không tồn tại | In `Không tìm thấy mặt hàng.` và hai dòng trong giỏ không thay đổi |
+| `TC03-07` | Từ giỏ của `TC03-04`, xóa dòng số `1` | Chỉ còn `P02 × 1`; tổng tiền bằng `50000` |
+| `TC03-08` | Nhập một lựa chọn menu khác `0`, `1`, `2`, `3`, `4` | In `Lựa chọn không hợp lệ.` rồi tiếp tục hiển thị menu |
+| `TC03-09` | Chọn `0` | Chương trình kết thúc |
+
+Ngoài các test case console, cần kiểm tra `Product.toString()`, `Customer.toString()` và `CartItem.getTotal()` trả đúng định dạng hoặc giá trị đã mô tả.
+
+Khi gọi `setQuantity(...)` trên một `CartItem`, giá trị `stock` của `Product` mà dòng đó tham chiếu phải giữ nguyên.
+
+### 2. Cây Thư Mục Sau Buổi 03
+
+```text
+src/
+├── HitShop.java
+└── model/
+    ├── Product.java
+    ├── Customer.java
+    └── CartItem.java
+```
