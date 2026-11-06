@@ -1,12 +1,57 @@
 # Bài Tập Về Nhà — Buổi 09
 
-## Bài Bắt Buộc — Đơn Hàng Nhiều Bảng, JOIN Và Báo Cáo
+## I. Tổng Kết Bài Tập Về Nhà Buổi 08
 
-### Mốc Chuyển Mô Hình
+Sau bài tập buổi 8, project đã tách luồng console → service → repository interface → JDBC implementation, dùng `Optional` cho kết quả tìm kiếm và `OrderStatus` cho trạng thái đơn.
+
+### 1. Các Test Case Phải Chạy Được
+
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC08-01` | Chạy CRUD Product qua `ProductService` | Kết quả giữ nguyên như buổi 7 |
+| `TC08-02` | Tìm P99 hoặc C99 | Service trả `Optional.empty()`, console không bị lỗi null |
+| `TC08-03` | Thêm Product giá `0` hoặc Customer có phone rỗng | Service từ chối, repository không ghi dữ liệu |
+| `TC08-04` | Liệt kê C01, C02 | Trả đúng hai Customer chuẩn |
+| `TC08-05` | Xác nhận Order mới rồi thử hủy | Trạng thái là `CONFIRMED` và không đổi |
+| `TC08-06` | Kiểm tra dependency và SQL | Console không gọi repository; service không chứa SQL |
+
+### 2. Cây Thư Mục Sau Buổi 08
+
+Cấu trúc source tối thiểu của phần bắt buộc; các package cũ vẫn được giữ nếu còn được sử dụng:
+
+```text
+pom.xml
+README.md
+sql/
+├── schema.sql
+└── seed.sql
+src/main/java/
+├── HitShop.java
+├── config/ConnectionFactory.java
+├── model/
+│   ├── Product.java
+│   ├── Customer.java
+│   ├── CartItem.java
+│   ├── Order.java
+│   └── OrderStatus.java
+├── repository/
+│   ├── ProductRepository.java
+│   ├── CustomerRepository.java
+│   └── jdbc/
+│       ├── JdbcProductRepository.java
+│       └── JdbcCustomerRepository.java
+└── service/
+    ├── ProductService.java
+    └── CustomerService.java
+```
+
+## II. Bài Bắt Buộc — Đơn Hàng Nhiều Bảng, JOIN Và Báo Cáo
+
+### 1. Mốc Chuyển Mô Hình
 
 Tiếp tục repository `HitShop` bằng JDK 17 và database buổi 8. Từ buổi này, Order được lưu trong MySQL và `orders.id` là `BIGINT AUTO_INCREMENT`; mã chuỗi `O01` của giai đoạn file được thay bằng id số như `1`. Không duy trì đồng thời hai kiểu id trong model Order.
 
-### Schema Bắt Buộc
+### 2. Schema Bắt Buộc
 
 ```sql
 CREATE TABLE orders (
@@ -30,7 +75,7 @@ CREATE TABLE order_items (
 
 `quantity > 0`; `unit_price > 0`. `unit_price` là giá chốt khi mua, không đọc lại giá hiện tại để tính lịch sử đơn.
 
-### Model Và Hợp Đồng Repository
+### 3. Model Và Hợp Đồng Repository
 
 - `Order`: `long id`, `Customer customer`, `OrderStatus status`, `LocalDateTime createdAt`, `List<OrderItem> items`; `addItem(OrderItem)` thêm một dòng và `getTotal()` cộng các line total.
 - `OrderItem`: `long id`, `Product product`, `int quantity`, `double unitPrice`; `getLineTotal()` trả `quantity * unitPrice`.
@@ -43,13 +88,13 @@ CREATE TABLE order_items (
 - `OrderRepository.findRevenueByDay(): List<DailyRevenue>`.
 - `OrderRepository.findRevenueByCustomer(): List<CustomerRevenue>`.
 
-### Sơ Đồ Lớp Và Quan Hệ
+### 4. Sơ Đồ Lớp Và Quan Hệ
 
 ![Sơ đồ lớp BTVN buổi 09](assets/buoi-09-class-diagram.svg)
 
 `OrderService` ghép phần header từ `OrderRepository` với các dòng từ `OrderItemRepository`; `Order` chứa nhiều `OrderItem`, và mỗi dòng giữ một `Product` cùng `unitPrice` đã chốt.
 
-### Hành Vi Bắt Buộc
+### 5. Hành Vi Bắt Buộc
 
 - Service từ chối customer không tồn tại, danh sách item rỗng, quantity không dương hoặc product không tồn tại.
 - Tạo Order trước OrderItem và dùng đúng khóa tự tăng vừa nhận; không đoán id bằng `MAX(id)`.
@@ -57,7 +102,7 @@ CREATE TABLE order_items (
 - Xem đơn in id, Customer, thời gian, trạng thái, từng dòng hàng và tổng.
 - Báo cáo ngày sắp xếp ngày tăng dần; báo cáo khách sắp xếp customer id tăng dần. Tổng là `SUM(quantity * unit_price)`.
 
-### Dữ Liệu Chuẩn
+### 6. Dữ Liệu Chuẩn
 
 - Customers: C01/Linh Nguyễn, C02/Minh Trần.
 - Product hiện tại: P01 giá 160000, P02 giá 50000.
@@ -66,13 +111,70 @@ CREATE TABLE order_items (
 - Báo cáo ngày `2026-01-15` là `500000`; C01 `350000`, C02 `150000`.
 - Order 1 vẫn hiển thị giá P01 là 150000 dù catalog hiện tại là 160000.
 
-### Nộp Bài
+### 7. Nộp Bài
 
 Nộp schema, seed, source repository/service và output tạo đơn, xem chi tiết, hai báo cáo. README ghi rõ bước reset database để id bắt đầu từ 1.
 
-## Nâng Cao — Transaction Và Tối Ưu
+## III. Nâng Cao — Transaction Và Tối Ưu
 
 - Đặt insert Order và toàn bộ OrderItem trong cùng transaction; cố ý làm một item lỗi để chứng minh không còn Order mồ côi.
 - Batch insert OrderItem.
 - Phân trang danh sách Order bằng `LIMIT/OFFSET`.
 - Tách `OrderItemRowMapper` dùng chung cho các truy vấn item.
+
+## IV. Tổng Kết Bài Tập Về Nhà Buổi 09
+
+Sau bài tập buổi 9, Order dùng khóa số do MySQL sinh, OrderItem giữ giá lịch sử và Service ghép dữ liệu từ nhiều repository trước khi trả cho View.
+
+### 1. Các Test Case Phải Chạy Được
+
+Reset database để Order đầu tiên có id `1` trước khi chạy bộ test.
+
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC09-01` | Tạo Order cho C01 với `P01 × 2`, `P02 × 1` | Nhận generated id `1`; header và hai item được lưu đúng khóa ngoại |
+| `TC09-02` | Tạo Order với customer không tồn tại, item rỗng, product sai hoặc quantity không dương | Service từ chối trước khi hoàn tất nghiệp vụ |
+| `TC09-03` | Xem Order id `1` | Hiển thị C01, thời gian, trạng thái, hai item và tổng `350000` |
+| `TC09-04` | Đổi giá hiện tại của P01 từ `150000` thành `160000`, xem lại Order 1 | Order vẫn dùng `unit_price=150000` và tổng vẫn là `350000` |
+| `TC09-05` | Tạo Order 2 cho C02 với `P02 × 3` | Tổng Order 2 bằng `150000` |
+| `TC09-06` | Chạy báo cáo ngày `2026-01-15` | Doanh thu ngày bằng `500000` |
+| `TC09-07` | Chạy báo cáo theo Customer | C01 bằng `350000`, C02 bằng `150000`, sắp xếp theo id tăng dần |
+| `TC09-08` | Kiểm tra code tạo Order | Dùng generated key của lệnh INSERT, không dùng `MAX(id)` |
+
+### 2. Cây Thư Mục Sau Buổi 09
+
+Cấu trúc source tối thiểu của phần bắt buộc; các package cũ vẫn được giữ nếu còn được sử dụng:
+
+```text
+pom.xml
+README.md
+sql/
+├── schema.sql
+└── seed.sql
+src/main/java/
+├── HitShop.java
+├── config/ConnectionFactory.java
+├── dto/
+│   ├── DailyRevenue.java
+│   └── CustomerRevenue.java
+├── model/
+│   ├── Product.java
+│   ├── Customer.java
+│   ├── Order.java
+│   ├── OrderItem.java
+│   └── OrderStatus.java
+├── repository/
+│   ├── ProductRepository.java
+│   ├── CustomerRepository.java
+│   ├── OrderRepository.java
+│   ├── OrderItemRepository.java
+│   └── jdbc/
+│       ├── JdbcProductRepository.java
+│       ├── JdbcCustomerRepository.java
+│       ├── JdbcOrderRepository.java
+│       └── JdbcOrderItemRepository.java
+└── service/
+    ├── ProductService.java
+    ├── CustomerService.java
+    └── OrderService.java
+```

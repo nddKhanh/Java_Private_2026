@@ -1,12 +1,47 @@
 # Bài Tập Sau Buổi 12 — Capstone
 
-## Mục Tiêu
+## I. Tổng Kết Bài Tập Về Nhà Buổi 11
+
+Sau bài tập buổi 11, project có một Swing View dùng chung ProductService với giao diện console và nhóm đã thực hành bàn giao chức năng qua pull request.
+
+### 1. Các Test Case Phải Chạy Được
+
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC11-01` | Mở cửa sổ Product ở kích thước 700×450 | Form và bảng hiển thị đầy đủ |
+| `TC11-02` | Kiểm tra trạng thái ban đầu | Text field rỗng, nút `Thêm` bị vô hiệu hóa |
+| `TC11-03` | Nạp Product từ Service | Bảng hiển thị đúng P01, P02, P03 |
+| `TC11-04` | Kiểm tra dependency của Swing View | View không chứa SQL, repository hoặc list dữ liệu riêng |
+| `TC11-05` | Chạy lại console | Các chức năng cũ vẫn hoạt động |
+| `TC11-06` | Kiểm tra lịch sử Git | Feature branch, commit có nghĩa, PR và review đều tồn tại |
+
+### 2. Cây Thư Mục Sau Buổi 11
+
+Cấu trúc source tối thiểu của phần bắt buộc; các package cũ vẫn được giữ nếu còn được sử dụng:
+
+```text
+src/main/java/
+├── app/HitShop.java
+├── controller/ShopController.java
+├── view/
+│   ├── ConsoleView.java
+│   └── ProductWindow.java
+├── dto/OrderItemInput.java
+├── service/
+├── repository/
+│   └── jdbc/
+└── model/
+```
+
+## II. Bài Tập Capstone
+
+### 1. Mục Tiêu
 
 Mỗi nhóm chọn một bài toán quản lý phù hợp, ví dụ cửa hàng, thư viện, khóa học, phòng khám nhỏ hoặc đặt lịch. `HitShop` là đề tài tham khảo có thể tiếp tục từ buổi 11, không phải đề tài bắt buộc cho mọi nhóm.
 
 Sản phẩm chạy bằng JDK 17, lưu dữ liệu trong MySQL và chứng minh được toàn bộ chuỗi kiến thức của khóa học: OOP, JDBC, thiết kế nhiều bảng, phân tầng ứng dụng, xử lý lỗi, transaction và Git collaboration.
 
-## 1. Đăng Ký Phạm Vi
+### 2. Đăng Ký Phạm Vi
 
 Trước khi code, nhóm nộp một trang mô tả:
 
@@ -19,16 +54,16 @@ Trước khi code, nhóm nộp một trang mô tả:
 
 Mentor chốt phạm vi theo tiêu chí “demo được, dữ liệu đúng, trách nhiệm rõ”. Nhóm không cộng thêm chức năng khi luồng lõi chưa hoàn thành.
 
-## 2. Yêu Cầu Kỹ Thuật Bắt Buộc
+### 3. Yêu Cầu Kỹ Thuật Bắt Buộc
 
-### OOP Và Mô Hình Dữ Liệu
+#### OOP Và Mô Hình Dữ Liệu
 
 - Có ít nhất ba entity nghiệp vụ, field được đóng gói và quan hệ object rõ ràng.
 - Database có ít nhất ba bảng nghiệp vụ và ít nhất một quan hệ một-nhiều bằng foreign key.
 - Có quy tắc kiểm tra dữ liệu ở Service, ví dụ số lượng dương, lịch không trùng hoặc trạng thái chuyển hợp lệ.
 - Giá trị lịch sử cần giữ nguyên phải được snapshot đúng lúc. Ví dụ đơn hàng giữ `unit_price` thay vì luôn đọc giá Product hiện tại.
 
-### JDBC Và Chức Năng
+#### JDBC Và Chức Năng
 
 - Có CRUD đầy đủ cho ít nhất một entity chính.
 - Có chức năng tạo và xem chi tiết một giao dịch thuộc luồng nghiệp vụ nhiều bảng.
@@ -36,13 +71,13 @@ Mentor chốt phạm vi theo tiêu chí “demo được, dữ liệu đúng, tr
 - SQL nhận input phải dùng `PreparedStatement`; tài nguyên được đóng bằng try-with-resources.
 - Dữ liệu vẫn còn sau khi đóng và chạy lại ứng dụng.
 
-### Transaction
+#### Transaction
 
 Luồng nghiệp vụ ghi nhiều bảng phải chạy trong một transaction. Tất cả các bước cùng commit hoặc cùng rollback. Nhóm phải demo một ca cố ý làm một bước ở giữa thất bại và chứng minh database không còn dữ liệu dở dang.
 
 Ví dụ HitShop: insert Order, insert OrderItem và giảm Product.stock cùng transaction. Hủy đơn và hoàn stock cũng phải là một transaction và không được hoàn kho hai lần.
 
-### Kiến Trúc
+#### Kiến Trúc
 
 ```text
 View → Controller → Service → Repository interface → JDBC implementation → MySQL
@@ -54,14 +89,14 @@ View → Controller → Service → Repository interface → JDBC implementation
 - JDBC implementation chịu trách nhiệm SQL và mapping.
 - Một composition root tạo và nối các dependency.
 
-### Git Và Tài Liệu
+#### Git Và Tài Liệu
 
 - Repository có `main`, `develop`, `feature/<ten-chuc-nang>`; thay đổi chính được đưa qua pull request.
 - Mỗi thành viên có commit và ít nhất một lần review phần của người khác.
 - README ghi JDK 17, MySQL, cách cấu hình không lộ credential, cách tạo schema/seed, cách chạy, tài khoản hoặc dữ liệu demo và luồng demo.
 - Không commit mật khẩu thật, thư mục build hoặc cấu hình IDE cá nhân không cần thiết.
 
-## 3. Bộ Nghiệm Thu Chung
+### 4. Bộ Nghiệm Thu Chung
 
 Nhóm tự chuẩn bị một script reset/seed có thể chạy lặp lại. Buổi demo thực hiện theo thứ tự:
 
@@ -76,7 +111,7 @@ Nhóm tự chuẩn bị một script reset/seed có thể chạy lặp lại. Bu
 
 Mỗi nhóm phải ghi trước dữ liệu đầu vào và kết quả mong đợi của bảy bước đầu trong README; không dùng dữ liệu ngẫu nhiên hoặc thời gian hệ thống nếu điều đó làm kết quả khó lặp lại.
 
-## 4. Đề Tài Tham Khảo: HitShop
+### 5. Đề Tài Tham Khảo: HitShop
 
 Nhóm tiếp tục HitShop có thể giữ hợp đồng từ buổi 11:
 
@@ -89,7 +124,7 @@ Nhóm tiếp tục HitShop có thể giữ hợp đồng từ buổi 11:
 
 Nhóm chọn đề tài khác được đặt tên class, bảng và menu theo miền bài toán của mình, đồng thời đáp ứng các yêu cầu chung.
 
-## 5. Hồ Sơ Nộp
+### 6. Hồ Sơ Nộp
 
 - URL repository và danh sách pull request.
 - Source code, `schema.sql`, `seed.sql` và README.
@@ -97,7 +132,7 @@ Nhóm chọn đề tài khác được đặt tên class, bảng và menu theo m
 - Bảng test case gồm input, kết quả mong đợi và kết quả thực tế.
 - Slide hoặc tài liệu demo, nếu có, dài tối đa 8 trang.
 
-## 6. Rubric 100 Điểm
+### 7. Rubric 100 Điểm
 
 | Nhóm tiêu chí | Điểm | Điều kiện chính |
 |---|---:|---|
@@ -109,3 +144,51 @@ Nhóm chọn đề tài khác được đặt tên class, bảng và menu theo m
 | README và demo | 10 | Người khác setup/chạy được, trình bày đúng trọng tâm |
 
 Tìm kiếm nâng cao, phân trang, batch, export, biểu đồ hoặc cải thiện giao diện được tính điểm cộng. Transaction và tính đúng đắn của dữ liệu vẫn phải đạt yêu cầu tương ứng trong rubric.
+
+## III. Tổng Kết Bài Tập Sau Buổi 12
+
+Capstone hoàn thành khi một người khác có thể dựng database sạch, chạy ứng dụng, lặp lại bộ nghiệm thu và theo dõi được toàn bộ luồng từ View đến MySQL.
+
+### 1. Các Test Case Phải Chạy Được
+
+Mỗi nhóm thay dữ liệu ví dụ bằng bộ dữ liệu cố định của đề tài và ghi rõ input cùng kết quả mong đợi trong README.
+
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC12-01` | Chạy script reset/seed rồi khởi động ứng dụng | Database về trạng thái chuẩn và ứng dụng chạy trên JDK 17 |
+| `TC12-02` | Liệt kê dữ liệu seed | Dữ liệu trên giao diện khớp chính xác với `seed.sql` |
+| `TC12-03` | Thực hiện đủ Create, Read, Update, Delete cho entity chính | Mỗi thao tác làm thay đổi đúng bản ghi; input sai bị từ chối |
+| `TC12-04` | Tạo một giao dịch nhiều bảng hợp lệ | Nhận id/kết quả mới, các bảng liên quan cùng được cập nhật và chi tiết hiển thị đúng |
+| `TC12-05` | Chạy truy vấn JOIN và báo cáo tổng hợp | Kết quả khớp phép tính tay từ dữ liệu chuẩn |
+| `TC12-06` | Cố ý làm bước giữa của giao dịch thất bại | Toàn bộ transaction rollback; không còn dữ liệu hoặc trạng thái dở dang |
+| `TC12-07` | Đóng rồi mở lại ứng dụng | Dữ liệu đã commit vẫn còn trong MySQL |
+| `TC12-08` | Kiểm tra kiến trúc source | Dependency đi theo View → Controller → Service → Repository interface → JDBC implementation |
+| `TC12-09` | Dựng project trên máy khác theo README | Không cần credential trong source và không phụ thuộc cấu hình IDE cá nhân |
+| `TC12-10` | Trình bày lịch sử cộng tác | Có branch, PR, review và commit có nghĩa của từng thành viên |
+
+### 2. Cây Thư Mục Sau Capstone
+
+Tên package và class được đổi theo đề tài, nhưng cấu trúc tối thiểu giữ các ranh giới sau:
+
+```text
+project-name/
+├── pom.xml
+├── README.md
+├── .gitignore
+├── sql/
+│   ├── schema.sql
+│   └── seed.sql
+├── docs/
+│   ├── erd.png
+│   ├── architecture.md
+│   └── test-cases.md
+└── src/main/java/<base-package>/
+    ├── app/
+    ├── controller/
+    ├── dto/
+    ├── model/
+    ├── repository/
+    │   └── jdbc/
+    ├── service/
+    └── view/
+```
