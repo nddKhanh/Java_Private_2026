@@ -117,6 +117,8 @@ Chạy bot khai thác và xây dựng:
 
 Script chạy 41 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
 
+Template hướng dẫn sử dụng và kiểm thử chuẩn nằm tại [`GUIDE.md`](GUIDE.md).
+
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
@@ -136,8 +138,9 @@ Không dùng các token này cho môi trường public hoặc production.
 - State chỉ nằm trong RAM và chủ ý được tạo lại khi server restart.
 - Mỗi team có một unit seed sẵn, một HQ và có thể spawn tối đa năm unit theo profile mặc định.
 - Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server có rate limit theo team và queue tuần tự.
-- Spawn chỉ tạo WORKER ở ô kề HQ; chưa có chi phí tài nguyên hoặc công trình sản xuất.
-- Không có database, lobby, đăng nhập, matchmaking hoặc tài nguyên.
+- Spawn tạo unit ở ô kề HQ; chi phí spawn chưa được áp dụng.
+- Resource node, harvest và building đã có; building production/defense chưa có.
+- Không có database, lobby, đăng nhập hoặc matchmaking.
 - Desktop Code Studio chỉ biên dịch và chạy source trên máy local; source/class không được gửi lên server.
 - JVM con có heap 64 MB, timeout cấu hình được và output giới hạn 64 KiB mỗi stream.
 - Các giới hạn process không phải sandbox an toàn cho code không tin cậy.
