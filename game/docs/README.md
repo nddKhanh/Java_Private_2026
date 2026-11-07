@@ -6,6 +6,7 @@ MVP game chiến thuật 2D trong đó chương trình Java gửi command và Ph
 
 README cấp gốc [`../README.md`](../README.md) là điểm vào chính của dự án.
 Khi thay đổi README cấp gốc về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật đồng thời `GUIDE.md`, `README.md` này và `CHANGELOG.md`.
+`GUIDE.md` chỉ liệt kê khả năng người chơi có thể cảm nhận và cách tương tác hiện tại, không liệt kê chi tiết triển khai hệ thống.
 
 ## Kiến trúc
 

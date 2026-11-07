@@ -63,6 +63,8 @@ Chạy toàn bộ regression, frontend build và audit:
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Lịch sử thay đổi theo phase. |
 | [`plan.md`](plan.md) | Kế hoạch sản phẩm, quyết định kiến trúc và hướng phát triển. |
 
+`docs/GUIDE.md` mô tả theo khả năng người chơi cảm nhận được và không thay thế tài liệu kỹ thuật nội bộ.
+
 ## Quy tắc đồng bộ tài liệu
 
 README cấp gốc là điểm vào chính của dự án.

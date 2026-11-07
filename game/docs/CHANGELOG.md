@@ -9,6 +9,10 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 
 - Thêm README cấp gốc mô tả dự án, cách chạy, bản đồ tài liệu và quy tắc đồng bộ README với GUIDE, docs README và CHANGELOG.
 
+### Changed
+
+- Viết lại `GUIDE.md` theo khả năng người chơi cảm nhận được, hành động tương tác và kịch bản sử dụng thay vì chi tiết hệ thống.
+
 ## Template
 
 ```markdown

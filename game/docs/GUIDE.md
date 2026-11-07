@@ -1,162 +1,215 @@
-# Ant Colony Wars — Hướng dẫn sử dụng và template kiểm thử
+# Ant Colony Wars — Hướng dẫn chơi và mẫu kiểm thử
 
-Tài liệu này là checklist chuẩn để chạy game và ghi nhận kết quả kiểm thử sau mỗi phase.
-Đánh dấu `[x]` khi chức năng đã test pass trong môi trường hiện tại.
-Đánh dấu `[~]` khi chức năng có một phần nhưng còn giới hạn đã ghi rõ.
-Đánh dấu `[ ]` khi chức năng chưa được triển khai hoặc chưa có bằng chứng kiểm thử.
+Tài liệu này mô tả những gì người chơi có thể nhìn thấy và thực hiện trong các kịch bản hiện tại.
+Đây cũng là mẫu checklist dùng lại sau mỗi lần cập nhật game.
 
-## 1. Trạng thái baseline
+Đánh dấu `[x]` khi đã kiểm tra thành công.
+Đánh dấu `[~]` khi dùng được nhưng còn giới hạn đã ghi rõ.
+Đánh dấu `[ ]` khi chưa dùng được hoặc chưa có bằng chứng kiểm tra.
 
-- Ngày baseline: 2026-11-08.
-- Phase đã ghi nhận: R1, R2, R3 và R4 `VERIFIED`.
-- Commit baseline: `2415c44`.
-- Server: Spring Boot WebSocket, server-authoritative.
-- Client: Java SDK 21, JavaFX Desktop Code Studio và Phaser viewer.
-- Protocol hiện tại: schema 4.
+## 1. Trạng thái hiện tại
 
-Khi README cấp gốc thay đổi về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật lại template này cùng `docs/README.md` và `docs/CHANGELOG.md`.
+- Ngày cập nhật: 2026-11-08.
+- Kịch bản đã hoàn thành: R1, R2, R3 và R4.
+- Người chơi điều khiển quân của mình bằng chương trình Java hoặc Desktop Code Studio.
+- Phaser là màn hình quan sát bản đồ và trạng thái trận đấu.
+- Máy chủ giữ kết quả chính thức của mọi hành động.
 
-## 2. Chuẩn bị môi trường
+Khi README cấp gốc thay đổi về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật lại tài liệu này cùng `docs/README.md` và `docs/CHANGELOG.md`.
 
-- [ ] JDK 21 đã cài và có trong `PATH`.
-- [ ] Node.js 20 trở lên đã cài và có trong `PATH`.
-- [ ] PowerShell 5.1 hoặc PowerShell 7 đang chạy tại thư mục gốc project.
-- [ ] Dependency Maven/npm đã tải thành công.
+## 2. Chuẩn bị
 
-## 3. Khởi động và sử dụng nhanh
+- [ ] Cài JDK 21.
+- [ ] Cài Node.js 20 trở lên.
+- [ ] Mở PowerShell tại thư mục gốc của dự án.
+- [ ] Đã tải xong các thư viện Maven và npm.
 
-Mở ba terminal tại thư mục gốc project.
+## 3. Bắt đầu một trận
 
-Terminal 1 — server:
+Mở ba cửa sổ PowerShell tại thư mục gốc.
+
+### Cửa sổ 1 — bật máy chủ
 
 ```powershell
 .\scripts\start-server.ps1
 ```
 
-Terminal 2 — Phaser viewer:
+### Cửa sổ 2 — bật màn hình bản đồ
 
 ```powershell
 .\scripts\start-web.ps1
 ```
 
-Mở `http://127.0.0.1:5173/` và chờ trạng thái `Đang trực tuyến`.
+Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 
-Terminal 3 — chạy bot:
+### Cửa sổ 3 — điều khiển quân bằng kịch bản mẫu
 
 ```powershell
 .\scripts\run-demo.ps1 BlueBot
 ```
 
-Server mặc định dùng token `blue-token` cho BLUE và `red-token` cho RED.
-Khởi động lại server giữa các kịch bản để trở về state seed ban đầu.
+Để kiểm tra lại từ bản đồ ban đầu, hãy khởi động lại máy chủ trước mỗi kịch bản.
+Token mẫu của đội xanh là `blue-token`.
+Token mẫu của đội đỏ là `red-token`.
 
-## 4. Checklist chức năng
+## 4. Các khả năng người chơi có thể sử dụng
 
-### Kết nối và quan sát
+### Quan sát trận đấu
 
-- [x] Kết nối WebSocket bằng token hợp lệ.
-- [x] Từ chối token không hợp lệ.
-- [x] Nhận snapshot ban đầu qua `STATE_UPDATED`.
-- [x] Đọc state mới qua `GET_STATE`.
-- [x] Phaser cập nhật state và revision mà không refresh.
-- [x] Hai viewer nhận cùng revision sau một command hợp lệ.
+- [x] Mở bản đồ và xem trạng thái kết nối.
+- [x] Xem vị trí, tên, loại quân và HP của từng quân.
+- [x] Xem nhà chính của hai đội và điểm sinh lực còn lại.
+- [x] Xem điểm tài nguyên cùng số lượng còn lại.
+- [x] Xem số tài nguyên hiện có của mỗi đội.
+- [x] Xem BARRACKS, TOWER và WALL trên bản đồ.
+- [x] Theo dõi số lần thay đổi trạng thái của trận đấu.
+- [x] Theo dõi đội thắng khi nhà chính bị phá hủy.
 
-### Điều khiển đơn vị
+### Di chuyển và chờ lượt
 
-- [x] `MOVE` theo bốn hướng `UP`, `RIGHT`, `DOWN`, `LEFT`.
-- [x] `WAIT` làm tăng revision nhưng không đổi vị trí.
-- [x] `ATTACK` unit hoặc headquarters trong tầm.
-- [x] Từ chối bounds, occupancy, target không tồn tại, friendly target và out-of-range.
-- [x] Unit hết HP bị loại khỏi active snapshot và ID không được tái sử dụng.
-- [x] Chọn unit theo ID bằng `selectUnit`.
+- [x] Chọn quân đang điều khiển.
+- [x] Di chuyển quân lên một ô.
+- [x] Di chuyển quân sang phải một ô.
+- [x] Di chuyển quân xuống một ô.
+- [x] Di chuyển quân sang trái một ô.
+- [x] Chờ một lượt mà không đổi vị trí.
+- [x] Bị từ chối khi đi ra ngoài bản đồ.
+- [x] Bị từ chối khi đi vào ô đã bị chiếm.
 
-### Spawn và loại quân
+### Tấn công và kết thúc trận
 
-- [x] `SPAWN` unit cạnh headquarters.
-- [x] Spawn `WORKER`, `MELEE`, `RANGED` và `SIEGE` qua schema 4.
-- [x] Từ chối unit type không hỗ trợ.
-- [x] Giới hạn số unit theo team.
-- [x] `RANGED` có tầm đánh xa hơn profile cơ bản.
-- [x] `SIEGE` gây damage cao hơn profile cơ bản.
+- [x] Tấn công quân đối phương trong tầm.
+- [x] Tấn công nhà chính đối phương trong tầm.
+- [x] Làm giảm HP của mục tiêu.
+- [x] Hạ quân đối phương khi HP về 0.
+- [x] Phá nhà chính và kết thúc trận.
+- [x] Bị từ chối khi tấn công đồng đội, mục tiêu không tồn tại hoặc mục tiêu ngoài tầm.
+- [x] Quân RANGED có tầm tấn công xa hơn loại cơ bản.
+- [x] Quân SIEGE gây sát thương cao hơn loại cơ bản.
 
-### Tài nguyên và xây dựng
+### Tạo thêm quân
 
-- [x] `HARVEST` tại resource node trong range.
-- [x] Resource node giảm amount và team tăng resources.
-- [x] Từ chối harvest ngoài range hoặc resource đã cạn.
-- [x] `BUILD` BARRACKS, TOWER và WALL trên ô kề hợp lệ.
-- [x] Trừ đúng cost và từ chối khi thiếu resources.
-- [x] Từ chối building trùng ID, ô bị chiếm, ngoài bounds hoặc không kề actor.
-- [~] Building được hiển thị trong snapshot và Phaser nhưng chưa có production/defense behavior.
+- [x] Tạo quân mới cạnh nhà chính của đội mình.
+- [x] Đặt tên cho quân mới.
+- [x] Tạo các loại WORKER, MELEE, RANGED và SIEGE.
+- [x] Chọn quân mới theo mã riêng và điều khiển độc lập.
+- [x] Bị từ chối khi vượt giới hạn số quân của đội.
+- [x] Bị từ chối khi tạo loại quân không được hỗ trợ.
 
-### Quota và an toàn command
+### Khai thác tài nguyên
 
-- [x] Command được xử lý tuần tự và revision/sequence tăng đúng thứ tự.
-- [x] Command ID trùng bị từ chối và không áp dụng hai lần.
-- [x] Rate limit mặc định 10 action/giây theo team.
-- [x] Nhiều client cùng team dùng chung rate limit.
-- [x] Queue capacity mặc định 32 command.
-- [x] SDK tự chờ khi nhận `RATE_LIMITED`.
+- [x] Đưa WORKER tới điểm tài nguyên.
+- [x] Khai thác khi quân đứng trong khoảng cách cho phép.
+- [x] Nhận tài nguyên vào kho của đội.
+- [x] Làm giảm lượng tài nguyên còn lại tại node.
+- [x] Bị từ chối khi đứng quá xa node.
+- [x] Bị từ chối khi node đã hết tài nguyên.
 
-### Desktop Code Studio
+### Xây dựng
 
-- [x] Compile source Java và hiển thị diagnostics.
-- [x] Run source trong JVM con.
-- [x] Stop JVM con đang chạy.
-- [x] Timeout, heap limit và output cap.
-- [~] App-image đã có package smoke test trên máy phát triển; chưa xác nhận trên máy Windows thứ hai.
+- [x] Xây BARRACKS cạnh quân đang điều khiển.
+- [x] Xây TOWER cạnh quân đang điều khiển.
+- [x] Xây WALL cạnh quân đang điều khiển.
+- [x] Trừ đúng chi phí xây dựng khỏi kho tài nguyên.
+- [x] Bị từ chối khi không đủ tài nguyên.
+- [x] Bị từ chối khi ô xây ngoài bản đồ, đã bị chiếm hoặc không kề quân.
+- [~] Công trình có vị trí, loại và HP, nhưng chưa sản xuất quân hoặc tự phòng thủ.
 
-### Chưa có hoặc chưa đủ bằng chứng
+### Giới hạn khi chơi
 
-- [ ] Database, account, lobby, matchmaking và restart recovery.
-- [ ] Nhiều match đồng thời và production deployment.
-- [ ] Load test nhiều kết nối hoặc nhiều client cùng team ở quy mô lớn.
-- [ ] Footprint 2×2, projectile và fixed simulation tick.
-- [ ] Visual QA R2–R4 trên nhiều trình duyệt hoặc thiết bị.
-- [ ] Building production, defense hoặc unit production.
+- [x] Máy chủ xử lý lần lượt các hành động.
+- [x] Mỗi đội có giới hạn 10 hành động trong một giây theo cấu hình mặc định.
+- [x] Hai chương trình cùng điều khiển một đội dùng chung giới hạn này.
+- [x] Chương trình Java tự chờ rồi gửi lại khi bị giới hạn tốc độ.
+- [~] Hàng đợi có giới hạn 32 lệnh theo cấu hình mặc định; chưa có giao diện riêng để xem hàng đợi.
 
-## 5. Cách điều khiển hiện tại
+## 5. Cách điều khiển theo từng hành động
 
-### Java SDK
+Người chơi viết chương trình Java để thực hiện các khả năng dưới đây.
+Mỗi hành động thành công làm trạng thái trận đấu thay đổi và được hiển thị trên bản đồ.
+
+### Kết nối vào đội
+
+Chọn địa chỉ máy chủ và mã truy cập của đội muốn điều khiển.
 
 ```java
-try (GameClient client = GameClient.connect("ws://localhost:8080/game", "blue-token")) {
-    client.move(Direction.RIGHT);
-    client.waitTurn();
-    client.attack("hq-red");
-    client.spawn("worker-blue-2", "Builder", UnitType.WORKER, Direction.DOWN);
-    client.harvest();
-    client.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
-}
+GameClient client = GameClient.connect(
+        "ws://localhost:8080/game",
+        "blue-token"
+);
 ```
 
-Các action không chỉ định `unitId` dùng unit active đầu tiên của team.
-Dùng overload có `unitId` để điều khiển unit cụ thể.
+### Chọn quân để điều khiển
+
+Khi không ghi mã quân, hành động dùng quân đang hoạt động đầu tiên của đội.
+Khi muốn điều khiển một quân cụ thể, truyền mã quân vào phiên bản hành động có `unitId`.
 
 ```java
 client.move("worker-blue-2", Direction.RIGHT);
 client.harvest("worker-blue-2");
+```
+
+### Di chuyển
+
+Mỗi lần gọi chỉ di chuyển một ô.
+
+```java
+client.move(Direction.UP);
+client.move(Direction.RIGHT);
+client.move(Direction.DOWN);
+client.move(Direction.LEFT);
+```
+
+### Chờ lượt
+
+Chờ lượt giữ nguyên vị trí nhưng vẫn được ghi nhận là một hành động.
+
+```java
+client.waitTurn();
+client.waitTurn("worker-blue-2");
+```
+
+### Tấn công
+
+Truyền mã quân hoặc nhà chính muốn tấn công.
+
+```java
+client.attack("worker-red");
+client.attack("worker-blue-2", "hq-red");
+```
+
+### Tạo quân
+
+Quân mới xuất hiện ở ô kề nhà chính của đội.
+
+```java
+client.spawn("worker-blue-2", "Builder", UnitType.WORKER, Direction.DOWN);
+client.spawn("ranged-blue-1", "Ranger", UnitType.RANGED, Direction.RIGHT);
+```
+
+### Khai thác
+
+Quân phải đứng trong khoảng cách cho phép của điểm tài nguyên.
+
+```java
+client.harvest();
+client.harvest("worker-blue-2");
+```
+
+### Xây dựng
+
+Quân phải đứng cạnh ô muốn xây và đội phải đủ tài nguyên.
+
+```java
+client.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
 client.build("worker-blue-2", "wall-blue", BuildingType.WALL, Direction.DOWN);
 ```
 
-`Direction` gồm `UP`, `RIGHT`, `DOWN`, `LEFT`.
-`UnitType` gồm `WORKER`, `MELEE`, `RANGED`, `SIEGE`.
-`BuildingType` gồm `BARRACKS`, `TOWER`, `WALL`.
+Các hướng hiện có là `UP`, `RIGHT`, `DOWN` và `LEFT`.
+Các loại quân hiện có là `WORKER`, `MELEE`, `RANGED` và `SIEGE`.
+Các loại công trình hiện có là `BARRACKS`, `TOWER` và `WALL`.
 
-### Desktop Code Studio
-
-```powershell
-.\scripts\start-desktop.ps1
-```
-
-- [ ] Nhập server `ws://localhost:8080/game`.
-- [ ] Nhập token `blue-token` hoặc `red-token`.
-- [ ] Chọn bot class và source Java.
-- [ ] Nhấn `Compile` hoặc `Ctrl+B`.
-- [ ] Nhấn `Run` hoặc `Ctrl+R`.
-- [ ] Nhấn `Stop` hoặc `Ctrl+K` khi cần dừng JVM con.
-
-### Bot mẫu
+## 6. Kịch bản mẫu để người chơi thử
 
 ```powershell
 .\scripts\run-demo.ps1 BlueBot
@@ -166,57 +219,78 @@ client.build("worker-blue-2", "wall-blue", BuildingType.WALL, Direction.DOWN);
 .\scripts\run-demo.ps1 ResourceBuilderBot
 ```
 
-## 6. Template test lặp lại
+- [x] `BlueBot`: đưa quân xanh di chuyển trên bản đồ.
+- [x] `RedBot`: điều khiển đội đỏ bằng token riêng.
+- [x] `WinningScenario`: đưa BLUE tấn công và phá nhà chính RED.
+- [x] `ReinforcementBot`: tạo quân mới, chọn quân đó và điều khiển riêng.
+- [x] `ResourceBuilderBot`: tới điểm tài nguyên, khai thác và xây BARRACKS.
 
-### Thông tin lần test
+## 7. Desktop Code Studio
+
+```powershell
+.\scripts\start-desktop.ps1
+```
+
+- [ ] Nhập máy chủ `ws://localhost:8080/game`.
+- [ ] Nhập token `blue-token` hoặc `red-token`.
+- [ ] Nhập tên lớp bot và chương trình Java.
+- [ ] Nhấn `Compile` hoặc `Ctrl+B` để biên dịch.
+- [ ] Nhấn `Run` hoặc `Ctrl+R` để bắt đầu điều khiển trận.
+- [ ] Nhấn `Stop` hoặc `Ctrl+K` để dừng chương trình.
+
+## 8. Những khả năng chưa có
+
+- [ ] Công trình tự sản xuất quân hoặc tự phòng thủ.
+- [ ] Footprint 2×2.
+- [ ] Projectile.
+- [ ] Nhịp mô phỏng cố định.
+- [ ] Database, tài khoản, lobby, matchmaking và khôi phục sau khi khởi động lại.
+- [ ] Nhiều trận cùng lúc và kiểm tra tải quy mô lớn.
+- [ ] Kiểm tra hình ảnh trên nhiều trình duyệt hoặc thiết bị.
+
+## 9. Mẫu ghi nhận một lần kiểm thử
+
+### Thông tin lần kiểm thử
 
 - Ngày/giờ:
-- Người test:
-- Commit/branch:
-- OS và JDK:
-- Browser:
-- Profile hoặc token:
-- Kết quả tổng thể: `[ ] PASS` `[ ] PASS CÓ GIỚI HẠN` `[ ] FAIL`
+- Người kiểm thử:
+- Nhánh và commit:
+- Hệ điều hành:
+- Trình duyệt:
+- Đội và token:
+- Kết quả: `[ ] ĐẠT` `[ ] ĐẠT CÓ GIỚI HẠN` `[ ] KHÔNG ĐẠT`
 
-### Kịch bản bắt buộc
+### Danh sách hành động
 
-- [ ] `T01` — Khởi động server và viewer, nhận snapshot revision 0.
-- [ ] `T02` — MOVE hợp lệ, viewer nhận vị trí mới và revision tăng 1.
-- [ ] `T03` — WAIT, revision tăng và vị trí không đổi.
-- [ ] `T04` — ATTACK hợp lệ, HP target giảm đúng profile.
-- [ ] `T05` — SPAWN, chọn unit mới và điều khiển bằng ID.
-- [ ] `T06` — HARVEST, kiểm tra resource node và team resources.
-- [ ] `T07` — BUILD, kiểm tra cost, position, type và building HP.
-- [ ] `T08` — Command lỗi, xác nhận state/revision không đổi.
-- [ ] `T09` — Hai client cùng team, xác nhận dùng chung quota.
-- [ ] `T10` — Chạy `WinningScenario`, xác nhận winner BLUE.
-- [ ] `T11` — Chạy `ResourceBuilderBot`, xác nhận harvest rồi build.
-- [ ] `T12` — Compile/Run/Stop trong Desktop Code Studio.
+- [ ] Kết nối vào đội.
+- [ ] Di chuyển lên, phải, xuống hoặc trái.
+- [ ] Chờ lượt.
+- [ ] Tấn công quân hoặc nhà chính.
+- [ ] Tạo quân mới.
+- [ ] Chọn và điều khiển quân mới.
+- [ ] Khai thác điểm tài nguyên.
+- [ ] Xây BARRACKS, TOWER hoặc WALL.
+- [ ] Thử một hành động không hợp lệ và xác nhận trạng thái không đổi.
+- [ ] Chạy kịch bản thắng hoặc kịch bản xây dựng.
 
-### Ghi nhận từng case
+### Ghi nhận kết quả
 
-| Case | Kết quả | Revision trước/sau | Error nếu có | Evidence |
+| Hành động | Kết quả | Trạng thái trước/sau | Thông báo lỗi | Bằng chứng |
 |---|---|---:|---|---|
-| T01 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T02 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T03 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T04 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T05 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T06 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T07 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T08 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T09 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T10 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T11 | `[ ] PASS` `[ ] FAIL` |  |  |  |
-| T12 | `[ ] PASS` `[ ] FAIL` |  |  |  |
+| Kết nối | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
+| Di chuyển | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
+| Chờ lượt | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
+| Tấn công | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
+| Tạo quân | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
+| Khai thác | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
+| Xây dựng | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
+| Hành động không hợp lệ | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
 
-## 7. Regression command
-
-Chạy bộ kiểm tra tự động trước khi ghi nhận kết quả manual:
+## 10. Kiểm tra tự động trước khi kiểm tra bằng tay
 
 ```powershell
 .\scripts\test-all.ps1
 ```
 
-Không đánh dấu runtime, visual hoặc load test là pass chỉ dựa trên Maven test.
-Mỗi phase mới cần cập nhật checklist, command điều khiển, expected result và số commit baseline.
+Không kết luận rằng hình ảnh, thao tác thực tế hoặc khả năng chịu tải đã đạt chỉ dựa trên kiểm tra tự động.
+Mỗi phase mới phải cập nhật phần khả năng người chơi, cách điều khiển, kịch bản và mẫu ghi nhận trong tài liệu này.
