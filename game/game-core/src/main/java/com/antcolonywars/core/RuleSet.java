@@ -36,6 +36,14 @@ public record RuleSet(
         }
     }
 
+    public int attackDamageFor(String unitType) {
+        return UnitType.SIEGE.name().equals(unitType) ? attackDamage + 1 : attackDamage;
+    }
+
+    public int attackRangeFor(String unitType) {
+        return UnitType.RANGED.name().equals(unitType) ? attackRange + 1 : attackRange;
+    }
+
     public RuleSet(String version, int attackDamage, int attackRange) {
         this(version, attackDamage, attackRange, 5, 3, 0, 3, 0, 3, 2, 1, 5);
     }

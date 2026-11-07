@@ -1,6 +1,7 @@
 package com.antcolonywars.client;
 
 import com.antcolonywars.core.MatchState;
+import com.antcolonywars.core.UnitType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 3;
+    private static final int SCHEMA_VERSION = 4;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -81,12 +82,18 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
     }
 
     public GameState spawn(String unitId, String displayName, Direction direction) {
+        return spawn(unitId, displayName, UnitType.WORKER, direction);
+    }
+
+    public GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction) {
         Objects.requireNonNull(unitId, "unitId");
         Objects.requireNonNull(displayName, "displayName");
+        Objects.requireNonNull(unitType, "unitType");
         Objects.requireNonNull(direction, "direction");
         return sendAction("SPAWN", Map.of(
                 "unitId", unitId,
                 "displayName", displayName,
+                "unitType", unitType.name(),
                 "direction", direction.name()
         ));
     }

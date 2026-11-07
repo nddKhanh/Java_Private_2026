@@ -67,6 +67,34 @@ class GameEngineAttackTest {
         assertSame(finalHit.state(), readAfterFinish.state());
     }
 
+    @Test
+    void appliesRangedRangeAndSiegeDamageProfiles() {
+        MatchSetup setup = new MatchSetup(
+                "type-setup", "type-match", 6, 6, RuleSet.mvp(),
+                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
+                List.of(
+                        new Unit("ranged-blue", "BLUE", "RANGED", new Position(1, 1), 3, Direction.RIGHT),
+                        new Unit("siege-blue", "BLUE", "SIEGE", new Position(2, 1), 3, Direction.RIGHT),
+                        new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)
+                ),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-red", "RED", new Position(5, 5), 3)
+                )
+        );
+        GameSession session = new GameSession(setup);
+
+        ApplyResult ranged = session.apply(new AttackCommand(
+                "ranged-attack", "BLUE", "ranged-blue", "worker-red"));
+        assertTrue(ranged.accepted());
+        assertEquals(2, unit(ranged.state(), "worker-red").hp());
+
+        ApplyResult siege = session.apply(new AttackCommand(
+                "siege-attack", "BLUE", "siege-blue", "worker-red"));
+        assertTrue(siege.accepted());
+        assertTrue(siege.state().retiredUnitIds().contains("worker-red"));
+    }
+
     private MatchSetup combatSetup(Position blue, Position red) {
         return combatSetup(blue, red, RuleSet.mvp(), new Position(4, 4));
     }

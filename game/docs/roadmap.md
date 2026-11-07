@@ -466,9 +466,17 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R3 — Loại quân và chiến đấu
 
-- MELEE, RANGED và SIEGE.
-- Footprint 2×2, tầm đánh và projectile.
-- Fixed simulation tick độc lập FPS của Phaser.
+- MELEE, RANGED và SIEGE có thể spawn qua Java SDK/WebSocket.
+- RANGED được tăng tầm đánh; SIEGE được tăng damage; WORKER giữ profile cơ bản.
+- Phaser hiển thị loại quân và schema 4 bảo vệ contract spawn mới.
+
+**Nghiệm thu:**
+
+- [x] Core validate loại quân và từ chối type không hỗ trợ.
+- [x] Combat profile của RANGED/SIEGE được kiểm thử bằng unit test.
+- [x] Spawn type được truyền xuyên suốt từ client đến snapshot.
+
+**Phạm vi chuyển tiếp:** Footprint 2×2, projectile và fixed simulation tick được giữ cho phase cân bằng chiến đấu tiếp theo.
 
 ## R4 — Hàng đợi và quota
 

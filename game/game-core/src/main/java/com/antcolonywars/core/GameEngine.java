@@ -52,6 +52,11 @@ public final class GameEngine {
         if (displayName.isEmpty() || displayName.length() > 32) {
             return ApplyResult.failure(state, ErrorCode.INVALID_DISPLAY_NAME);
         }
+        try {
+            UnitType.valueOf(command.unitType());
+        } catch (IllegalArgumentException exception) {
+            return ApplyResult.failure(state, ErrorCode.INVALID_UNIT_TYPE);
+        }
         long teamUnitCount = state.units().stream()
                 .filter(unit -> unit.teamId().equals(command.actorTeamId()))
                 .count();
@@ -75,7 +80,7 @@ public final class GameEngine {
 
         List<Unit> units = new ArrayList<>(state.units());
         units.add(new Unit(
-                command.unitId(), displayName, command.actorTeamId(), "WORKER", destination,
+                command.unitId(), displayName, command.actorTeamId(), command.unitType(), destination,
                 rules.spawnedUnitHp(), command.direction()
         ));
         return accept(state, units, state.retiredUnitIds(), state.headquarters(), state.status(),
@@ -154,7 +159,7 @@ public final class GameEngine {
         if (targetHp == 0) {
             return ApplyResult.failure(state, ErrorCode.TARGET_DESTROYED);
         }
-        if (actor.position().manhattanDistance(targetPosition) > rules.attackRange()) {
+        if (actor.position().manhattanDistance(targetPosition) > rules.attackRangeFor(actor.type())) {
             return ApplyResult.failure(state, ErrorCode.OUT_OF_RANGE);
         }
 
@@ -164,7 +169,7 @@ public final class GameEngine {
         MatchStatus status = state.status();
         String winnerTeamId = state.winnerTeamId();
         if (targetUnit != null) {
-            Unit damaged = targetUnit.takeDamage(rules.attackDamage());
+            Unit damaged = targetUnit.takeDamage(rules.attackDamageFor(actor.type()));
             if (damaged.hp() == 0) {
                 units = removeUnit(units, damaged.id());
                 retiredUnitIds = new ArrayList<>(retiredUnitIds);
@@ -173,7 +178,7 @@ public final class GameEngine {
                 units = replaceUnit(units, damaged);
             }
         } else {
-            Headquarters damaged = targetHeadquarters.takeDamage(rules.attackDamage());
+            Headquarters damaged = targetHeadquarters.takeDamage(rules.attackDamageFor(actor.type()));
             headquarters = replaceHeadquarters(headquarters, damaged);
             if (damaged.hp() == 0) {
                 status = MatchStatus.FINISHED;

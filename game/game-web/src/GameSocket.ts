@@ -33,7 +33,7 @@ export class GameSocket {
     }
     try {
       const message = JSON.parse(raw) as Partial<StateUpdatedMessage>;
-      if (message.type === 'STATE_UPDATED' && message.schemaVersion === 3 && message.state) {
+      if (message.type === 'STATE_UPDATED' && message.schemaVersion === 4 && message.state) {
         this.onState(message as StateUpdatedMessage);
       }
     } catch {

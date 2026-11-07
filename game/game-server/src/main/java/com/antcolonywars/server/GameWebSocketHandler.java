@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 3;
+    public static final int SCHEMA_VERSION = 4;
 
     private final MatchCoordinator coordinator;
     private final ObjectMapper objectMapper;
@@ -142,6 +142,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                     teamId,
                     requireText(request.unitId()),
                     requireText(request.displayName()),
+                    request.unitType() == null || request.unitType().isBlank() ? "WORKER" : request.unitType(),
                     Direction.valueOf(requireText(request.direction()))
             );
         }

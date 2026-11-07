@@ -117,3 +117,12 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Bằng chứng:** 39 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 - **Tiếp theo:** Bắt đầu R3 với loại quân MELEE, RANGED, SIEGE và mở rộng luật chiến đấu.
 - **Chưa kiểm chứng:** Chưa kiểm thử trực quan R2 trên trình duyệt hoặc app-image đóng gói; building chưa có production/defense behavior.
+
+## 2026-11-07 — R3 loại quân và combat profile
+
+- **Trạng thái:** `VERIFIED`
+- **Đã đạt:** Bổ sung WORKER, MELEE, RANGED và SIEGE; spawn type đi qua schema 4 từ Java SDK/WebSocket tới snapshot.
+- **Đã đạt:** RANGED có tầm đánh xa hơn và SIEGE gây damage cao hơn; Phaser hiển thị type cạnh unit.
+- **Bằng chứng:** 40 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
+- **Tiếp theo:** Hoàn thiện footprint, projectile và fixed simulation tick trong phase chiến đấu tiếp theo.
+- **Chưa kiểm chứng:** Chưa kiểm thử trực quan R3 trên trình duyệt hoặc app-image đóng gói.

@@ -8,6 +8,7 @@ public record ClientMessage(
         String action,
         String unitId,
         String displayName,
+        String unitType,
         String direction,
         String targetId,
         String buildingId,

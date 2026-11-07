@@ -1,11 +1,11 @@
-# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.8)
+# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.9)
 
-> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05, gameplay R1 và R2 đã được kiểm chứng.
+> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05, gameplay R1, R2 và R3 đã được kiểm chứng.
 > **Kiến trúc chính:** Server-authoritative; server giữ luật và state chính, client gửi command và render snapshot/event.
 > **Kiến trúc dự phòng:** `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là đề xuất sau MVP, chưa thay thế roadmap hiện tại.
 > **Mục tiêu dài hạn:** Game chiến thuật online 2D trên lưới ô vuông, trong đó người chơi điều khiển đơn vị bằng chương trình Java.
 > **Mục tiêu MVP:** Chứng minh một chương trình Java cơ bản có thể gửi hành động tới server, làm thay đổi trạng thái trận đấu và được Phaser hiển thị ngay qua WebSocket.
-> **Mục tiêu hậu MVP gần nhất:** Bổ sung loại quân và luật chiến đấu ở R3 trên nền resource/building đã ổn định.
+> **Mục tiêu hậu MVP gần nhất:** Hoàn thiện footprint, projectile và simulation tick trên nền combat profile R3.
 
 ## 1. Quyết định kỹ thuật
 
@@ -231,7 +231,7 @@ Client gửi:
 ```json
 {
   "type": "COMMAND",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "matchId": "match-default",
   "commandId": "blue-001",
   "action": "MOVE",
@@ -245,7 +245,7 @@ Server trả cho client gửi lệnh:
 ```json
 {
   "type": "COMMAND_RESULT",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "commandId": "blue-001",
   "ok": true,
   "revision": 1,
@@ -258,7 +258,7 @@ Server phát cho các client đang theo dõi trận:
 ```json
 {
   "type": "STATE_UPDATED",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "matchId": "match-default",
   "revision": 1,
   "sequence": 1,

@@ -48,6 +48,20 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 
 - Xác minh 39 Maven test, frontend production build và npm audit 0 vulnerability cho R2.
 
+## 2026-11-07 — R3
+
+### Added
+
+- Thêm UnitType WORKER, MELEE, RANGED và SIEGE cùng combat profile khác nhau.
+
+### Changed
+
+- Nâng protocol schema lên version 4 cho spawn unit type và hiển thị type trên Phaser.
+
+### Verified
+
+- Xác minh 40 Maven test, frontend production build và npm audit 0 vulnerability cho R3.
+
 ## 2026-11-07 — MVP và R1
 
 ### Added
