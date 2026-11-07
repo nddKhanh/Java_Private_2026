@@ -124,7 +124,7 @@ Chạy bot khai thác và xây dựng:
 
 Script chạy 41 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
 
-Template hướng dẫn sử dụng và kiểm thử chuẩn nằm tại [`GUIDE.md`](GUIDE.md).
+Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy các cửa sổ PowerShell đến viết và chạy Java, thử hành động, đối chiếu chức năng và ghi kết quả kiểm thử.
 
 ## Cấu hình trận
 

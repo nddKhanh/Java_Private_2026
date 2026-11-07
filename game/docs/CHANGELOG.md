@@ -11,6 +11,7 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 
 ### Changed
 
+- Gộp phần điều khiển, kịch bản mẫu và Desktop Code Studio trong GUIDE ngay sau phần khởi chạy, dùng một chương trình mẫu và bảng hành động ngắn gọn.
 - Đưa bước mở Desktop Code Studio vào luồng bắt đầu chơi, kèm hướng dẫn nhập chương trình, biên dịch, chạy và dừng trong GUIDE cùng hai README.
 - Viết lại `GUIDE.md` theo khả năng người chơi cảm nhận được, hành động tương tác và kịch bản sử dụng thay vì chi tiết hệ thống.
 

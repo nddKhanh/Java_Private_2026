@@ -67,7 +67,7 @@ Chạy toàn bộ regression, frontend build và audit:
 | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Lịch sử thay đổi theo phase. |
 | [`plan.md`](plan.md) | Kế hoạch sản phẩm, quyết định kiến trúc và hướng phát triển. |
 
-`docs/GUIDE.md` mô tả theo khả năng người chơi cảm nhận được và không thay thế tài liệu kỹ thuật nội bộ.
+`docs/GUIDE.md` hướng dẫn tuần tự từ khởi chạy, viết và chạy Java, thử từng hành động đến đối chiếu chức năng và ghi kết quả kiểm thử.
 
 ## Quy tắc đồng bộ tài liệu
 

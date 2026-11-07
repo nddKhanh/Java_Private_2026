@@ -49,27 +49,102 @@ Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 ```
 
 Chờ cửa sổ Desktop Code Studio xuất hiện.
-Đây là nơi nhập chương trình điều khiển quân; trang bản đồ chỉ dùng để quan sát.
+Giữ cả ba cửa sổ PowerShell hoạt động trong khi chơi; mỗi cửa sổ chạy một lệnh ở trên.
 
-1. Trong ô `Server`, nhập `ws://localhost:8080/game`.
-2. Trong ô `Token`, nhập `blue-token` để điều khiển đội xanh.
-3. Giữ tên lớp `MyBot` và chương trình mẫu đang hiển thị.
-4. Nhấn `Compile` (`Ctrl+B`) để biên dịch; nếu có lỗi, sửa theo dòng và cột được thông báo.
-5. Khi biên dịch thành công, nhấn `Run` (`Ctrl+R`).
-6. Chuyển sang trang bản đồ để xem quân mới di chuyển, khai thác và xây doanh trại.
-7. Nhấn `Stop` (`Ctrl+K`) nếu muốn dừng chương trình đang chạy.
+## 4. Viết và chạy chương trình điều khiển
 
-Sau khi sửa chương trình, cần nhấn `Compile` lại trước khi nhấn `Run`.
-Dừng chương trình không hoàn tác các hành động đã thực hiện trong trận.
-Mỗi cửa sổ PowerShell chỉ chạy một lệnh khởi động tương ứng; giữ hai cửa sổ máy chủ và bản đồ hoạt động trong khi chơi.
+### Bước 1 — chọn đội và nhập chương trình
 
-Nếu chỉ muốn xem kịch bản có sẵn, có thể chạy `.\scripts\run-demo.ps1 BlueBot` thay cho việc mở Desktop Code Studio.
+Trong Desktop Code Studio, nhập `Server` là `ws://localhost:8080/game`, `Token` là `blue-token` và tên lớp là `MyBot`.
+Thay nội dung ô soạn thảo bằng chương trình sau để thử trên trận mới:
 
-Để kiểm tra lại từ bản đồ ban đầu, hãy khởi động lại máy chủ trước mỗi kịch bản.
-Token mẫu của đội xanh là `blue-token`.
-Token mẫu của đội đỏ là `red-token`.
+```java
+import com.antcolonywars.bot.BotProgram;
+import com.antcolonywars.bot.GameBot;
+import com.antcolonywars.client.Direction;
+import com.antcolonywars.client.BuildingType;
 
-## 4. Các khả năng người chơi có thể sử dụng
+public final class MyBot implements BotProgram {
+    @Override
+    public void run(GameBot bot) {
+        bot.selectUnit("worker-blue");
+        bot.move(Direction.RIGHT);
+        bot.waitTurn();
+    }
+}
+```
+
+### Bước 2 — biên dịch, chạy và quan sát
+
+1. Nhấn `Compile` (`Ctrl+B`); nếu có lỗi, sửa theo dòng và cột được thông báo.
+2. Nhấn `Run` (`Ctrl+R`) sau khi biên dịch thành công.
+3. Mở trang bản đồ: quân xanh đi từ `(1, 0)` sang `(2, 0)` rồi đứng chờ.
+4. Nhấn `Stop` (`Ctrl+K`) khi cần dừng chương trình đang chạy.
+
+Sau mỗi lần sửa, biên dịch lại trước khi chạy.
+Dừng chương trình không hoàn tác hành động đã thực hiện.
+Để thử một kịch bản từ đầu, dừng máy chủ bằng `Ctrl+C` ở cửa sổ 1 rồi chạy lại `.\scripts\start-server.ps1` và chờ bản đồ kết nối lại.
+
+### Bước 3 — thay hành động muốn thử
+
+Thay các dòng bên trong hàm `run` bằng hành động dưới đây.
+Mỗi dòng là một ví dụ riêng; cần đưa quân tới vị trí phù hợp trước khi khai thác, xây dựng hoặc tấn công.
+
+| Muốn thực hiện | Lệnh trong hàm `run` | Điều kiện hoặc kết quả |
+|---|---|---|
+| Chọn quân | `bot.selectUnit("worker-blue");` | Quân thuộc đội đang điều khiển. |
+| Đi một ô | `bot.move(Direction.RIGHT);` | Ô đích trống và nằm trong bản đồ. |
+| Đứng chờ | `bot.waitTurn();` | Giữ nguyên vị trí. |
+| Tấn công | `bot.attack("hq-red");` | Nhà chính đối phương phải trong tầm. |
+| Tạo quân thợ | `bot.spawn("worker-blue-2", "Tho 2", Direction.DOWN);` | Ô dưới nhà chính trống, mã quân chưa dùng và đội còn chỗ. |
+| Khai thác | `bot.harvest();` | Mặc định đứng tại điểm tài nguyên còn trữ lượng. |
+| Xây doanh trại | `bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);` | Ô bên phải trống; mặc định tốn 3 tài nguyên. |
+| Xây tháp | `bot.build("tower-blue", BuildingType.TOWER, Direction.DOWN);` | Ô bên dưới trống; mặc định tốn 2 tài nguyên. |
+| Xây tường | `bot.build("wall-blue", BuildingType.WALL, Direction.LEFT);` | Ô bên trái trống; mặc định tốn 1 tài nguyên. |
+
+Đổi `Direction.RIGHT` thành `UP`, `DOWN` hoặc `LEFT` để đi lên, xuống hoặc trái.
+Sau khi tạo quân mới, gọi `bot.selectUnit("worker-blue-2");` để điều khiển quân đó.
+Để thử đội đỏ, dùng mã truy cập `red-token` và chọn `worker-red`.
+
+**Tạo loại quân khác:** Các lệnh `bot.spawn` hiện chỉ tạo quân thợ.
+Để thử quân cận chiến, đánh xa hoặc công thành trong Desktop Code Studio, thêm các dòng nhập sau ở đầu chương trình:
+
+```java
+import com.antcolonywars.client.GameClient;
+import com.antcolonywars.core.UnitType;
+```
+
+Thay nội dung hàm `run` bằng đoạn dưới đây; trên trận mới, quân đánh xa xuất hiện dưới nhà chính xanh:
+
+```java
+try (GameClient client = GameClient.connect("ws://localhost:8080/game", "blue-token")) {
+    client.spawn("ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);
+    client.move("ranged-blue-1", Direction.RIGHT);
+}
+```
+
+Đổi `UnitType.RANGED` thành `MELEE` (cận chiến), `SIEGE` (công thành) hoặc `WORKER` (quân thợ).
+Kết nối này dùng mã truy cập ghi trong đoạn chương trình.
+
+### Cách khác — chạy kịch bản có sẵn
+
+Nếu muốn thử nhanh mà không viết Java, mở một cửa sổ PowerShell khác và chạy một kịch bản:
+
+```powershell
+.\scripts\run-demo.ps1 ResourceBuilderBot
+```
+
+| Tên thay vào lệnh | Điều quan sát được |
+|---|---|
+| `BlueBot` | Quân xanh di chuyển. |
+| `RedBot` | Quân đỏ di chuyển. |
+| `WinningScenario` | Đội xanh phá nhà chính đỏ và thắng. |
+| `ReinforcementBot` | Tạo quân mới rồi điều khiển quân đó. |
+| `ResourceBuilderBot` | Quân tới điểm tài nguyên, khai thác và xây doanh trại. |
+
+Khởi động lại máy chủ trước mỗi kịch bản độc lập.
+
+## 5. Các khả năng người chơi có thể sử dụng
 
 ### Quan sát trận đấu
 
@@ -140,145 +215,7 @@ Token mẫu của đội đỏ là `red-token`.
 - [x] Chương trình Java tự chờ rồi gửi lại khi bị giới hạn tốc độ.
 - [~] Hàng đợi có giới hạn 32 lệnh theo cấu hình mặc định; chưa có giao diện riêng để xem hàng đợi.
 
-## 5. Cách điều khiển theo từng hành động
-
-Người chơi viết chương trình Java để thực hiện các khả năng dưới đây.
-Mỗi hành động thành công làm trạng thái trận đấu thay đổi và được hiển thị trên bản đồ.
-
-### Kết nối vào đội
-
-Chọn địa chỉ máy chủ và mã truy cập của đội muốn điều khiển.
-
-```java
-GameClient client = GameClient.connect(
-        "ws://localhost:8080/game",
-        "blue-token"
-);
-```
-
-### Chọn quân để điều khiển
-
-Khi không ghi mã quân, hành động dùng quân đang hoạt động đầu tiên của đội.
-Khi muốn điều khiển một quân cụ thể, truyền mã quân vào phiên bản hành động có `unitId`.
-
-```java
-client.move("worker-blue-2", Direction.RIGHT);
-client.harvest("worker-blue-2");
-```
-
-### Di chuyển
-
-Mỗi lần gọi chỉ di chuyển một ô.
-
-```java
-client.move(Direction.UP);
-client.move(Direction.RIGHT);
-client.move(Direction.DOWN);
-client.move(Direction.LEFT);
-```
-
-### Chờ lượt
-
-Chờ lượt giữ nguyên vị trí nhưng vẫn được ghi nhận là một hành động.
-
-```java
-client.waitTurn();
-client.waitTurn("worker-blue-2");
-```
-
-### Tấn công
-
-Truyền mã quân hoặc nhà chính muốn tấn công.
-
-```java
-client.attack("worker-red");
-client.attack("worker-blue-2", "hq-red");
-```
-
-### Tạo quân
-
-Quân mới xuất hiện ở ô kề nhà chính của đội.
-
-```java
-client.spawn("worker-blue-2", "Builder", UnitType.WORKER, Direction.DOWN);
-client.spawn("ranged-blue-1", "Ranger", UnitType.RANGED, Direction.RIGHT);
-```
-
-### Khai thác
-
-Quân phải đứng trong khoảng cách cho phép của điểm tài nguyên.
-
-```java
-client.harvest();
-client.harvest("worker-blue-2");
-```
-
-### Xây dựng
-
-Quân phải đứng cạnh ô muốn xây và đội phải đủ tài nguyên.
-
-```java
-client.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
-client.build("worker-blue-2", "wall-blue", BuildingType.WALL, Direction.DOWN);
-```
-
-Các hướng hiện có là `UP`, `RIGHT`, `DOWN` và `LEFT`.
-Các loại quân hiện có là `WORKER`, `MELEE`, `RANGED` và `SIEGE`.
-Các loại công trình hiện có là `BARRACKS`, `TOWER` và `WALL`.
-
-## 6. Kịch bản mẫu để người chơi thử
-
-```powershell
-.\scripts\run-demo.ps1 BlueBot
-.\scripts\run-demo.ps1 RedBot
-.\scripts\run-demo.ps1 WinningScenario
-.\scripts\run-demo.ps1 ReinforcementBot
-.\scripts\run-demo.ps1 ResourceBuilderBot
-```
-
-- [x] `BlueBot`: đưa quân xanh di chuyển trên bản đồ.
-- [x] `RedBot`: điều khiển đội đỏ bằng token riêng.
-- [x] `WinningScenario`: đưa BLUE tấn công và phá nhà chính RED.
-- [x] `ReinforcementBot`: tạo quân mới, chọn quân đó và điều khiển riêng.
-- [x] `ResourceBuilderBot`: tới điểm tài nguyên, khai thác và xây BARRACKS.
-
-## 7. Desktop Code Studio
-
-Để tự thử hành động đơn giản, thay toàn bộ nội dung ô soạn thảo bằng chương trình dưới đây và giữ tên lớp là `MyBot`.
-Chương trình dùng `GameBot` được ứng dụng cung cấp theo máy chủ và mã truy cập đã nhập.
-Các ví dụ `client.*` ở mục 5 dành cho chương trình dùng `GameClient` trực tiếp; không dán riêng chúng vào ô soạn thảo mà thiếu lớp Java bao quanh.
-
-```java
-import com.antcolonywars.bot.BotProgram;
-import com.antcolonywars.bot.GameBot;
-import com.antcolonywars.client.Direction;
-
-public final class MyBot implements BotProgram {
-    @Override
-    public void run(GameBot bot) {
-        bot.selectUnit("worker-blue");
-        bot.move(Direction.RIGHT);
-        bot.waitTurn();
-        System.out.println("Quan xanh da di sang phai mot o.");
-    }
-}
-```
-
-Trên trận mới, quân xanh đi từ ô `(1, 0)` sang `(2, 0)` rồi đứng chờ.
-Nhấn `Compile`, sau đó `Run` để thực hiện; thay các lời gọi trong hàm `run` để thử hành động khác.
-
-```powershell
-.\scripts\start-desktop.ps1
-```
-
-- [ ] Nhập máy chủ `ws://localhost:8080/game`.
-- [ ] Nhập token `blue-token` hoặc `red-token`.
-- [ ] Nhập tên lớp bot và chương trình Java.
-- [ ] Nhấn `Compile` hoặc `Ctrl+B` để biên dịch.
-- [ ] Nhấn `Run` hoặc `Ctrl+R` để bắt đầu điều khiển trận.
-- [ ] Nhấn `Stop` hoặc `Ctrl+K` để dừng chương trình.
-
-## 8. Những khả năng chưa có
+## 6. Những khả năng chưa có
 
 - [ ] Công trình tự sản xuất quân hoặc tự phòng thủ.
 - [ ] Footprint 2×2.
@@ -288,7 +225,7 @@ Nhấn `Compile`, sau đó `Run` để thực hiện; thay các lời gọi tron
 - [ ] Nhiều trận cùng lúc và kiểm tra tải quy mô lớn.
 - [ ] Kiểm tra hình ảnh trên nhiều trình duyệt hoặc thiết bị.
 
-## 9. Mẫu ghi nhận một lần kiểm thử
+## 7. Mẫu ghi nhận một lần kiểm thử
 
 ### Thông tin lần kiểm thử
 
@@ -326,7 +263,7 @@ Nhấn `Compile`, sau đó `Run` để thực hiện; thay các lời gọi tron
 | Xây dựng | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
 | Hành động không hợp lệ | `[ ] ĐẠT` `[ ] KHÔNG ĐẠT` |  |  |  |
 
-## 10. Kiểm tra tự động trước khi kiểm tra bằng tay
+## 8. Kiểm tra tự động trước khi kiểm tra bằng tay
 
 ```powershell
 .\scripts\test-all.ps1
