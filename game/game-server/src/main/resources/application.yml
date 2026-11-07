@@ -1,0 +1,46 @@
+game:
+  profile:
+    setup-id: mvp-default
+    match-id: match-default
+    board:
+      width: 8
+      height: 8
+    rules:
+      version: mvp-1
+      attack-damage: 1
+      attack-range: 1
+    teams:
+      - id: BLUE
+        display-name: Blue
+        color: "#2563eb"
+        token: blue-token
+      - id: RED
+        display-name: Red
+        color: "#dc2626"
+        token: red-token
+    units:
+      - id: worker-blue
+        team-id: BLUE
+        type: WORKER
+        x: 1
+        y: 0
+        hp: 3
+        facing: RIGHT
+      - id: worker-red
+        team-id: RED
+        type: WORKER
+        x: 6
+        y: 7
+        hp: 3
+        facing: LEFT
+    headquarters:
+      - id: hq-blue
+        team-id: BLUE
+        x: 0
+        y: 0
+        hp: 3
+      - id: hq-red
+        team-id: RED
+        x: 7
+        y: 7
+        hp: 3

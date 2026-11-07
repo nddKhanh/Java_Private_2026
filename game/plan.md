@@ -1,279 +1,357 @@
-# ANT COLONY WARS — Kế hoạch cơ chế và MVP (v0.3)
+# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.6)
 
-> **Trạng thái:** Bản thiết kế cập nhật theo yêu cầu ngày 07/11/2026.  
-> **Mục tiêu:** Game chiến thuật online 2D pixel art, bản đồ **ma trận ô vuông**, điều khiển từng đơn vị bằng các lệnh cú pháp tối giản. Người mới dùng một lệnh `print()` vẫn chơi được; người biết vòng lặp, điều kiện, hàm và phối hợp nhóm có lợi thế khi các chức năng nâng cao được bật.  
-> **Nguyên tắc triển khai:** **Giữ nguyên tầm nhìn gameplay, nhưng MVP chỉ chứng minh hệ thống chạy được với lệnh đơn**. Không tự đưa cơ chế phức tạp vào MVP.
+> **Trạng thái:** MVP Phase 00–05 và Desktop Code Studio D00–D05 đã được kiểm chứng.
+> **Kiến trúc chính:** Server-authoritative; server giữ luật và state chính, client gửi command và render snapshot/event.
+> **Kiến trúc dự phòng:** `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là đề xuất sau MVP, chưa thay thế roadmap hiện tại.
+> **Mục tiêu dài hạn:** Game chiến thuật online 2D trên lưới ô vuông, trong đó người chơi điều khiển đơn vị bằng chương trình Java.
+> **Mục tiêu MVP:** Chứng minh một chương trình Java cơ bản có thể gửi hành động tới server, làm thay đổi trạng thái trận đấu và được Phaser hiển thị ngay qua WebSocket.
+> **Mục tiêu hậu MVP gần nhất:** Cung cấp ứng dụng desktop để viết, biên dịch và chạy bot Java local rồi gửi command tới server qua SDK hiện có.
 
-## 1. Tóm tắt quyết định
+## 1. Quyết định kỹ thuật
 
-| Nội dung | Luật chơi mục tiêu (full) | MVP triển khai đầu tiên |
+| Thành phần | Công nghệ | Phạm vi |
 |---|---|---|
-| Thế giới | Online, 2D pixel art, lưới ô vuông, 4 hướng | Có |
-| Đội & phe | 10 đội, chia **2 phe**, mỗi phe **5 đội** | Có đội và phe; **1 tài khoản/đội** |
-| Thành viên điều khiển | Tối đa **5 tài khoản đang điều khiển/đội** | 1 tài khoản/đội |
-| Số đơn vị | Tối đa **50 đơn vị/đội**, tính cả thợ | Có kiểm tra giới hạn khi tạo đơn vị nếu tiện; không phải tối ưu tải |
-| Lệnh `print()` thủ công | **Mỗi bot chỉ nhận tối đa 1 hành động trong một lượt gửi theo chế độ `print` đơn** | **Có:** một lệnh hành động đơn/lần gửi |
-| Vòng `for` | Luồng lệnh nhiều hành động/bot/lượt gửi, có hạn mức 10 hành động/s/bot | **Chưa có**; chỉ chừa hướng phát triển |
-| Hạn mức hành động | Tối đa **10 hành động được xử lý/giây/bot**; dùng chung giữa các tài khoản cùng đội | Chưa cần bộ phân luồng/tính tốc độ hoàn chỉnh |
-| Hành động | Tạo/xóa, chọn bot, đi 4 hướng, đứng im, đánh, khai thác, xây, xuất quân | **Chỉ cần xử lý từng lệnh đơn**, có thể triển khai các hành động cốt lõi theo từng bước |
-| Di chuyển đặc thù | Mọi đơn vị có hướng quay; tốc độ theo số lệnh tích lũy tùy loại | **Mỗi lệnh MOVE đi 1 ô**, không phân tốc độ |
-| Va chạm ô | Mỗi ô tối đa 1 đơn vị; ngoại lệ ô tài nguyên được đứng lên để khai thác | **Chưa cần va chạm**; có thể chồng đơn vị, xuyên vật thể và ra ngoài bản đồ |
-| Đạn | Tốc độ bay **10 ô/giây**, kiểm tra va chạm; xuyên hay không tùy loại quân | **Đòn đánh tức thời, xuyên mọi vật thể**, không có đường đạn |
-| Tài nguyên | Ô tài nguyên vô hạn, chỉ thợ được khai thác | Có thể dùng tài nguyên vô hạn, chưa cân bằng giá trị |
-| Công trình | Nhà chính, trại lính, tháp canh, tường; trừ nhà chính, phải có thợ để xây | Có thể biểu diễn trên map; xây bằng lệnh đơn, chưa cần chiếm ô/va chạm |
-| Kết thúc | Phá nhà chính của phe đối địch để giành chiến thắng; xác định thắng theo phe | Có thể kiểm tra HP nhà chính = 0; chưa cần hệ thống giải đấu |
+| Game engine và server | Java 21 + Spring Boot | Game Core thuần; state trong RAM theo `MatchSetup` |
+| Chương trình điều khiển | Java 21 | Một Java client nhỏ chạy local, gọi API mức cao |
+| Giao diện 2D | TypeScript + Phaser | Hiển thị map, đơn vị, HQ, HP, log và kết quả |
+| Giao tiếp online | WebSocket + JSON | Java client gửi lệnh; server phát kết quả và state |
+| Lưu trữ | Không dùng database | Seed từ profile cấu hình khi khởi động server |
+| Xác thực | Token demo từ cấu hình | Không đăng ký, đăng nhập hoặc phân quyền động |
+| Desktop Code Studio | Java 21 + JavaFX + Java Compiler API | Đã triển khai; editor, biên dịch local và child JVM runner |
 
-**Ranh giới quan trọng:** Các mục ghi ở cột *full* là **luật chơi mong muốn**, không phải yêu cầu lập trình ngay. Các mục *MVP* có quyền tạm bỏ kiểm tra để rút ngắn thời gian thử tính khả thi.
+MVP không nhận source code Java rồi biên dịch trên server.
+Người chơi viết và chạy chương trình Java trên máy local bằng một thư viện client được cung cấp sẵn.
+Cách này cho phép dùng biến, `if`, `for`, hàm và class Java thật mà không cần compiler service hoặc sandbox trong MVP.
+Sau MVP, Desktop Code Studio cung cấp trải nghiệm này trong một ứng dụng desktop mà không thay đổi quyền quyết định gameplay của server.
 
-## 2. Mô hình trận đấu, đội và quyền điều khiển
+## 2. Định nghĩa MVP
 
-### 2.1. Luật mục tiêu
+MVP chỉ gồm một lát cắt dọc có thể chơi và kiểm thử trực tiếp:
 
-- Một trận có **10 đội**, chia thành **2 phe**, mỗi phe 5 đội. Các đội cùng phe là đồng minh; mục tiêu thắng/thua được tính theo **phe**.
-- Mỗi đội sở hữu một nhà chính, tài nguyên, công trình và **tối đa 50 đơn vị**. Giới hạn này tính theo **đội**, không phải theo tài khoản.
-- Mỗi đội cấp quyền điều khiển đồng thời cho **tối đa 5 tài khoản**. Tất cả cùng thao tác trên **cùng danh sách bot, công trình, tài nguyên và hàng đợi lệnh của đội**.
-- Các tài khoản cùng đội **không được cộng thêm quota**. Nếu hai người gửi lệnh trùng, cùng nhắm một bot hoặc gửi quá tải thì áp dụng quy tắc y như **một người gửi**.
-- Đồng minh không được tấn công nhau theo mặc định (đề xuất để làm rõ ý nghĩa 2 phe); đổi luật này về sau nếu muốn friendly fire.
+- Một profile mặc định có map 8×8; kích thước map đọc từ cấu hình.
+- Profile mặc định có hai đội `BLUE` và `RED`; đội, màu, token và vị trí không nằm trong luật engine.
+- Mỗi đội có một HQ và một đơn vị `WORKER` được seed từ `MatchSetup`.
+- Token demo được đọc từ cấu hình hoặc biến môi trường.
+- Đơn vị đi bốn hướng, đứng im và tấn công.
+- Server chặn đi ra ngoài map.
+- Một ô chỉ chứa tối đa một đơn vị hoặc một HQ.
+- Đơn vị chỉ tấn công mục tiêu địch ở ô kề theo khoảng cách Manhattan bằng 1.
+- Đòn đánh trừ HP ngay lập tức; không có projectile.
+- Phá HQ đối phương kết thúc trận.
+- Phaser nhận state qua WebSocket và hiển thị thay đổi mà không refresh.
+- Toàn bộ trạng thái nằm trong RAM và được tạo lại khi server khởi động.
 
-### 2.2. MVP
+### 2.1. Không thuộc MVP
 
-- Có thể tạo trận, tạo đội, chỉ định phe `A` hoặc `B`, gắn **đúng 1 tài khoản vào 1 đội**; một tài khoản chỉ thuộc **một đội trong trận**.
-- Đủ để chạy thử bằng 2 đội (mỗi phe 1 đội), nhưng dữ liệu **không khóa cứng** vào 2 đội; mở rộng dần lên 10.
-- Chưa có mời thành viên, phân quyền 5 người, xử lý concurrent submissions hoặc đăng nhập nhiều người cùng đội.
+- Tạo, xóa hoặc sản xuất thêm đơn vị.
+- Tài nguyên, khai thác và xây công trình.
+- Bốn loại quân và footprint 2×2.
+- 10 đội, 5 tài khoản mỗi đội hoặc lobby.
+- Database, đăng ký, đăng nhập và phục hồi sau khi restart.
+- Đạn bay, animation chiến đấu, fog of war hoặc tìm đường.
+- Rate limit 10 hành động mỗi giây và hàng đợi dài.
+- Editor Java trên trình duyệt.
+- Upload, biên dịch hoặc chạy source code không tin cậy trên server.
+- Matchmaking, xếp hạng, replay, pixel art hoàn chỉnh hoặc cân bằng game.
 
-## 3. Bản đồ và vật thể
+Ranh giới này là bắt buộc.
+Một tính năng ngoài danh sách MVP chỉ được triển khai sau khi kịch bản nghiệm thu cuối đã chạy thành công.
+Desktop Code Studio thuộc roadmap hậu MVP và không làm thay đổi tiêu chí hoàn thành của MVP đã kiểm chứng.
 
-- Bản đồ là ma trận ô vuông `W × H`, kích thước tùy cấu hình trận; tọa độ `(x, y)`, `x` tăng sang phải, `y` tăng xuống dưới.
-- Bốn hướng: `UP`, `DOWN`, `LEFT`, `RIGHT`. Không đi chéo.
-- Map tĩnh về địa hình nhưng trạng thái quân, công trình, tài nguyên và vị trí thay đổi theo lệnh.
-- Có lớp hiển thị **địa hình**, **ô tài nguyên**, **công trình**, **đơn vị**, **đạn** (đạn chỉ ở bản full). Không nhất thiết buộc dữ liệu này vào một trường duy nhất trong ô.
-- **Full:** một ô tối đa một đơn vị; ngoại lệ ô tài nguyên vẫn cho một đơn vị đứng trên đó. Một đơn vị có thể cùng đứng trên ô tài nguyên vì tài nguyên là lớp nền, không phải một đơn vị thứ hai. Công trình và tường chiếm ô, chặn đường. Xe công thành dùng footprint 2×2 (4 ô) và phải đủ ô trống.
-- **MVP:** bỏ qua kiểm tra ô bị chiếm, vật cản, giới hạn map; cho phép nhiều đơn vị cùng tọa độ, đi xuyên công trình, đi tới `x < 0`, `y < 0` hoặc vượt `W−1`, `H−1`. Đây là chủ ý để kiểm chứng luồng lệnh; UI nên hiển thị vị trí ngoài map bằng log/danh sách đơn vị dù sprite nằm ngoài khung.
+### 2.2. Ranh giới dynamic của MVP
 
-## 4. Danh mục đơn vị
+MVP vẫn chỉ chạy một match và một profile mặc định, nhưng không khóa các giá trị sau trong source code:
 
-| Loại | Vai trò | Đặc điểm full | MVP |
-|---|---|---|---|
-| **Thợ** (`WORKER`) | Khai thác tài nguyên, xây công trình | Chỉ thợ `GATHER` và `BUILD` | Di chuyển 1 ô/lệnh; có thể `GATHER`, `BUILD` |
-| **Cận chiến** (`MELEE`) | Chống chịu, đánh kề | Máu cao, sát thương thấp, giá trung bình, tầm 1; **2 lệnh MOVE cùng hướng/ô** | Di chuyển 1 ô/lệnh; tấn công tức thời, xuyên |
-| **Tầm xa** (`RANGED`) | Tấn công từ xa | Máu thấp, sát thương cao, giá trung bình, tầm 3; **1 lệnh MOVE/ô**, đạn **không xuyên** | Di chuyển 1 ô/lệnh; tấn công tức thời, xuyên |
-| **Xe công thành** (`SIEGE`) | Phá công trình, xuyên vật thể | Máu trung bình, sát thương rất cao, giá cao, chiếm **2×2**, tầm 7; **5 lệnh MOVE cùng hướng/ô**, đạn **xuyên** | Di chuyển 1 ô/lệnh, không xét footprint; tấn công tức thời, xuyên |
+- Kích thước map và danh sách tile.
+- Danh sách đội, màu hiển thị, token demo và HQ.
+- Danh sách unit seed, loại unit, vị trí và HP ban đầu.
+- Damage, attack range, occupancy và giới hạn bounds.
+- Protocol version, rules version và tên profile.
 
-**Chưa cân bằng:** HP, sát thương, tốc độ bắn, giá, sức chứa, lượng khai thác, HP công trình. Dùng hằng số tạm nếu cần chạy demo; không xem đó là luật đã chốt.
+`MatchSetup` là đầu vào của Game Core.
+Server chọn profile mặc định từ file cấu hình, sau đó tạo `MatchState` từ `MatchSetup`.
+Thêm profile hoặc đổi sang nguồn setup khác không được yêu cầu sửa luật MOVE/WAIT/ATTACK.
 
-### 4.1. Quy tắc hướng quay / di chuyển tích lũy (full, chưa làm MVP)
+## 3. Cách người chơi điều khiển bằng Java
 
-Mỗi đơn vị cần lưu tối thiểu `facing` (hướng hiện tại) và bộ đếm tiến độ di chuyển `move_count`. **Không cần trường `move_direction` riêng** vì hướng đã có trong `facing`; không phải lưu toàn bộ lịch sử di chuyển nếu bộ đếm đủ đại diện.
+Module `game-client-java` cung cấp API nhỏ và dễ học:
 
-Khi nhận `MOVE <direction>`:
+```java
+import com.antcolony.client.Direction;
+import com.antcolony.client.GameClient;
 
-1. Nếu `direction != facing`, quay mặt sang hướng mới và **đặt lại tiến độ tích lũy** cho hướng mới.
-2. Nếu đã cùng hướng, tăng tiến độ. Khi đạt ngưỡng của loại quân (MELEE 2, RANGED 1, SIEGE 5; WORKER mặc định 1), tiến 1 ô theo `facing`, xóa tiến độ.
-3. Với đơn vị yêu cầu nhiều lệnh, lần đổi hướng là một lần quay; cần quy ước rõ có tính là lệnh tích lũy thứ nhất hay không. **Đề xuất:** tính luôn là lần thứ nhất để tránh việc cùng một loại quân có tốc độ khác nhau giữa lệnh đầu và các lệnh sau.
-4. `WAIT` đứng yên không quay mặt, không di chuyển; đề xuất không xóa tiến độ. `ATTACK`/`GATHER`/`BUILD` có thể xóa tiến độ khi triển khai full để tránh giữ năng lượng di chuyển không hợp lý.
+public class BlueBot {
+    public static void main(String[] args) throws Exception {
+        try (GameClient bot = GameClient.connect(
+                System.getenv("GAME_WS_URL"),
+                System.getenv("GAME_TEAM_TOKEN"))) {
+            for (int i = 0; i < 3; i++) {
+                bot.move(Direction.RIGHT);
+            }
 
-**Lưu ý:** Với quy tắc 'đổi hướng cũng tính là lần thứ nhất', RANGED/WORKER sẽ quay và tiến ngay bằng một lệnh; MELEE/SIEGE mới phải tích thêm lệnh. Cách này khớp nhu cầu 'quay mặt rồi di chuyển' mà không thêm mã lệnh `TURN`.
-
-**MVP:** bỏ hoàn toàn bộ đếm và xử lý hướng đặc thù. `MOVE DIR` luôn cập nhật `facing=DIR`, `x/y` tăng hoặc giảm đúng một ô.
-
-### 4.2. Đứng im (`WAIT`)
-
-- `WAIT` là **một hành động thực sự**: giữ nguyên vị trí và hướng, hữu ích để đồng bộ kịch bản chiến thuật, chờ đồng đội/đạn bay/hồi nhịp.
-- **Full:** `WAIT` được tính vào giới hạn 10 hành động/giây/bot, không phải cách lách quota.
-- **MVP:** thực hiện `WAIT` bằng cách không thay đổi tọa độ; trả `OK` và ghi sự kiện trong log.
-
-## 5. Khai thác tài nguyên
-
-- Ô tài nguyên có `resource_type` (gợi ý `FOOD`, `WOOD`, `STONE`); ở giai đoạn đầu **trữ lượng vô hạn**.
-- **Chỉ `WORKER`** được `GATHER`; thợ phải đứng **đúng trên ô tài nguyên**, không chỉ đứng cạnh.
-- Mỗi lệnh `GATHER` hợp lệ cộng một lượng tài nguyên (giá trị mặc định tùy cấu hình thử nghiệm), không cần mang về kho, không cần thời gian chờ riêng ngoài giới hạn hành động.
-- Các đơn vị chiến đấu `GATHER` sẽ nhận lỗi `WORKER_REQUIRED`; thợ ngoài ô tài nguyên nhận `NOT_ON_RESOURCE`.
-- **MVP:** có thể hiện thực kiểm tra loại thợ + ô tài nguyên và cộng tài nguyên ngay. Tài nguyên vẫn vô hạn; chưa cần cân bằng, không cần mô phỏng chở hàng.
-
-## 6. Công trình và xuất quân
-
-| Công trình | Full | MVP |
-|---|---|---|
-| **Nhà chính** (`HQ`) | Mỗi đội khởi đầu có một nhà chính; **HQ bị phá → đội bị loại**; thắng thua tính theo phe | Tạo sẵn khi khởi trận; có HP để thử tấn công |
-| **Nhà xuất quân** (`BARRACKS`) | Tạo mọi loại quân, xuất quân ở ô trống quanh nhà; không có chỗ thì **giữ yêu cầu chờ** | Có thể xuất quân ngay ở tọa độ quy định mà không kiểm tra chỗ |
-| **Tháp canh** (`TOWER`) | 1 ô, tầm 5, sát thương lớn, HP trung bình | Tạo/hiển thị được; chưa cần AI tự bắn |
-| **Tường** (`WALL`) | 1 ô, HP rất lớn, chặn mọi đơn vị, kể cả xe 2×2 | Tạo/hiển thị được; chưa chặn di chuyển |
-
-### 6.1. Xây dựng
-
-- **Full:** trừ nhà chính tạo sẵn khi bắt đầu trận, **mọi công trình chỉ có `WORKER` mới được xây**. Một lệnh `BUILD` hợp lệ là **xây xong ngay**, không có thời gian thi công.
-- Thợ thực hiện lệnh xây trên ô đích hợp lệ (đề xuất là ô kề thợ, hoặc ô thợ đang đứng nếu muốn xây rồi rời đi — phải chọn một khi bổ sung kiểm tra vị trí); công trình không được chồng lên vật thể chiếm chỗ.
-- Nếu thiếu diện tích trống, trả lỗi `NO_SPACE`, không xây; không phát sinh công trình dở dang.
-- **MVP:** `BUILD` do thợ gửi, tạo công trình ngay tại tọa độ yêu cầu, bỏ qua mọi kiểm tra footprint, chiếm ô và va chạm. Đối với HQ, không có lệnh xây lại trong MVP.
-
-### 6.2. Tạo, đặt tên và xóa đơn vị
-
-- Tên đơn vị là duy nhất **trong đội**; cùng phe nhưng khác đội vẫn có thể trùng tên. Server giữ ID nội bộ riêng.
-- `SPAWN <type> <name>`: tạo đơn vị ở vị trí gần HQ/nhà xuất quân; tối đa 50 đơn vị/đội. Mục tiêu là nhà xuất quân có thể tạo mọi loại, HQ bảo đảm có thể tạo ít nhất thợ ban đầu để tránh bế tắc.
-- **Full:** chỉ xuất đơn vị ở ô hợp lệ trống xung quanh công trình. Nếu chưa có chỗ, gửi `SPAWN_QUEUED` và giữ yêu cầu đến khi có chỗ. Để không vượt 50, slot được giữ ngay khi nhận lệnh; hoàn slot và hoàn chi phí nếu yêu cầu bị hủy hoặc nhà bị phá.
-- `DELETE <name>`: xóa đơn vị của đội, giải phóng slot, không hoàn chi phí (quy ước tạm); hủy các lệnh đang chờ của bot đó.
-- **MVP:** tạo đơn vị ở điểm xuất quân cố định hoặc ô liền kề bất kỳ, **cho phép trùng vị trí**, không cần hàng đợi chờ chỗ trống. `DELETE` biến mất ngay.
-
-## 7. Tấn công và đạn
-
-### 7.1. Luật mục tiêu (full)
-
-- `ATTACK <target>`: phải có mục tiêu hợp lệ còn sống, thuộc phe địch và trong tầm của đơn vị tấn công.
-- Tầm tính theo **Manhattan** trên lưới ô vuông, tạm là khoảng cách nhỏ nhất giữa các ô footprint của chủ thể và mục tiêu; MELEE = 1, RANGED = 3, SIEGE = 7, TOWER = 5.
-- **Đạn tầm xa bay 10 ô/giây**, không dịch chuyển tức thời. Engine cập nhật vị trí đạn theo đồng hồ mô phỏng, xác định vật cản/đối tượng đầu tiên trúng đạn để phát sinh sự kiện va chạm.
-- **RANGED:** đạn không xuyên vật thể; chạm vật cản/đơn vị trước mục tiêu thì bị chặn hoặc gây sát thương vào vật trúng đầu tiên (chọn khi triển khai full). **SIEGE:** đòn tấn công xuyên, không bị vật thể trên đường chặn; có thể giới hạn số mục tiêu trúng đạn sau khi cân bằng.
-- **MELEE:** đánh trực tiếp ô kề; không dùng đạn. **TOWER:** có tầm 5 nhưng cách kích hoạt tấn công (tự động hay ra lệnh) để ở backlog vì chưa cần cho MVP.
-
-### 7.2. MVP
-
-- `ATTACK` trừ HP mục tiêu **ngay lập tức** nếu mục tiêu tồn tại; có thể kiểm tra mục tiêu thuộc phe địch và còn HP (kiểm tra rẻ, dễ làm).
-- **Mọi đòn đánh đều xuyên, không có đạn bay, không có collision, không có vật chắn và không cần kiểm tra tầm đánh** trong MVP. Nếu muốn thử tầm đánh, bật sau như một bước mở rộng chứ không coi là điều kiện hoàn thành MVP.
-- HP giảm tới 0 thì đơn vị/công trình bị phá. Khi HQ bị phá, có thể đánh dấu đội bị loại để chứng minh vòng đời trận.
-
-## 8. Gửi code, `print`, vòng lặp và giới hạn lệnh
-
-### 8.1. Mục đích thiết kế
-
-Người chỉ biết `print()` có thể chọn một bot và làm một hành động. Người biết `for` có thể sinh nhiều hành động, giữ nhịp thực hiện ở nhiều bot hơn, phối hợp chiến thuật mà **không cần giải thuật tìm đường**.
-
-**Quy tắc full quan trọng để không vô hiệu hóa `for`:**
-
-- **Chế độ `print` đơn:** trong **một lượt gửi chương trình**, với **mỗi bot**, chỉ nhận **tối đa một lệnh hành động** (`MOVE`, `WAIT`, `ATTACK`, `GATHER`, `BUILD`). Nhiều dòng `print` điều khiển cùng bot trong cùng lượt **không được cộng dồn**; các lệnh hành động dư bị từ chối `DUPLICATE_ACTION_IN_SUBMISSION`. `SELECT` chỉ đổi bot đang được nhắm tới, không phải hành động di chuyển.
-- **Chế độ lặp (phát triển sau):** khi hệ thống hỗ trợ vòng `for`, các lệnh được sinh bởi vòng lặp **được phép xếp chuỗi nhiều hành động cho cùng bot** trong một lượt gửi, vẫn **không quá 10 hành động thực thi/giây/bot**. Cơ chế này phải dựa trên **ngữ cảnh thực thi có kiểm soát**, không thể phân biệt an toàn bằng cách nhìn các chuỗi stdout vì hai chương trình có thể in ra đúng cùng văn bản. Không được chỉ dùng `print` nhiều dòng rồi tự gắn nhãn là lặp.
-- **Giới hạn 10 hành động/giây/bot** là giới hạn *server thực thi*, không phải 10 HTTP request vật lý. Có thể gửi một request chứa nhiều lệnh được sinh hợp lệ, engine thực thi theo thời gian. Các tài khoản cùng đội dùng chung quota bot và hàng đợi.
-- Các lệnh quản lý như `SPAWN`, `DELETE`, `SELECT` không được dùng để lách hành động; đề xuất có hạn mức riêng theo **đội** ở bản full (giá trị chưa chốt).
-
-> **Quyết định kỹ thuật cần giữ minh bạch:** Nếu chỉ chạy mã Python và đọc `stdout`, server **không thể biết** một dòng do `for` tạo ra hay do người chơi copy `print`. Muốn thực thi đúng ràng buộc đặc biệt này, bản full phải dùng một trong các cơ chế: (A) ngôn ngữ lệnh/DSL hỗ trợ `REPEAT`, hoặc (B) trình chạy Python có instrumentation / API xuất lệnh đánh dấu nguồn gốc hợp lệ. **Đề xuất ưu tiên A** nếu muốn đơn giản và khó lách. MVP chưa cần giải quyết vấn đề này.
-
-### 8.2. MVP: lệnh số, một hành động mỗi lần gửi
-
-- **Không chạy Python trong MVP.** Giao diện có dropdown chọn bot và một ô nhập **mã số lệnh**; nhấn **Gửi** để thực hiện một hành động.
-- Các thao tác có tham số dùng chuỗi dạng `mã tham_số_1 tham_số_2 ...`, chẳng hạn `1 worker ant01` để tạo đơn vị hoặc `9 enemy02` để đánh mục tiêu. Các thao tác di chuyển/đứng im/khai thác chỉ cần nhập **một số**.
-- Mỗi request chỉ được chứa **một lệnh**, không chấp nhận nhiều dòng. `SELECT` là thay đổi bot đang chọn trên UI, không làm mất lượt hành động. Server luôn nhận `unit_name` riêng, không dùng lựa chọn chung của cả đội.
-- Chỉ chấp nhận đúng số lượng và kiểu tham số cho từng mã; mã lạ và dữ liệu sai trả lỗi, không sửa ngầm.
-- MVP chưa triển khai trình biên dịch, vòng lặp, hàng đợi nhiều lệnh hay giới hạn tốc độ đầy đủ. Các giới hạn đó thuộc hướng phát triển, không thay đổi cách diễn giải mã hành động.
-- Bảo đảm ít nhất hai đội online có thể gửi lệnh đơn, server thay đổi trạng thái và cập nhật bản đồ cho cả hai.
-
-## 9. Bảng mã lệnh số (ID bắt đầu từ 1, tăng dần)
-
-> **Giao thức cho MVP:** Một dòng = một lệnh. Với hành động không có tham số, nhập đúng **một số**. Khi có tham số, nhập **số + tham số**, ngăn cách bằng dấu cách. Bot được chọn từ danh sách trên giao diện; không cần `SELECT` dưới dạng một lệnh game. Các con số chỉ là **mã hành động**, không phải số lần lặp.
-
-| ID | Tên hành động | Người chơi nhập | Ý nghĩa | Giai đoạn |
-|---:|---|---|---|---|
-| 1 | Tạo bot | `1 <loại> <tên>` | Tạo và đặt tên bot tại nhà chính | MVP |
-| 2 | Xóa bot | `2 <tên>` | Xóa bot thuộc đội | MVP |
-| 3 | Lên | `3` | Bot được chọn đi lên 1 ô | MVP |
-| 4 | Xuống | `4` | Bot được chọn đi xuống 1 ô | MVP |
-| 5 | Trái | `5` | Bot được chọn sang trái 1 ô | MVP |
-| 6 | Phải | `6` | Bot được chọn sang phải 1 ô | MVP |
-| 7 | Đứng im | `7` | Bot được chọn đứng im một hành động | MVP |
-| 8 | Khai thác | `8` | Thợ được chọn khai thác tại ô đang đứng | MVP |
-| 9 | Tấn công | `9 <tên_mục_tiêu>` | Bot được chọn tấn công mục tiêu | MVP (tức thời, xuyên vật thể) |
-| 10 | Xây dựng | `10 <loại> <x> <y>` | Thợ được chọn xây công trình | MVP (bỏ kiểm tra va chạm) |
-| 11 | Xuất quân | `11 <loại> <tên>` | Tạo đơn vị từ công trình sản xuất (nếu đã triển khai) | Later / tùy chọn MVP |
-| 12 | Xem trạng thái | `12` | Xem thông tin bot/đội đang chọn, không tiêu tốn hành động | Later (MVP có thể xem ở UI) |
-
-**Quy ước thống nhất:** `1` tạo bot trực tiếp tại nhà chính để thử nghiệm; `11` sẽ dùng cho hệ thống sản xuất quân từ nhà xuất quân khi bổ sung gameplay đầy đủ. Nếu MVP chưa có nhà xuất quân thì chỉ cần `1`. Các tham số `<loại>` và `<tên>` là chuỗi; `<x>`, `<y>` là số nguyên. Tên bot phải duy nhất trong đội.
-
-### 9.1. Ví dụ người chơi dùng trong MVP
-
-Chọn bot `ant01` ở dropdown, rồi nhập `6` và nhấn **Gửi**: `ant01` đi sang phải một ô. Nhập `7`: đứng im. Nhập `8`: thử khai thác (chỉ hợp lệ nếu `ant01` là thợ trên ô tài nguyên).
-
-Để tạo bot, nhập `1 worker ant01`; để xóa bot, nhập `2 ant01`. Mỗi lần gửi **chỉ có một dòng và một hành động**.
-
-### 9.2. Hướng phát triển: từ mã số đến `print` và `for`
-
-Sau MVP, giữ nguyên các mã số và cho phép xuất lệnh qua chương trình:
-
-```python
-print(6)  # Bot đang chọn: sang phải
+            bot.move(Direction.DOWN);
+            bot.attack(System.getenv("GAME_TARGET_ID"));
+        }
+    }
+}
 ```
 
-Nếu hỗ trợ vòng lặp, ví dụ:
+API MVP chỉ cần các phương thức sau.
+URL, token và unit ID phải lấy từ cấu hình hoặc tham số chạy, không ghi cứng trong thư viện.
 
-```python
-for i in range(5):
-    print(6)
+```java
+GameClient.connect(String url, String teamToken)
+client.move(Direction direction)
+client.waitTurn()
+client.attack(String targetId)
+client.getLatestState()
+client.close()
 ```
 
-**Lưu ý bắt buộc:** Kết quả `stdout` của 5 lần `print(6)` trong vòng `for` không khác 5 dòng `print(6)` sao chép thủ công. Muốn *thực sự* giới hạn lệnh `print` đơn mà ưu tiên vòng lặp, phải dùng runtime có phân tích cấu trúc mã hoặc DSL hỗ trợ lệnh lặp riêng; không thể xác minh điều này chỉ bằng chuỗi lệnh xuất ra. Đây là việc thuộc **hướng phát triển**, không chặn MVP.
+Mỗi lời gọi hành động gửi đúng một command và chờ `COMMAND_RESULT` tương ứng.
+Vòng `for` tự nhiên tạo nhiều command có thứ tự mà không cần phân tích source code.
+Server áp dụng cùng luật cho mọi command, bất kể command được viết trực tiếp hay sinh ra từ vòng lặp.
 
-Khi bổ sung giới hạn 10 hành động/giây/bot, áp dụng tại server theo bot, dùng chung cho mọi tài khoản cùng đội và mọi loại lệnh (ngoại trừ thao tác đọc trạng thái); **không** dựa vào số request HTTP thực tế hay tốc độ máy người chơi.
+### 3.1. Desktop Code Studio sau MVP
 
-## 10. Giao diện online
+Desktop Code Studio là ứng dụng JavaFX để người học viết source Java, biên dịch local, chạy bot và xem log mà không phải tự cấu hình một project Maven riêng.
+Ứng dụng không dịch cú pháp Java thành MOVE/ATTACK bằng regex hoặc AST.
+Source được biên dịch và thực thi như Java thật, sau đó gọi `game-client-java` để gửi command tới server.
 
 ```text
-┌────────────────────────────── MAP 2D ──────────────────────────────┬──────── CODE / LỆNH ────────┐
-│  Ma trận ô vuông, sprite pixel art                                 │ Team: Blue-01 / Phe A      │
-│  Nhà chính · Tài nguyên · Thợ · Lính · Công trình                  │ Bot: [ant_01 ▾]            │
-│                                                                    │                            │
-│  (click một bot -> chọn tên; click mục tiêu -> lấy ID)             │ print("MOVE RIGHT")        │
-│                                                                    │                            │
-│                                                                    │ [GỬI LỆNH]                 │
-│                                                                    │                            │
-│                                                                    │ Kết quả: OK / ERR          │
-├────────────────────────────────────────────────────────────────────┴────────────────────────────┤
-│ Phe · Team · HP HQ · Tài nguyên · Danh sách bot · Nhật ký hành động / lỗi                          │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
+JavaFX editor
+    → Java Compiler API
+    → class files trong thư mục tạm
+    → child JVM runner
+    → game-client-java
+    → WebSocket server
+    → Game Core và STATE_UPDATED
+    → Phaser viewer
 ```
 
-- UI có bản đồ bên trái, danh sách chọn bot và ô **nhập mã lệnh số** bên phải, nút **Gửi lệnh**, bảng mã lệnh và log. Editor Python là hướng phát triển, chưa cần trong MVP.
-- Click đơn vị trên map để chọn bot; chọn mục tiêu có thể tự điền `target_id`.
-- Server là nguồn sự thật; client nhận trạng thái qua WebSocket hoặc polling nhẹ ở MVP.
-- **MVP không cần:** syntax highlighting đầy đủ, debugger, sandbox Python đa tài khoản, replay, lobby 50 người, hệ thống anti-cheat tinh vi.
+Code người dùng triển khai một hợp đồng nhỏ để desktop kiểm soát vòng đời chạy:
 
-## 11. Lộ trình MVP — ưu tiên **chạy được**
+```java
+public final class MyBot implements BotProgram {
+    @Override
+    public void run(GameBot bot) throws Exception {
+        for (int i = 0; i < 3; i++) {
+            bot.move(Direction.RIGHT);
+        }
+    }
+}
+```
 
-### P0 — Minimal Vertical Slice (bắt buộc)
+`game-desktop` chịu trách nhiệm UI, cấu hình kết nối, biên dịch và điều phối process.
+`game-runner` là entry point tối thiểu chạy class đã biên dịch trong một JVM con và kết nối bằng `game-client-java`.
+URL server, team token và unit ID do desktop truyền vào runner; người dùng không cần ghi credential trong source.
+Source code và class file chỉ tồn tại local, không được upload lên game server.
 
-1. **Tạo trận/đội/phe:** ít nhất 2 đội; mỗi đội 1 tài khoản, có nhà chính được khởi tạo sẵn.
-2. **Hiển thị map:** ma trận vuông, đơn vị/công trình/tài nguyên dạng ký hiệu hoặc sprite placeholder.
-3. **Tạo và chọn bot:** `SPAWN` đặt tên, hiển thị đơn vị; UI có chọn bot; `DELETE` xóa đúng bot.
-4. **Lệnh đơn:** editor + nút Gửi. Đẩy một lệnh, server trả `OK/ERR`, client cập nhật vị trí và trạng thái.
-5. **Hành động đơn:** `MOVE` 4 hướng (1 ô/lệnh), `WAIT`, `ATTACK` (trừ HP trực tiếp), `GATHER` (chỉ thợ đứng trên tài nguyên), `BUILD` (thợ xây xong tức thì).
-6. **Đồng bộ online cơ bản:** hai trình duyệt nhìn thấy cùng trạng thái trên server.
-7. **Kiểm tra vòng đời:** mất HP, phá nhà chính, đánh dấu đội bị loại. Không bắt buộc cân bằng và xếp hạng.
+JVM con phải có classpath giới hạn, working directory tạm, giới hạn heap, timeout, giới hạn output và thao tác dừng rõ ràng.
+Các giới hạn này bảo vệ độ ổn định của ứng dụng nhưng không phải sandbox an toàn cho code không tin cậy.
+Phiên bản đầu chỉ chạy source do chính người dùng tin cậy; nếu nhận code từ người khác thì phải bổ sung cô lập ở mức hệ điều hành hoặc container.
 
-**Các giản lược được chấp nhận có chủ ý:** vượt biên map; đi xuyên vật thể, xuyên tường và đơn vị; nhiều đơn vị chung ô; mọi quân đi 1 ô/lệnh; mọi đòn đánh xuyên tức thì; không có đạn bay và collision; không có kinh tế/giá thành được cân bằng; một tài khoản/đội; không chạy `for`; không có queue cho spawn bị kẹt; chưa cần xử lý đồng thời 5 thành viên.
+UI tối thiểu gồm editor, cấu hình server/team, nút Compile, Run, Stop và console.
+Lỗi compiler phải hiển thị message, dòng và cột để người học sửa trực tiếp.
+Phaser tiếp tục chạy ở trình duyệt trong phiên bản đầu; việc nhúng viewer vào desktop chỉ xem xét sau khi luồng compile/run ổn định.
 
-**Tiêu chí hoàn thành MVP:** Có thể mở 2 client thuộc 2 đội, tạo thợ/quân, dùng một lệnh đơn để di chuyển/đứng yên/khai thác/xây/tấn công/xóa, quan sát thay đổi đồng bộ trên map và phá HQ để kết thúc phần chơi. **Không được coi những giản lược ở trên là lỗi MVP.**
+Bản phát hành desktop dùng `jpackage`.
+Runtime đóng gói phải có module `jdk.compiler`; nếu chưa đóng gói được compiler thì tài liệu phải yêu cầu rõ JDK 21 thay vì chỉ JRE.
 
-### P1 — Hoàn thiện luật chơi trước khi cân bằng
+## 4. Mô hình trạng thái tối thiểu
 
-- Giới hạn **10 hành động/giây/bot** trên server, không lệ thuộc số người điều khiển hay số request HTTP.
-- Thêm **vòng lặp hợp lệ** và hàng đợi lệnh, phân biệt được vòng lặp với nhiều dòng `print` copy. Lệnh trùng hoặc quá tải xử lý theo cùng quota đội/bot.
-- Bổ sung kiểm tra biên map, mỗi ô một đơn vị, collision với vật thể, footprint xe 2×2 và tường cản đường.
-- Thêm di chuyển tích lũy theo hướng quay (2 / 1 / 5 lệnh MOVE tương ứng MELEE / RANGED / SIEGE).
-- Giới hạn tầm đánh 1 / 3 / 7 / 5 và thời gian bay đạn 10 ô/giây; tầm xa chặn vật thể, xe bắn xuyên.
-- Chốt vị trí xây hợp lệ, xếp hàng spawn khi thiếu ô trống, giới hạn dân số và công trình.
-- Hỗ trợ đủ **10 đội chia 2 phe, 5 tài khoản/đội**; shared control, shared limits và xử lý trùng lệnh từ nhiều người.
+```text
+MatchState
+├── matchId
+├── setupId
+├── rulesVersion
+├── status: RUNNING | FINISHED
+├── winnerTeamId
+├── revision
+├── eventSequence
+├── map: width, height
+├── teams[2]
+├── units[2]
+└── headquarters[2]
+```
 
-### P2 — Chất lượng trải nghiệm và cân bằng (chưa cần)
+Mỗi `Unit` cần `id`, `teamId`, `x`, `y`, `hp` và `facing`.
+Mỗi `Headquarters` cần `id`, `teamId`, `x`, `y` và `hp`.
+ID là duy nhất toàn trận và được dùng trong giao thức.
+Tên hiển thị không được dùng làm khóa định danh.
 
-- Định lượng HP/damage/giá, tốc độ khai thác, tốc độ tấn công, số tài nguyên khởi điểm, kích thước map và thời lượng trận.
-- UI pixel art hoàn chỉnh, hiệu ứng đi/đánh/khai thác, panel đội/đồng minh, replay và thống kê.
-- Matchmaking, xếp hạng, lịch sử trận, bảo vệ chống spam nâng cao, kịch bản/tutorial theo mức kiến thức `print` → `for` → `if` → hàm.
+Giá trị HP và damage chỉ là hằng số thử nghiệm.
+Đề xuất ban đầu là đơn vị có 3 HP, HQ có 3 HP và mỗi đòn đánh gây 1 damage.
 
-## 12. Điểm cải tiến đáng cân nhắc nhưng **không chặn MVP**
+Các giá trị mặc định này thuộc `RuleSet`/`MatchSetup`, không phải literal rải trong handler hoặc renderer.
 
-1. **Quy tắc rõ cho `for`:** ưu tiên DSL `REPEAT` hoặc runner theo dõi nguồn lệnh thay vì tin vào chuỗi stdout; nếu không sẽ không thể ngăn việc copy nhiều `print` một cách đúng đắn.
-2. **Lệnh `WAIT` có ý nghĩa:** nếu chỉ gửi một lệnh rồi đứng yên, `WAIT` có cùng trạng thái kết quả với không gửi gì; giá trị thật xuất hiện khi chạy chương trình nhiều lệnh theo thời gian, hoặc phối hợp đồng đội. Vẫn đưa `WAIT` vào MVP để giữ giao thức ổn định.
-3. **Đặt tên và ID ổn định:** tên dễ gõ cho người mới, ID nội bộ chống đụng độ giữa nhiều đội. Log nên in cả tên và ID khi cần debug.
-4. **Hiển thị lệnh bị từ chối:** mã lỗi ngắn `UNKNOWN_UNIT`, `INVALID_DIRECTION`, `WORKER_REQUIRED`, `NOT_ON_RESOURCE`, `INVALID_TARGET`, về sau thêm `NO_SPACE`, `RATE_LIMIT`, `DUPLICATE_ACTION_IN_SUBMISSION`.
-5. **Đồng đội chia việc:** về sau có thể gắn nhãn người gửi vào từng sự kiện để dễ phối hợp và chẩn đoán xung đột, nhưng quyền tác động vẫn là quyền chung của đội.
-6. **Tách mô phỏng khỏi đồ họa:** logic là trạng thái + lệnh → trạng thái mới; UI chỉ render. Nhờ vậy các phép thử lệnh đơn rất dễ viết trước khi vẽ pixel art.
-7. **Giới hạn thực thi code khi mở `for`:** sandbox với timeout, RAM/CPU/output cap, không cho truy cập network/file system; cần thiết để không ai dùng vòng lặp vô hạn làm nghẽn server.
+## 4.1. Hợp đồng Game Core
 
-## 13. Những quyết định tạm để nhóm triển khai không tự suy diễn
+Game Core phải chạy được không cần Spring Boot, WebSocket, database hoặc Phaser:
 
-- Bản đồ **vuông**, 4 hướng; kích thước map cấu hình được.
-- Thắng theo **phe**, nhưng thử MVP chỉ cần mỗi phe một đội. Bị mất HQ thì **đội bị loại**; phe thua khi không còn đội nào có HQ.
-- `SPAWN` ở HQ được cho phép tối thiểu với `WORKER`; việc xuất quân khác ở HQ hay chỉ từ BARRACKS sẽ chốt khi hoàn thiện luật sản xuất.
-- Trong **full**, quyền tạo/xóa bot là quyền của **đội**; các tài khoản cùng đội dùng chung giới hạn 50 đơn vị và 10 hành động/s/bot.
-- Trong **MVP**, chỉ đơn vị `WORKER` được khai thác/xây; tài nguyên vô hạn; xây xong chỉ bằng một lệnh; mọi đơn vị đi 1 ô/lệnh; đánh trực tiếp xuyên; bỏ qua collision và biên map theo chủ đích.
-- Không thêm BFS/A*, tự di chuyển, tự tìm mục tiêu, tự khai thác hoặc AI điều khiển thay người chơi.
-- **Không triển khai hoặc hứa có tính năng `for` trong MVP**. Cơ chế phân biệt `print` thủ công và output từ vòng lặp là nghiên cứu/thiết kế cho P1.
+```text
+apply(GameState state, GameCommand command, RuleSet rules)
+    -> ApplyResult(state, events, errors)
+```
 
----
+Hàm xử lý không đọc đồng hồ hệ thống, không gọi network và không dùng random không có seed.
+Metadata giao thức như `commandId`, `sequence` và `effectiveTick` tách khỏi luật gameplay.
+MVP chỉ dùng `revision`/`sequence`; `effectiveTick` có thể bổ sung sau mà không đổi chữ ký luật.
 
-**Tinh thần thiết kế:** Một người biết mỗi `print` vẫn ra được lệnh và nhìn thấy tác dụng ngay. Khi hệ thống mở chế độ lặp, người biết `for` có thể khai thác, di chuyển và điều khiển nhiều đơn vị hiệu quả hơn trong cùng quỹ thời gian. Thành công của MVP là **chứng minh pipeline lệnh → xử lý server → cập nhật bản đồ online**, không phải hoàn thiện tất cả luật RTS từ ngày đầu.
+## 5. Luật xử lý command
+
+Các command của MVP:
+
+| Command | Dữ liệu | Kết quả |
+|---|---|---|
+| `MOVE` | `unitId`, `direction` | Đi một ô nếu hợp lệ |
+| `WAIT` | `unitId` | Không đổi vị trí nhưng tạo event thành công |
+| `ATTACK` | `unitId`, `targetId` | Trừ HP mục tiêu địch ở ô kề |
+| `GET_STATE` | Không có | Trả snapshot hiện tại |
+
+`GET_STATE` là thao tác chỉ đọc và luôn trả snapshot hiện tại, kể cả khi trận đã kết thúc.
+
+Server phải kiểm tra action command theo thứ tự:
+
+1. Trận còn ở trạng thái `RUNNING`.
+2. Token hợp lệ và sở hữu đơn vị gửi lệnh.
+3. `commandId` chưa được xử lý trước đó.
+4. Command và tham số hợp lệ.
+5. Vị trí đích nằm trong map và không bị chiếm.
+6. Mục tiêu tấn công thuộc đội địch, còn sống và ở trong tầm.
+
+Action command thất bại không được thay đổi state hoặc tăng `revision`.
+Action command được chấp nhận chỉ áp dụng một lần và tăng `revision` đúng một đơn vị, kể cả `WAIT`.
+Các command của cùng một match được server xử lý tuần tự.
+
+## 6. Giao thức WebSocket tối thiểu
+
+Client gửi:
+
+```json
+{
+  "type": "COMMAND",
+  "schemaVersion": 1,
+  "matchId": "mvp-default",
+  "commandId": "blue-001",
+  "action": "MOVE",
+  "unitId": "worker-blue",
+  "direction": "RIGHT"
+}
+```
+
+Server trả cho client gửi lệnh:
+
+```json
+{
+  "type": "COMMAND_RESULT",
+  "schemaVersion": 1,
+  "commandId": "blue-001",
+  "ok": true,
+  "revision": 1,
+  "sequence": 1
+}
+```
+
+Server phát cho các client đang theo dõi trận:
+
+```json
+{
+  "type": "STATE_UPDATED",
+  "schemaVersion": 1,
+  "matchId": "mvp-default",
+  "revision": 1,
+  "sequence": 1,
+  "state": {}
+}
+```
+
+MVP phát toàn bộ snapshot sau mỗi command thành công để giảm logic đồng bộ.
+Snapshot phải serialize được và event phải có thứ tự để sau này hỗ trợ replay hoặc client simulation.
+Chỉ chuyển sang delta event khi state lớn hơn và có benchmark chứng minh cần thiết.
+
+## 7. Giao diện Phaser
+
+Giao diện MVP chỉ cần:
+
+- Lưới theo kích thước trong snapshot, mặc định 8×8.
+- Hai HQ bằng hình chữ nhật khác màu.
+- Hai đơn vị bằng hình tròn hoặc sprite placeholder.
+- HP của hai HQ và hai đơn vị.
+- Trạng thái trận và đội thắng.
+- `revision` hiện tại.
+- Log năm command gần nhất.
+- Trạng thái kết nối WebSocket.
+
+Phaser không tự tính kết quả di chuyển hoặc chiến đấu.
+Phaser chỉ render state do server gửi.
+Không cần editor, nút điều khiển, animation hoặc asset pixel art trong MVP.
+
+## 8. Kiểm thử trực tiếp
+
+### 8.1. Test tự động
+
+- Unit test cho MOVE bốn hướng, WAIT, bounds và ô bị chiếm.
+- Unit test ownership, attack range, damage, phá HQ và `MATCH_FINISHED`.
+- Unit test command trùng `commandId` không chạy hai lần.
+- Test tạo hai `MatchSetup` khác nhau mà không sửa Game Core.
+- Test serialize/deserialize snapshot và replay cùng command log cho cùng state.
+- Integration test mở WebSocket, gửi command và nhận `COMMAND_RESULT` cùng `STATE_UPDATED`.
+- Test Java client gửi chuỗi command theo đúng thứ tự.
+
+### 8.2. Kịch bản demo bắt buộc
+
+1. Khởi động backend và frontend từ hướng dẫn sạch.
+2. Mở trang Phaser và thấy map seed ban đầu.
+3. Chạy `BlueBot.java` từ IDE hoặc Maven.
+4. Quan sát đơn vị BLUE di chuyển ngay trên Phaser.
+5. Chạy `RedBot.java` để chứng minh hai token điều khiển hai đội khác nhau.
+6. Chạy kịch bản đưa một đơn vị tới HQ địch và tấn công ba lần.
+7. Quan sát Phaser hiển thị `FINISHED` và đúng đội thắng.
+8. Chạy lại test tự động và nhận kết quả pass.
+
+## 9. Tiêu chí hoàn thành MVP
+
+MVP hoàn thành khi tất cả điều kiện sau đạt:
+
+- Một lệnh khởi động được backend và một lệnh khởi động được frontend.
+- Có thể đổi map/team/unit seed bằng profile cấu hình mà không sửa luật engine.
+- Chương trình Java cơ bản dùng được biến, `if`, `for` và hàm để gửi command.
+- Java client không cần sửa mã nguồn backend hoặc frontend.
+- Server là nguồn sự thật duy nhất.
+- Hai token không điều khiển được đơn vị của nhau.
+- MOVE, WAIT, ATTACK, bounds, occupancy và chiến thắng hoạt động đúng.
+- Phaser cập nhật qua WebSocket mà không refresh.
+- Kịch bản demo hoàn thành một trận từ đầu đến cuối.
+- Bộ test tự động của MVP pass.
+- README ghi đúng lệnh chạy và giới hạn của MVP.
+
+## 10. Thời gian mục tiêu
+
+| Khối | Thời gian dự kiến |
+|---|---:|
+| Khung dự án và pure game engine | 3–4 ngày công |
+| Spring Boot WebSocket và state trong RAM | 2–3 ngày công |
+| Java client SDK và chương trình mẫu | 2–3 ngày công |
+| Phaser viewer | 2–3 ngày công |
+| Tích hợp, test và README | 2–4 ngày công |
+| **Tổng MVP** | **12–18 ngày công** |
+
+Một người đã quen công nghệ có thể hoàn thành trong khoảng 2–3 tuần toàn thời gian.
+Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiến 4–7 tuần.
+Ước lượng không bao gồm sản xuất pixel art, triển khai production hoặc chạy source Java không tin cậy trên server.
+
+## 11. Hướng phát triển sau MVP
+
+1. Mở rộng gameplay với nhiều đơn vị và spawn sau khi Desktop Code Studio D05 đã được nghiệm thu.
+2. Thêm tạo/xóa đơn vị và nhiều đơn vị mỗi đội từ command/config mở rộng.
+3. Thêm tài nguyên, WORKER, khai thác và xây BARRACKS/TOWER/WALL.
+4. Thêm các loại MELEE/RANGED/SIEGE, tầm đánh và projectile.
+5. Thêm rate limit, hàng đợi và simulation tick.
+6. Thêm tài khoản, lobby, database và nhiều người cùng đội.
+7. Thêm 10 đội chia 2 phe và tối đa 50 đơn vị mỗi đội.
+8. Chỉ thiết kế editor web nếu Desktop Code Studio không đáp ứng; compiler service và sandbox phải tách khỏi game server.
+9. Nếu cần client simulation, thực hiện theo tài liệu migration dự phòng sau khi snapshot, command log và deterministic core đã được kiểm chứng.
+10. Bổ sung pixel art, animation, tutorial, replay và cân bằng.
+
+Tinh thần của MVP là chứng minh chu trình **Java program → WebSocket → server xử lý → state đổi → Phaser hiển thị → trận kết thúc** với số thành phần ít nhất có thể.
