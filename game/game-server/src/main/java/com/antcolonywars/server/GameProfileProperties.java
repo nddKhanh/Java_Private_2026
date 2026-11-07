@@ -17,7 +17,13 @@ public record GameProfileProperties(
     public record Board(int width, int height) {
     }
 
-    public record Rules(String version, int attackDamage, int attackRange) {
+    public record Rules(
+            String version,
+            int attackDamage,
+            int attackRange,
+            int maxUnitsPerTeam,
+            int spawnedUnitHp
+    ) {
     }
 
     public record TeamProfile(String id, String displayName, String color, String token) {
@@ -25,6 +31,7 @@ public record GameProfileProperties(
 
     public record UnitProfile(
             String id,
+            String displayName,
             String teamId,
             String type,
             int x,

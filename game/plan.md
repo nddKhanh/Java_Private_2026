@@ -1,11 +1,11 @@
-# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.6)
+# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.7)
 
-> **Trạng thái:** MVP Phase 00–05 và Desktop Code Studio D00–D05 đã được kiểm chứng.
+> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05 và gameplay R1 đã được kiểm chứng.
 > **Kiến trúc chính:** Server-authoritative; server giữ luật và state chính, client gửi command và render snapshot/event.
 > **Kiến trúc dự phòng:** `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là đề xuất sau MVP, chưa thay thế roadmap hiện tại.
 > **Mục tiêu dài hạn:** Game chiến thuật online 2D trên lưới ô vuông, trong đó người chơi điều khiển đơn vị bằng chương trình Java.
 > **Mục tiêu MVP:** Chứng minh một chương trình Java cơ bản có thể gửi hành động tới server, làm thay đổi trạng thái trận đấu và được Phaser hiển thị ngay qua WebSocket.
-> **Mục tiêu hậu MVP gần nhất:** Cung cấp ứng dụng desktop để viết, biên dịch và chạy bot Java local rồi gửi command tới server qua SDK hiện có.
+> **Mục tiêu hậu MVP gần nhất:** Bổ sung tài nguyên và xây dựng ở R2 mà không đưa chi phí vào lệnh spawn R1.
 
 ## 1. Quyết định kỹ thuật
 
@@ -231,8 +231,8 @@ Client gửi:
 ```json
 {
   "type": "COMMAND",
-  "schemaVersion": 1,
-  "matchId": "mvp-default",
+  "schemaVersion": 2,
+  "matchId": "match-default",
   "commandId": "blue-001",
   "action": "MOVE",
   "unitId": "worker-blue",
@@ -245,7 +245,7 @@ Server trả cho client gửi lệnh:
 ```json
 {
   "type": "COMMAND_RESULT",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "commandId": "blue-001",
   "ok": true,
   "revision": 1,
@@ -258,8 +258,8 @@ Server phát cho các client đang theo dõi trận:
 ```json
 {
   "type": "STATE_UPDATED",
-  "schemaVersion": 1,
-  "matchId": "mvp-default",
+  "schemaVersion": 2,
+  "matchId": "match-default",
   "revision": 1,
   "sequence": 1,
   "state": {}
@@ -343,9 +343,9 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 
 ## 11. Hướng phát triển sau MVP
 
-1. Mở rộng gameplay với nhiều đơn vị và spawn sau khi Desktop Code Studio D05 đã được nghiệm thu.
-2. Thêm tạo/xóa đơn vị và nhiều đơn vị mỗi đội từ command/config mở rộng.
-3. Thêm tài nguyên, WORKER, khai thác và xây BARRACKS/TOWER/WALL.
+1. R1 đã bổ sung spawn WORKER cạnh HQ, ID toàn trận, tên hiển thị, chọn đơn vị và giới hạn theo đội.
+2. Đơn vị bị hạ được xóa khỏi snapshot để giải phóng ô và quota.
+3. Tiếp theo thêm tài nguyên, WORKER, khai thác và xây BARRACKS/TOWER/WALL.
 4. Thêm các loại MELEE/RANGED/SIEGE, tầm đánh và projectile.
 5. Thêm rate limit, hàng đợi và simulation tick.
 6. Thêm tài khoản, lobby, database và nhiều người cùng đội.

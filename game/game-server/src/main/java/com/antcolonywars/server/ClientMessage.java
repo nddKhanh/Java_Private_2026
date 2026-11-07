@@ -7,6 +7,7 @@ public record ClientMessage(
         String commandId,
         String action,
         String unitId,
+        String displayName,
         String direction,
         String targetId
 ) {

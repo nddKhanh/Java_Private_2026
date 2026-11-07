@@ -8,6 +8,7 @@ import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.GetStateCommand;
 import com.antcolonywars.core.MatchState;
 import com.antcolonywars.core.MoveCommand;
+import com.antcolonywars.core.SpawnCommand;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -24,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
 
     private final MatchCoordinator coordinator;
     private final ObjectMapper objectMapper;
@@ -132,6 +133,15 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     private ActionCommand toCommand(ClientMessage request, String teamId, MatchState state) {
         requireText(request.commandId());
         requireText(request.action());
+        if ("SPAWN".equals(request.action())) {
+            return new SpawnCommand(
+                    request.commandId(),
+                    teamId,
+                    requireText(request.unitId()),
+                    requireText(request.displayName()),
+                    Direction.valueOf(requireText(request.direction()))
+            );
+        }
         String unitId = request.unitId();
         if (unitId == null || unitId.isBlank()) {
             unitId = controlledUnitId(state, teamId);

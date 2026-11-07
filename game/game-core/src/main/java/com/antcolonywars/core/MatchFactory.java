@@ -22,6 +22,7 @@ public final class MatchFactory {
                 setup.mapHeight(),
                 setup.teams(),
                 setup.units(),
+                List.of(),
                 setup.headquarters(),
                 List.of()
         );
@@ -36,6 +37,9 @@ public final class MatchFactory {
         Set<String> entityIds = new HashSet<>();
         Set<Position> occupied = new HashSet<>();
         for (Unit unit : setup.units()) {
+            if (unit.displayName().isBlank() || unit.displayName().length() > 32) {
+                throw new IllegalArgumentException("Invalid unit display name: " + unit.id());
+            }
             validateEntity(unit.id(), unit.teamId(), unit.position(), unit.hp(), setup, teamIds, entityIds, occupied);
         }
         for (Headquarters headquarters : setup.headquarters()) {

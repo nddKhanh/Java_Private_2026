@@ -18,8 +18,10 @@ public final class DefaultMatchSetup {
                         new Team("RED", "Red", "#dc2626")
                 ),
                 List.of(
-                        new Unit("worker-blue", "BLUE", "WORKER", new Position(1, 0), 3, Direction.RIGHT),
-                        new Unit("worker-red", "RED", "WORKER", new Position(6, 7), 3, Direction.LEFT)
+                        new Unit("worker-blue", "Blue Worker 1", "BLUE", "WORKER", new Position(1, 0), 3,
+                                Direction.RIGHT),
+                        new Unit("worker-red", "Red Worker 1", "RED", "WORKER", new Position(6, 7), 3,
+                                Direction.LEFT)
                 ),
                 List.of(
                         new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),

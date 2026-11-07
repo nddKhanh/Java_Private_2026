@@ -18,20 +18,52 @@ public final class GameBots {
         return new ClientGameBot(GameClient.connect(serverUrl, teamToken, timeout));
     }
 
-    private record ClientGameBot(GameClient client) implements GameBot {
+    private static final class ClientGameBot implements GameBot {
+        private final GameClient client;
+        private String selectedUnitId;
+
+        private ClientGameBot(GameClient client) {
+            this.client = client;
+        }
+
+        @Override
+        public GameBot selectUnit(String unitId) {
+            if (unitId == null || unitId.isBlank()) {
+                throw new IllegalArgumentException("unitId must not be blank");
+            }
+            selectedUnitId = unitId;
+            return this;
+        }
+
+        @Override
+        public String selectedUnitId() {
+            return selectedUnitId;
+        }
+
+        @Override
+        public GameState spawn(String unitId, String displayName, Direction direction) {
+            return client.spawn(unitId, displayName, direction);
+        }
+
         @Override
         public GameState move(Direction direction) {
-            return client.move(direction);
+            return selectedUnitId == null
+                    ? client.move(direction)
+                    : client.move(selectedUnitId, direction);
         }
 
         @Override
         public GameState waitTurn() {
-            return client.waitTurn();
+            return selectedUnitId == null
+                    ? client.waitTurn()
+                    : client.waitTurn(selectedUnitId);
         }
 
         @Override
         public GameState attack(String targetId) {
-            return client.attack(targetId);
+            return selectedUnitId == null
+                    ? client.attack(targetId)
+                    : client.attack(selectedUnitId, targetId);
         }
 
         @Override

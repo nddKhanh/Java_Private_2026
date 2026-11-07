@@ -98,3 +98,12 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Bằng chứng:** Người dùng xác nhận trực tiếp Compile → Run, bot hoàn tất và Phaser cập nhật đúng vị trí cùng revision.
 - **Tiếp theo:** Bắt đầu R1 — nhiều đơn vị và spawn.
 - **Chưa kiểm chứng:** Chưa thử app-image trên máy Windows thứ hai; chưa có production deployment, database hoặc load test.
+
+## 2026-11-07 — R1 nhiều đơn vị và spawn
+
+- **Trạng thái:** `VERIFIED`
+- **Đã đạt:** Triển khai SPAWN cạnh HQ, ID toàn trận, tên hiển thị, quota theo đội và chọn unit qua Java SDK.
+- **Đã đạt:** Unit bị hạ được loại khỏi danh sách active nhưng ID không được tái sử dụng; Phaser hiển thị đồng thời nhiều unit và command log SPAWN.
+- **Bằng chứng:** 35 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
+- **Tiếp theo:** Bắt đầu R2 với tài nguyên, khai thác và công trình mà không thay đổi tính xác định của Game Core.
+- **Chưa kiểm chứng:** Chưa kiểm thử trực quan R1 trên trình duyệt hoặc app-image đóng gói; chưa có chi phí spawn hay production building.

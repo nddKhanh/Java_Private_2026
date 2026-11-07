@@ -95,6 +95,19 @@ class GameClientIntegrationTest {
         }
     }
 
+    @Test
+    void botSpawnsSelectsAndMovesAnotherUnit() {
+        try (GameBot bot = GameBots.connect(serverUrl(), "blue-token")) {
+            bot.spawn("worker-blue-2", "Builder", Direction.DOWN);
+            bot.selectUnit("worker-blue-2").move(Direction.RIGHT);
+
+            assertEquals("worker-blue-2", bot.selectedUnitId());
+            assertEquals(1, unitX(bot.getLatestState(), "worker-blue-2"));
+            assertEquals(1, unitX(bot.getLatestState(), "worker-blue"));
+            assertEquals(2, bot.getLatestState().revision());
+        }
+    }
+
     private String serverUrl() {
         return "ws://localhost:" + port + "/game";
     }

@@ -97,10 +97,11 @@ export class BattleScene extends Phaser.Scene {
         unit.hp > 0 ? 1 : 0.25,
       );
       shape.setStrokeStyle(Math.max(2, cellSize * 0.04), 0xf8fafc, 0.9);
-      this.add.text(center.x, center.y, `${unit.hp}`, {
+      this.add.text(center.x, center.y, `${unit.displayName}\n${unit.hp} HP`, {
+        align: 'center',
         color: '#ffffff',
         fontFamily: 'Inter, system-ui, sans-serif',
-        fontSize: `${Math.max(12, Math.min(18, cellSize * 0.25))}px`,
+        fontSize: `${Math.max(9, Math.min(13, cellSize * 0.17))}px`,
         fontStyle: '700',
       }).setOrigin(0.5);
     }

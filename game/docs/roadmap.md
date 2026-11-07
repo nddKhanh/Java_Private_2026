@@ -1,6 +1,6 @@
-# ANT COLONY WARS — Roadmap điều khiển bằng Java (v0.4)
+# ANT COLONY WARS — Roadmap điều khiển bằng Java (v0.5)
 
-> **Nguồn yêu cầu:** `../plan.md` v0.6.
+> **Nguồn yêu cầu:** `../plan.md` v0.7.
 > **Mục tiêu:** Hoàn thành nhanh một lát cắt có thể chạy và kiểm thử trực tiếp từ chương trình Java tới Phaser.
 > **Nguyên tắc:** Chỉ chuyển phase khi test của phase hiện tại và toàn bộ test cũ đều pass.
 > **Kiến trúc chính:** Server-authoritative; tài liệu client simulation trong `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là phương án dự phòng.
@@ -427,9 +427,26 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R1 — Nhiều đơn vị và spawn
 
-- Tạo, xóa và chọn nhiều đơn vị.
-- Tên hiển thị riêng nhưng dùng ID toàn trận trong giao thức.
-- Giới hạn số lượng đơn vị và vị trí spawn hợp lệ.
+**Trạng thái:** `VERIFIED`.
+
+**Triển khai:**
+
+- `SPAWN` tạo WORKER ở ô kề HQ theo hướng do bot chọn.
+- Mỗi unit có ID toàn trận và tên hiển thị riêng.
+- `GameBot.selectUnit` chọn đơn vị cho MOVE, WAIT và ATTACK tiếp theo.
+- Rules cấu hình giới hạn unit mỗi đội và HP unit mới.
+- Unit hết HP bị loại khỏi danh sách active để giải phóng ô và quota; ID đã dùng không được tái sử dụng trong trận.
+- Phaser hiển thị nhiều unit cùng tên và ID riêng.
+
+**Nghiệm thu:**
+
+- [x] Spawn hợp lệ tạo unit mới và tăng revision đúng một lần.
+- [x] ID trùng, ô bị chiếm, ô ngoài map và vượt quota bị từ chối mà state không đổi.
+- [x] Bot chọn unit mới bằng ID rồi điều khiển độc lập với unit seed.
+- [x] Unit bị hạ được xóa khỏi snapshot.
+- [x] Snapshot, replay và regression cũ vẫn pass.
+
+**Bằng chứng:** 35 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 
 ## R2 — Tài nguyên và xây dựng
 

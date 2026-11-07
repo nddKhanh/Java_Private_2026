@@ -10,10 +10,16 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 
 ### Added
 
+- Thêm SPAWN cạnh HQ, quota unit theo đội, HP spawn cấu hình được và error code rõ cho R1.
+- Thêm ID toàn trận, tên hiển thị và `GameBot.selectUnit` để điều khiển nhiều đơn vị độc lập.
+- Thêm `ReinforcementBot` cùng hiển thị nhiều unit trên Phaser.
 - [Kết quả mới đã có].
 
 ### Changed
 
+- Nâng protocol schema lên version 2 cho snapshot có tên unit và action SPAWN.
+- Unit hết HP được loại khỏi danh sách active để giải phóng ô và quota nhưng ID vẫn được giữ để cấm tái sử dụng.
+- Nâng kế hoạch lên v0.7 và roadmap lên v0.5 với R1 đã kiểm chứng.
 - [Kết quả đã được điều chỉnh].
 
 ### Fixed
@@ -22,6 +28,7 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 
 ### Verified
 
+- Xác minh 35 Maven test, frontend production build và npm audit 0 vulnerability cho R1.
 - [Bằng chứng hoặc phạm vi đã kiểm tra].
 ```
 

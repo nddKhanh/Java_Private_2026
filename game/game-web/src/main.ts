@@ -104,7 +104,7 @@ function updatePanel(state: MatchState): void {
     const headquarters = state.headquarters.find((item) => item.teamId === team.id);
     const units = state.units.filter((unit) => unit.teamId === team.id);
     const unitRows = units.map((unit) => `
-      <div class="force-stat"><span>${escapeHtml(unit.id)}</span><strong>${unit.hp} HP</strong></div>
+      <div class="force-stat"><span>${escapeHtml(unit.displayName)} <small>(${escapeHtml(unit.id)})</small></span><strong>${unit.hp} HP</strong></div>
     `).join('');
     return `
       <article class="team-card" style="--team-color: ${safeColor(team.color)}">

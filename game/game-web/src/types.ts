@@ -11,6 +11,7 @@ export interface Team {
 
 export interface Unit {
   id: string;
+  displayName: string;
   teamId: string;
   type: string;
   position: Position;
@@ -37,6 +38,7 @@ export interface MatchState {
   mapHeight: number;
   teams: Team[];
   units: Unit[];
+  retiredUnitIds: string[];
   headquarters: Headquarters[];
   processedCommandIds: string[];
 }

@@ -24,7 +24,9 @@ public class GameServerConfiguration {
                 new RuleSet(
                         profile.rules().version(),
                         profile.rules().attackDamage(),
-                        profile.rules().attackRange()
+                        profile.rules().attackRange(),
+                        profile.rules().maxUnitsPerTeam(),
+                        profile.rules().spawnedUnitHp()
                 ),
                 profile.teams().stream()
                         .map(team -> new Team(team.id(), team.displayName(), team.color()))
@@ -32,6 +34,9 @@ public class GameServerConfiguration {
                 profile.units().stream()
                         .map(unit -> new Unit(
                                 unit.id(),
+                                unit.displayName() == null || unit.displayName().isBlank()
+                                        ? unit.id()
+                                        : unit.displayName(),
                                 unit.teamId(),
                                 unit.type(),
                                 new Position(unit.x(), unit.y()),

@@ -15,6 +15,7 @@ public record MatchState(
         int mapHeight,
         List<Team> teams,
         List<Unit> units,
+        List<String> retiredUnitIds,
         List<Headquarters> headquarters,
         List<String> processedCommandIds
 ) {
@@ -25,6 +26,7 @@ public record MatchState(
         Objects.requireNonNull(status, "status");
         teams = List.copyOf(teams);
         units = List.copyOf(units);
+        retiredUnitIds = List.copyOf(retiredUnitIds);
         headquarters = List.copyOf(headquarters);
         processedCommandIds = List.copyOf(processedCommandIds);
     }

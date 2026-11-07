@@ -10,11 +10,13 @@ final class DefaultBotSource {
             public final class MyBot implements BotProgram {
                 @Override
                 public void run(GameBot bot) {
+                    bot.spawn("worker-blue-2", "Blue Worker 2", Direction.DOWN);
+                    bot.selectUnit("worker-blue-2");
                     for (int step = 0; step < 3; step++) {
                         bot.move(Direction.RIGHT);
                     }
 
-                    System.out.println("Completed 3 moves.");
+                    System.out.println("Spawned and moved Blue Worker 2.");
                 }
             }
             """;

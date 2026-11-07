@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("BlueBot", "RedBot", "WinningScenario")]
+    [ValidateSet("BlueBot", "RedBot", "WinningScenario", "ReinforcementBot")]
     [string]$Scenario
 )
 

@@ -4,6 +4,12 @@ import com.antcolonywars.client.Direction;
 import com.antcolonywars.client.GameState;
 
 public interface GameBot extends AutoCloseable {
+    GameBot selectUnit(String unitId);
+
+    String selectedUnitId();
+
+    GameState spawn(String unitId, String displayName, Direction direction);
+
     GameState move(Direction direction);
 
     GameState waitTurn();

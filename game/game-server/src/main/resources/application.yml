@@ -6,9 +6,11 @@ game:
       width: 8
       height: 8
     rules:
-      version: mvp-1
+      version: r1-1
       attack-damage: 1
       attack-range: 1
+      max-units-per-team: 5
+      spawned-unit-hp: 3
     teams:
       - id: BLUE
         display-name: Blue
@@ -20,6 +22,7 @@ game:
         token: red-token
     units:
       - id: worker-blue
+        display-name: Blue Worker 1
         team-id: BLUE
         type: WORKER
         x: 1
@@ -27,6 +30,7 @@ game:
         hp: 3
         facing: RIGHT
       - id: worker-red
+        display-name: Red Worker 1
         team-id: RED
         type: WORKER
         x: 6

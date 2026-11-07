@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 1;
+    private static final int SCHEMA_VERSION = 2;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -57,13 +57,38 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         return sendAction("MOVE", Map.of("direction", direction.name()));
     }
 
+    public GameState move(String unitId, Direction direction) {
+        Objects.requireNonNull(direction, "direction");
+        return sendUnitAction("MOVE", unitId, Map.of("direction", direction.name()));
+    }
+
     public GameState waitTurn() {
         return sendAction("WAIT", Map.of());
+    }
+
+    public GameState waitTurn(String unitId) {
+        return sendUnitAction("WAIT", unitId, Map.of());
     }
 
     public GameState attack(String targetId) {
         Objects.requireNonNull(targetId, "targetId");
         return sendAction("ATTACK", Map.of("targetId", targetId));
+    }
+
+    public GameState attack(String unitId, String targetId) {
+        Objects.requireNonNull(targetId, "targetId");
+        return sendUnitAction("ATTACK", unitId, Map.of("targetId", targetId));
+    }
+
+    public GameState spawn(String unitId, String displayName, Direction direction) {
+        Objects.requireNonNull(unitId, "unitId");
+        Objects.requireNonNull(displayName, "displayName");
+        Objects.requireNonNull(direction, "direction");
+        return sendAction("SPAWN", Map.of(
+                "unitId", unitId,
+                "displayName", displayName,
+                "direction", direction.name()
+        ));
     }
 
     public GameState getLatestState() {
@@ -125,11 +150,7 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
 
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
-        connectionFailure = error;
-        failPending(new GameClientException("CONNECTION_ERROR", "WebSocket transport failed", error));
-        synchronized (stateMonitor) {
-            stateMonitor.notifyAll();
-        }
+        recordConnectionFailure(new GameClientException("CONNECTION_ERROR", "WebSocket transport failed", error));
     }
 
     private void open(String authenticatedUrl) {
@@ -177,6 +198,9 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
             Thread.currentThread().interrupt();
             throw new GameClientException("INTERRUPTED", "Interrupted while waiting for command", exception);
         } catch (ExecutionException exception) {
+            if (exception.getCause() instanceof GameClientException clientException) {
+                throw clientException;
+            }
             throw new GameClientException("COMMAND_FAILED", "Cannot send command", exception.getCause());
         } catch (TimeoutException exception) {
             throw new GameClientException("TIMEOUT", "Timed out waiting for command " + commandId, exception);
@@ -187,9 +211,26 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         }
     }
 
+    private GameState sendUnitAction(String action, String unitId, Map<String, Object> parameters) {
+        Objects.requireNonNull(unitId, "unitId");
+        if (unitId.isBlank()) {
+            throw new IllegalArgumentException("unitId must not be blank");
+        }
+        Map<String, Object> message = new HashMap<>(parameters);
+        message.put("unitId", unitId);
+        return sendAction(action, message);
+    }
+
     private void handleMessage(String payload) {
         try {
             JsonNode message = objectMapper.readTree(payload);
+            int schemaVersion = message.path("schemaVersion").asInt(-1);
+            if (schemaVersion != SCHEMA_VERSION) {
+                throw new GameClientException(
+                        "UNSUPPORTED_SCHEMA_VERSION",
+                        "Server schema " + schemaVersion + " is not supported"
+                );
+            }
             String type = message.path("type").asText();
             if ("STATE_UPDATED".equals(type)) {
                 MatchState state = objectMapper.treeToValue(message.path("state"), MatchState.class);
@@ -214,8 +255,14 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
                     ));
                 }
             }
+        } catch (GameClientException exception) {
+            recordConnectionFailure(exception);
         } catch (Exception exception) {
-            failPending(new GameClientException("INVALID_SERVER_MESSAGE", "Cannot decode server message", exception));
+            recordConnectionFailure(new GameClientException(
+                    "INVALID_SERVER_MESSAGE",
+                    "Cannot decode server message",
+                    exception
+            ));
         }
     }
 
@@ -224,6 +271,9 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         synchronized (stateMonitor) {
             while (latestState == null || (!allowAnyInitialRevision && latestState.revision() < revision)) {
                 if (connectionFailure != null) {
+                    if (connectionFailure instanceof GameClientException clientException) {
+                        throw clientException;
+                    }
                     throw new GameClientException("CONNECTION_ERROR", "Connection failed", connectionFailure);
                 }
                 long remaining = deadline - System.nanoTime();
@@ -248,6 +298,14 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
 
     private void failPending(GameClientException exception) {
         pending.values().forEach(future -> future.completeExceptionally(exception));
+    }
+
+    private void recordConnectionFailure(GameClientException exception) {
+        connectionFailure = exception;
+        failPending(exception);
+        synchronized (stateMonitor) {
+            stateMonitor.notifyAll();
+        }
     }
 
     private static String withToken(String url, String token) {

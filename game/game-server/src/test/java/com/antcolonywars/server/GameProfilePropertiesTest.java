@@ -14,7 +14,7 @@ class GameProfilePropertiesTest {
                 "custom",
                 "custom-match",
                 new GameProfileProperties.Board(4, 4),
-                new GameProfileProperties.Rules("custom-1", 1, 1),
+                new GameProfileProperties.Rules("custom-1", 1, 1, 5, 3),
                 List.of(new GameProfileProperties.TeamProfile("GREEN", "Green", "#00ff00", "custom-token")),
                 List.of(),
                 List.of()

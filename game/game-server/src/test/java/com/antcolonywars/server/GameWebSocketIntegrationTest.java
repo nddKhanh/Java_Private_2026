@@ -112,6 +112,33 @@ class GameWebSocketIntegrationTest {
         red.close();
     }
 
+    @Test
+    void spawnsNamedUnitAndControlsItByGlobalId() throws Exception {
+        SocketClient blue = connect("blue-token");
+        blue.awaitType("STATE_UPDATED");
+
+        blue.send(command("spawn-blue-2", "SPAWN", Map.of(
+                "unitId", "worker-blue-2",
+                "displayName", "Builder",
+                "direction", "DOWN"
+        )));
+        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
+        JsonNode spawnedState = blue.awaitType("STATE_UPDATED");
+        JsonNode spawned = unit(spawnedState, "worker-blue-2");
+        assertEquals("Builder", spawned.path("displayName").asText());
+        assertEquals(0, spawned.path("position").path("x").asInt());
+        assertEquals(1, spawned.path("position").path("y").asInt());
+
+        blue.send(command("move-blue-2", "MOVE", Map.of(
+                "unitId", "worker-blue-2",
+                "direction", "RIGHT"
+        )));
+        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
+        assertEquals(1, unitX(blue.awaitType("STATE_UPDATED"), "worker-blue-2"));
+
+        blue.close();
+    }
+
     private SocketClient connect(String token) {
         String query = token == null ? "" : "?token=" + token;
         SocketClient listener = new SocketClient(objectMapper);
@@ -129,7 +156,7 @@ class GameWebSocketIntegrationTest {
     private Map<String, Object> command(String commandId, String action, Map<String, Object> extra) {
         Map<String, Object> message = new java.util.HashMap<>(extra);
         message.put("type", "COMMAND");
-        message.put("schemaVersion", 1);
+        message.put("schemaVersion", 2);
         message.put("matchId", "match-default");
         message.put("commandId", commandId);
         message.put("action", action);
@@ -137,9 +164,13 @@ class GameWebSocketIntegrationTest {
     }
 
     private int unitX(JsonNode envelope, String unitId) {
+        return unit(envelope, unitId).path("position").path("x").asInt();
+    }
+
+    private JsonNode unit(JsonNode envelope, String unitId) {
         for (JsonNode unit : envelope.path("state").path("units")) {
             if (unitId.equals(unit.path("id").asText())) {
-                return unit.path("position").path("x").asInt();
+                return unit;
             }
         }
         throw new AssertionError("Unit not found: " + unitId);
