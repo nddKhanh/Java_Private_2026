@@ -1,11 +1,11 @@
-# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.9)
+# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v1.0)
 
-> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05, gameplay R1, R2 và R3 đã được kiểm chứng.
+> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05, gameplay R1–R4 đã được kiểm chứng.
 > **Kiến trúc chính:** Server-authoritative; server giữ luật và state chính, client gửi command và render snapshot/event.
 > **Kiến trúc dự phòng:** `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là đề xuất sau MVP, chưa thay thế roadmap hiện tại.
 > **Mục tiêu dài hạn:** Game chiến thuật online 2D trên lưới ô vuông, trong đó người chơi điều khiển đơn vị bằng chương trình Java.
 > **Mục tiêu MVP:** Chứng minh một chương trình Java cơ bản có thể gửi hành động tới server, làm thay đổi trạng thái trận đấu và được Phaser hiển thị ngay qua WebSocket.
-> **Mục tiêu hậu MVP gần nhất:** Hoàn thiện footprint, projectile và simulation tick trên nền combat profile R3.
+> **Mục tiêu hậu MVP gần nhất:** Hoàn thiện footprint, projectile và simulation tick trên nền quota R4.
 
 ## 1. Quyết định kỹ thuật
 
@@ -346,12 +346,13 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 1. R1 đã bổ sung spawn WORKER cạnh HQ, ID toàn trận, tên hiển thị, chọn đơn vị và giới hạn theo đội.
 2. Đơn vị bị hạ được xóa khỏi snapshot để giải phóng ô và quota.
 3. R2 đã bổ sung resource node, stockpile, khai thác và xây BARRACKS/TOWER/WALL qua schema 3.
-4. Tiếp theo thêm các loại MELEE/RANGED/SIEGE, tầm đánh và projectile.
-5. Thêm rate limit, hàng đợi và simulation tick.
-6. Thêm tài khoản, lobby, database và nhiều người cùng đội.
-7. Thêm 10 đội chia 2 phe và tối đa 50 đơn vị mỗi đội.
-8. Chỉ thiết kế editor web nếu Desktop Code Studio không đáp ứng; compiler service và sandbox phải tách khỏi game server.
-9. Nếu cần client simulation, thực hiện theo tài liệu migration dự phòng sau khi snapshot, command log và deterministic core đã được kiểm chứng.
-10. Bổ sung pixel art, animation, tutorial, replay và cân bằng.
+4. R3 đã bổ sung các loại MELEE/RANGED/SIEGE và combat profile cơ bản.
+5. R4 đã bổ sung rate limit theo team và hàng đợi tuần tự có capacity.
+6. Tiếp theo hoàn thiện footprint, projectile và simulation tick.
+7. Thêm tài khoản, lobby, database và nhiều người cùng đội.
+8. Thêm 10 đội chia 2 phe và tối đa 50 đơn vị mỗi đội.
+9. Chỉ thiết kế editor web nếu Desktop Code Studio không đáp ứng; compiler service và sandbox phải tách khỏi game server.
+10. Nếu cần client simulation, thực hiện theo tài liệu migration dự phòng sau khi snapshot, command log và deterministic core đã được kiểm chứng.
+11. Bổ sung pixel art, animation, tutorial, replay và cân bằng.
 
 Tinh thần của MVP là chứng minh chu trình **Java program → WebSocket → server xử lý → state đổi → Phaser hiển thị → trận kết thúc** với số thành phần ít nhất có thể.

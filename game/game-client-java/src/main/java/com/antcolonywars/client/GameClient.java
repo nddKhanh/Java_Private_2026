@@ -224,6 +224,10 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
                     .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             CommandResult result = response.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             if (!result.ok()) {
+                if ("RATE_LIMITED".equals(result.error())) {
+                    waitForRateWindow();
+                    return sendAction(action, parameters);
+                }
                 throw new GameClientException(result.error(), "Command rejected: " + result.error());
             }
             waitForRevision(result.revision(), false);
@@ -244,6 +248,15 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
             throw new GameClientException("INVALID_MESSAGE", "Cannot encode command", exception);
         } finally {
             pending.remove(commandId);
+        }
+    }
+
+    private void waitForRateWindow() {
+        try {
+            Thread.sleep(1_050);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new GameClientException("INTERRUPTED", "Interrupted while waiting for rate limit", exception);
         }
     }
 

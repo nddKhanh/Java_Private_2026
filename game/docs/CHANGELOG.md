@@ -62,6 +62,20 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 
 - Xác minh 40 Maven test, frontend production build và npm audit 0 vulnerability cho R3.
 
+## 2026-11-08 — R4
+
+### Added
+
+- Thêm rate limit theo team, queue tuần tự có capacity và các mã lỗi `RATE_LIMITED`/`COMMAND_QUEUE_FULL`.
+
+### Changed
+
+- Bổ sung cấu hình `actions-per-second` và `command-queue-capacity` vào game profile.
+
+### Verified
+
+- Xác minh 41 Maven test, frontend production build và npm audit 0 vulnerability cho R4.
+
 ## 2026-11-07 — MVP và R1
 
 ### Added

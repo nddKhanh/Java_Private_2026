@@ -2,7 +2,7 @@
 
 MVP game chiến thuật 2D trong đó chương trình Java gửi command và Phaser hiển thị state do server xác nhận theo thời gian thực.
 
-**Trạng thái:** Phase 00–05, Desktop D00–D05, R1 và R2 `VERIFIED`.
+**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R4 `VERIFIED`.
 
 ## Kiến trúc
 
@@ -115,12 +115,14 @@ Chạy bot khai thác và xây dựng:
 .\scripts\test-all.ps1
 ```
 
-Script chạy 39 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
+Script chạy 41 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
 
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
-Map, rules, team, màu, token demo, unit, HQ, resource node, building, quota và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
+Map, rules, team, màu, token demo, unit, HQ, resource node, building, quota action và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
+
+Profile mặc định giới hạn 10 action mỗi giây cho mỗi team và queue tuần tự tối đa 32 command.
 
 Token mặc định chỉ dùng cho demo local:
 
@@ -133,7 +135,7 @@ Không dùng các token này cho môi trường public hoặc production.
 
 - State chỉ nằm trong RAM và chủ ý được tạo lại khi server restart.
 - Mỗi team có một unit seed sẵn, một HQ và có thể spawn tối đa năm unit theo profile mặc định.
-- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE.
+- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server có rate limit theo team và queue tuần tự.
 - Spawn chỉ tạo WORKER ở ô kề HQ; chưa có chi phí tài nguyên hoặc công trình sản xuất.
 - Không có database, lobby, đăng nhập, matchmaking hoặc tài nguyên.
 - Desktop Code Studio chỉ biên dịch và chạy source trên máy local; source/class không được gửi lên server.

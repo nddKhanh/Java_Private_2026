@@ -126,3 +126,12 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Bằng chứng:** 40 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 - **Tiếp theo:** Hoàn thiện footprint, projectile và fixed simulation tick trong phase chiến đấu tiếp theo.
 - **Chưa kiểm chứng:** Chưa kiểm thử trực quan R3 trên trình duyệt hoặc app-image đóng gói.
+
+## 2026-11-08 — R4 hàng đợi và quota
+
+- **Trạng thái:** `VERIFIED`
+- **Đã đạt:** Thêm rate limit 10 action/giây theo team và queue tuần tự có capacity cấu hình mặc định 32.
+- **Đã đạt:** Nhiều client cùng team dùng chung cửa sổ quota; `RATE_LIMITED` và `COMMAND_QUEUE_FULL` không làm tăng revision.
+- **Bằng chứng:** 41 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
+- **Tiếp theo:** Hoàn thiện footprint, projectile và fixed simulation tick trước khi mở rộng tài khoản/dữ liệu bền vững.
+- **Chưa kiểm chứng:** Chưa chạy load test nhiều kết nối hoặc kiểm thử trực quan trên trình duyệt.

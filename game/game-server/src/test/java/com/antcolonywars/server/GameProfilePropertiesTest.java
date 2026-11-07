@@ -19,7 +19,8 @@ class GameProfilePropertiesTest {
                 List.of(),
                 List.of(),
                 List.of(),
-                List.of()
+                List.of(),
+                new GameProfileProperties.Limits(10, 32)
         );
 
         assertEquals("GREEN", profile.teamIdForToken("custom-token"));

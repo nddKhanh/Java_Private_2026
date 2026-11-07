@@ -76,7 +76,7 @@ public class GameServerConfiguration {
     }
 
     @Bean
-    public MatchCoordinator matchCoordinator(MatchSetup setup) {
-        return new MatchCoordinator(setup);
+    public MatchCoordinator matchCoordinator(MatchSetup setup, GameProfileProperties profile) {
+        return new MatchCoordinator(setup, profile.limits());
     }
 }

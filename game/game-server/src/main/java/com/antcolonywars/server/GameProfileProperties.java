@@ -14,8 +14,16 @@ public record GameProfileProperties(
         List<UnitProfile> units,
         List<HeadquartersProfile> headquarters,
         List<ResourceProfile> resources,
-        List<BuildingProfile> buildings
+        List<BuildingProfile> buildings,
+        Limits limits
 ) {
+    public record Limits(int actionsPerSecond, int commandQueueCapacity) {
+        public Limits {
+            if (actionsPerSecond < 1 || commandQueueCapacity < 1) {
+                throw new IllegalArgumentException("Rate and queue limits must be positive");
+            }
+        }
+    }
     public record Board(int width, int height) {
     }
 

@@ -480,9 +480,18 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R4 — Hàng đợi và quota
 
-- Giới hạn hành động theo bot.
-- Queue có kích thước hữu hạn và mã lỗi rõ.
-- Nhiều Java client cùng đội vẫn dùng chung quota.
+- Giới hạn hành động theo team, dùng chung cho mọi Java client của team.
+- Coordinator xử lý command theo queue tuần tự có capacity cấu hình.
+- Mã lỗi `RATE_LIMITED` và `COMMAND_QUEUE_FULL` được trả về mà không đổi state.
+
+**Nghiệm thu:**
+
+- [x] Mặc định giới hạn 10 action mỗi giây theo team.
+- [x] Queue capacity mặc định là 32 và không làm thay đổi thứ tự revision.
+- [x] Rate window dùng clock server và được kiểm thử với clock deterministic.
+- [x] Cấu hình nằm trong profile, không đưa quota vào Game Core.
+
+**Bằng chứng:** 41 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 
 ## R5 — Tài khoản và dữ liệu bền vững
 
