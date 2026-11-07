@@ -85,6 +85,26 @@ export class BattleScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
+    for (const resource of state.resourceNodes) {
+      const center = this.cellCenter(originX, originY, cellSize, resource.position.x, resource.position.y);
+      const size = Math.max(10, cellSize * 0.2);
+      this.add.star(center.x, center.y, 6, size, size * 0.45, 0xf59e0b, 0.9);
+      this.add.text(center.x, center.y + size, `${resource.amount}`, {
+        color: '#fbbf24', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px',
+      }).setOrigin(0.5);
+    }
+
+    for (const building of state.buildings) {
+      const team = teams.get(building.teamId);
+      const center = this.cellCenter(originX, originY, cellSize, building.position.x, building.position.y);
+      const shape = this.add.rectangle(center.x, center.y, cellSize * 0.52, cellSize * 0.52,
+        this.teamColor(team), 0.95);
+      shape.setStrokeStyle(2, 0xfbbf24, 1);
+      this.add.text(center.x, center.y, building.type[0], {
+        color: '#ffffff', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14px', fontStyle: '700',
+      }).setOrigin(0.5);
+    }
+
     for (const unit of state.units) {
       const team = teams.get(unit.teamId);
       const center = this.cellCenter(originX, originY, cellSize, unit.position.x, unit.position.y);

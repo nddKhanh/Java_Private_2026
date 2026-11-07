@@ -26,7 +26,9 @@ public final class DefaultMatchSetup {
                 List.of(
                         new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
                         new Headquarters("hq-red", "RED", new Position(7, 7), 3)
-                )
+                ),
+                List.of(new ResourceNode("ore-center", new Position(2, 2), 10)),
+                List.of()
         );
     }
 }

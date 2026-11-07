@@ -7,7 +7,14 @@ public record RuleSet(
         int attackDamage,
         int attackRange,
         int maxUnitsPerTeam,
-        int spawnedUnitHp
+        int spawnedUnitHp,
+        int startingResources,
+        int harvestAmount,
+        int harvestRange,
+        int barracksCost,
+        int towerCost,
+        int wallCost,
+        int buildingHp
 ) {
     public RuleSet {
         Objects.requireNonNull(version, "version");
@@ -23,13 +30,21 @@ public record RuleSet(
         if (spawnedUnitHp <= 0) {
             throw new IllegalArgumentException("Spawned unit hp must be positive");
         }
+        if (startingResources < 0 || harvestAmount <= 0 || harvestRange < 0
+                || barracksCost <= 0 || towerCost <= 0 || wallCost <= 0 || buildingHp <= 0) {
+            throw new IllegalArgumentException("Invalid resource or building rule");
+        }
     }
 
     public RuleSet(String version, int attackDamage, int attackRange) {
-        this(version, attackDamage, attackRange, 5, 3);
+        this(version, attackDamage, attackRange, 5, 3, 0, 3, 0, 3, 2, 1, 5);
+    }
+
+    public RuleSet(String version, int attackDamage, int attackRange, int maxUnitsPerTeam, int spawnedUnitHp) {
+        this(version, attackDamage, attackRange, maxUnitsPerTeam, spawnedUnitHp, 0, 3, 0, 3, 2, 1, 5);
     }
 
     public static RuleSet mvp() {
-        return new RuleSet("r1-1", 1, 1, 5, 3);
+        return new RuleSet("r2-1", 1, 1, 5, 3, 0, 3, 0, 3, 2, 1, 5);
     }
 }

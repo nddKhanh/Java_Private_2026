@@ -1,6 +1,8 @@
 package com.antcolonywars.server;
 
 import com.antcolonywars.core.Direction;
+import com.antcolonywars.core.Building;
+import com.antcolonywars.core.BuildingType;
 import com.antcolonywars.core.Headquarters;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.Position;
@@ -26,7 +28,14 @@ public class GameServerConfiguration {
                         profile.rules().attackDamage(),
                         profile.rules().attackRange(),
                         profile.rules().maxUnitsPerTeam(),
-                        profile.rules().spawnedUnitHp()
+                        profile.rules().spawnedUnitHp(),
+                        profile.rules().startingResources(),
+                        profile.rules().harvestAmount(),
+                        profile.rules().harvestRange(),
+                        profile.rules().barracksCost(),
+                        profile.rules().towerCost(),
+                        profile.rules().wallCost(),
+                        profile.rules().buildingHp()
                 ),
                 profile.teams().stream()
                         .map(team -> new Team(team.id(), team.displayName(), team.color()))
@@ -50,6 +59,17 @@ public class GameServerConfiguration {
                                 headquarters.teamId(),
                                 new Position(headquarters.x(), headquarters.y()),
                                 headquarters.hp()
+                        ))
+                        .toList(),
+                profile.resources().stream()
+                        .map(resource -> new com.antcolonywars.core.ResourceNode(
+                                resource.id(), new Position(resource.x(), resource.y()), resource.amount()
+                        ))
+                        .toList(),
+                profile.buildings().stream()
+                        .map(building -> new Building(
+                                building.id(), building.teamId(), BuildingType.valueOf(building.type()),
+                                new Position(building.x(), building.y()), building.hp()
                         ))
                         .toList()
         );

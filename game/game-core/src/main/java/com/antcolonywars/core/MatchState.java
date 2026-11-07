@@ -17,6 +17,8 @@ public record MatchState(
         List<Unit> units,
         List<String> retiredUnitIds,
         List<Headquarters> headquarters,
+        List<ResourceNode> resourceNodes,
+        List<Building> buildings,
         List<String> processedCommandIds
 ) {
     public MatchState {
@@ -28,6 +30,8 @@ public record MatchState(
         units = List.copyOf(units);
         retiredUnitIds = List.copyOf(retiredUnitIds);
         headquarters = List.copyOf(headquarters);
+        resourceNodes = List.copyOf(resourceNodes);
+        buildings = List.copyOf(buildings);
         processedCommandIds = List.copyOf(processedCommandIds);
     }
 }

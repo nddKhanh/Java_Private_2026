@@ -3,11 +3,14 @@ package com.antcolonywars.server;
 import com.antcolonywars.core.ActionCommand;
 import com.antcolonywars.core.ApplyResult;
 import com.antcolonywars.core.AttackCommand;
+import com.antcolonywars.core.BuildCommand;
+import com.antcolonywars.core.BuildingType;
 import com.antcolonywars.core.Direction;
 import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.GetStateCommand;
 import com.antcolonywars.core.MatchState;
 import com.antcolonywars.core.MoveCommand;
+import com.antcolonywars.core.HarvestCommand;
 import com.antcolonywars.core.SpawnCommand;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
@@ -25,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 2;
+    public static final int SCHEMA_VERSION = 3;
 
     private final MatchCoordinator coordinator;
     private final ObjectMapper objectMapper;
@@ -153,6 +156,12 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             case "WAIT" -> new WaitCommand(request.commandId(), teamId, unitId);
             case "ATTACK" -> new AttackCommand(
                     request.commandId(), teamId, unitId, requireText(request.targetId())
+            );
+            case "HARVEST" -> new HarvestCommand(request.commandId(), teamId, unitId);
+            case "BUILD" -> new BuildCommand(
+                    request.commandId(), teamId, unitId, requireText(request.buildingId()),
+                    BuildingType.valueOf(requireText(request.buildingType())),
+                    Direction.valueOf(requireText(request.direction()))
             );
             default -> throw new IllegalArgumentException("Unknown action");
         };

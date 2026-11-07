@@ -107,3 +107,13 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Bằng chứng:** 35 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 - **Tiếp theo:** Bắt đầu R2 với tài nguyên, khai thác và công trình mà không thay đổi tính xác định của Game Core.
 - **Chưa kiểm chứng:** Chưa kiểm thử trực quan R1 trên trình duyệt hoặc app-image đóng gói; chưa có chi phí spawn hay production building.
+
+## 2026-11-07 — R2 tài nguyên và xây dựng
+
+- **Trạng thái:** `VERIFIED`
+- **Đã đạt:** Bổ sung resource node, stockpile theo team, `HARVEST` có range và `BUILD` cho BARRACKS, TOWER, WALL với chi phí/HP cấu hình được.
+- **Đã đạt:** Đồng bộ schema 3 qua Game Core, WebSocket, Java SDK và Phaser; viewer hiển thị resource node, tài nguyên và công trình.
+- **Đã đạt:** Bổ sung `ResourceBuilderBot` và cập nhật bot mặc định Desktop Code Studio để khai thác rồi xây barracks.
+- **Bằng chứng:** 39 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
+- **Tiếp theo:** Bắt đầu R3 với loại quân MELEE, RANGED, SIEGE và mở rộng luật chiến đấu.
+- **Chưa kiểm chứng:** Chưa kiểm thử trực quan R2 trên trình duyệt hoặc app-image đóng gói; building chưa có production/defense behavior.

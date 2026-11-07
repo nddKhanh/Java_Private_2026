@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 2;
+    private static final int SCHEMA_VERSION = 3;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -87,6 +87,35 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         return sendAction("SPAWN", Map.of(
                 "unitId", unitId,
                 "displayName", displayName,
+                "direction", direction.name()
+        ));
+    }
+
+    public GameState harvest() {
+        return sendAction("HARVEST", Map.of());
+    }
+
+    public GameState harvest(String unitId) {
+        return sendUnitAction("HARVEST", unitId, Map.of());
+    }
+
+    public GameState build(String buildingId, BuildingType buildingType, Direction direction) {
+        Objects.requireNonNull(buildingId, "buildingId");
+        Objects.requireNonNull(buildingType, "buildingType");
+        Objects.requireNonNull(direction, "direction");
+        return sendAction("BUILD", Map.of(
+                "buildingId", buildingId,
+                "buildingType", buildingType.name(),
+                "direction", direction.name()
+        ));
+    }
+
+    public GameState build(String unitId, String buildingId, BuildingType buildingType, Direction direction) {
+        Objects.requireNonNull(buildingType, "buildingType");
+        Objects.requireNonNull(direction, "direction");
+        return sendUnitAction("BUILD", unitId, Map.of(
+                "buildingId", buildingId,
+                "buildingType", buildingType.name(),
                 "direction", direction.name()
         ));
     }

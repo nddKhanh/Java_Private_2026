@@ -9,6 +9,8 @@ public record ClientMessage(
         String unitId,
         String displayName,
         String direction,
-        String targetId
+        String targetId,
+        String buildingId,
+        String buildingType
 ) {
 }

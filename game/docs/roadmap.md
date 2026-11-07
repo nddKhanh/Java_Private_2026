@@ -1,6 +1,6 @@
-# ANT COLONY WARS — Roadmap điều khiển bằng Java (v0.5)
+# ANT COLONY WARS — Roadmap điều khiển bằng Java (v0.6)
 
-> **Nguồn yêu cầu:** `../plan.md` v0.7.
+> **Nguồn yêu cầu:** `../plan.md` v0.8.
 > **Mục tiêu:** Hoàn thành nhanh một lát cắt có thể chạy và kiểm thử trực tiếp từ chương trình Java tới Phaser.
 > **Nguyên tắc:** Chỉ chuyển phase khi test của phase hiện tại và toàn bộ test cũ đều pass.
 > **Kiến trúc chính:** Server-authoritative; tài liệu client simulation trong `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là phương án dự phòng.
@@ -450,9 +450,19 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R2 — Tài nguyên và xây dựng
 
-- WORKER khai thác tài nguyên.
-- BARRACKS, TOWER và WALL.
-- Chi phí thử nghiệm và luật xây trên ô hợp lệ.
+- WORKER khai thác tài nguyên tại resource node trong tầm cho phép.
+- BARRACKS, TOWER và WALL được xây trên ô kề hợp lệ với chi phí cấu hình.
+- Team stockpile, resource node và building được giữ trong snapshot server-authoritative.
+
+**Nghiệm thu:**
+
+- [x] `HARVEST` giảm lượng resource node và cộng tài nguyên cho đúng team.
+- [x] `BUILD` kiểm tra ownership, khoảng cách, bounds, occupancy và đủ tài nguyên trước khi tạo công trình.
+- [x] BARRACKS, TOWER và WALL có chi phí cùng HP cấu hình được.
+- [x] Snapshot WebSocket và Phaser hiển thị resource node, stockpile và building.
+- [x] Java SDK, bot mẫu và replay/regression giữ nguyên tính xác định của core.
+
+**Bằng chứng:** 39 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 
 ## R3 — Loại quân và chiến đấu
 

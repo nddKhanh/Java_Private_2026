@@ -3,6 +3,7 @@ package com.antcolonywars.client;
 import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.bot.GameBots;
 import com.antcolonywars.core.Unit;
+import com.antcolonywars.client.BuildingType;
 import com.antcolonywars.server.GameServerApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -105,6 +106,22 @@ class GameClientIntegrationTest {
             assertEquals(1, unitX(bot.getLatestState(), "worker-blue-2"));
             assertEquals(1, unitX(bot.getLatestState(), "worker-blue"));
             assertEquals(2, bot.getLatestState().revision());
+        }
+    }
+
+    @Test
+    void botHarvestsAndBuildsFromTheJavaSdk() {
+        try (GameBot bot = GameBots.connect(serverUrl(), "blue-token")) {
+            bot.move(Direction.RIGHT);
+            bot.move(Direction.DOWN);
+            bot.move(Direction.DOWN);
+            bot.harvest();
+            bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
+
+            assertEquals(0, bot.getLatestState().snapshot().teams().stream()
+                    .filter(team -> team.id().equals("BLUE"))
+                    .findFirst().orElseThrow().resources());
+            assertEquals(BuildingType.BARRACKS.name(), bot.getLatestState().snapshot().buildings().getFirst().type().name());
         }
     }
 

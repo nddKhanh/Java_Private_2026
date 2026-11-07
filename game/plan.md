@@ -1,11 +1,11 @@
-# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.7)
+# ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v0.8)
 
-> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05 và gameplay R1 đã được kiểm chứng.
+> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05, gameplay R1 và R2 đã được kiểm chứng.
 > **Kiến trúc chính:** Server-authoritative; server giữ luật và state chính, client gửi command và render snapshot/event.
 > **Kiến trúc dự phòng:** `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là đề xuất sau MVP, chưa thay thế roadmap hiện tại.
 > **Mục tiêu dài hạn:** Game chiến thuật online 2D trên lưới ô vuông, trong đó người chơi điều khiển đơn vị bằng chương trình Java.
 > **Mục tiêu MVP:** Chứng minh một chương trình Java cơ bản có thể gửi hành động tới server, làm thay đổi trạng thái trận đấu và được Phaser hiển thị ngay qua WebSocket.
-> **Mục tiêu hậu MVP gần nhất:** Bổ sung tài nguyên và xây dựng ở R2 mà không đưa chi phí vào lệnh spawn R1.
+> **Mục tiêu hậu MVP gần nhất:** Bổ sung loại quân và luật chiến đấu ở R3 trên nền resource/building đã ổn định.
 
 ## 1. Quyết định kỹ thuật
 
@@ -231,7 +231,7 @@ Client gửi:
 ```json
 {
   "type": "COMMAND",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "matchId": "match-default",
   "commandId": "blue-001",
   "action": "MOVE",
@@ -245,7 +245,7 @@ Server trả cho client gửi lệnh:
 ```json
 {
   "type": "COMMAND_RESULT",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "commandId": "blue-001",
   "ok": true,
   "revision": 1,
@@ -258,7 +258,7 @@ Server phát cho các client đang theo dõi trận:
 ```json
 {
   "type": "STATE_UPDATED",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "matchId": "match-default",
   "revision": 1,
   "sequence": 1,
@@ -345,8 +345,8 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 
 1. R1 đã bổ sung spawn WORKER cạnh HQ, ID toàn trận, tên hiển thị, chọn đơn vị và giới hạn theo đội.
 2. Đơn vị bị hạ được xóa khỏi snapshot để giải phóng ô và quota.
-3. Tiếp theo thêm tài nguyên, WORKER, khai thác và xây BARRACKS/TOWER/WALL.
-4. Thêm các loại MELEE/RANGED/SIEGE, tầm đánh và projectile.
+3. R2 đã bổ sung resource node, stockpile, khai thác và xây BARRACKS/TOWER/WALL qua schema 3.
+4. Tiếp theo thêm các loại MELEE/RANGED/SIEGE, tầm đánh và projectile.
 5. Thêm rate limit, hàng đợi và simulation tick.
 6. Thêm tài khoản, lobby, database và nhiều người cùng đội.
 7. Thêm 10 đội chia 2 phe và tối đa 50 đơn vị mỗi đội.

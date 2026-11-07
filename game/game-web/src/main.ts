@@ -110,7 +110,7 @@ function updatePanel(state: MatchState): void {
       <article class="team-card" style="--team-color: ${safeColor(team.color)}">
         <div class="team-heading">
           <span class="team-swatch"></span>
-          <strong>${escapeHtml(team.displayName)}</strong>
+          <strong>${escapeHtml(team.displayName)} · ${team.resources} res</strong>
         </div>
         <div class="force-stat"><span>HQ</span><strong>${headquarters?.hp ?? 0} HP</strong></div>
         ${unitRows}

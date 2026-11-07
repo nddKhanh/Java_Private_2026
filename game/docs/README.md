@@ -2,7 +2,7 @@
 
 MVP game chiến thuật 2D trong đó chương trình Java gửi command và Phaser hiển thị state do server xác nhận theo thời gian thực.
 
-**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1 `VERIFIED`.
+**Trạng thái:** Phase 00–05, Desktop D00–D05, R1 và R2 `VERIFIED`.
 
 ## Kiến trúc
 
@@ -68,8 +68,8 @@ Trong ứng dụng:
 2. Nhập Token là `blue-token`.
 3. Giữ Bot class là `MyBot` và source mẫu mặc định.
 4. Nhấn **Compile**; trạng thái phải chuyển thành `Compiled`.
-5. Nhấn **Run**; console phải hiện `Spawned and moved Blue Worker 2` và `Bot finished successfully`.
-6. Quan sát Phaser: `worker-blue-2` xuất hiện dưới HQ BLUE, đi sang phải ba ô và revision tăng lên 4.
+5. Nhấn **Run**; console phải hiện thông báo spawn, harvest và build thành công.
+6. Quan sát Phaser: `worker-blue-2` xuất hiện, đi tới resource node, stockpile đổi và barracks mới được hiển thị.
 
 Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để Stop.
 
@@ -103,18 +103,24 @@ Khởi động lại server rồi chạy demo spawn và chọn đơn vị:
 
 Bot tạo `worker-blue-2`, chọn unit này và di chuyển ba ô mà không đổi vị trí `worker-blue`.
 
+Chạy bot khai thác và xây dựng:
+
+```powershell
+.\scripts\run-demo.ps1 ResourceBuilderBot
+```
+
 ## Chạy toàn bộ kiểm tra
 
 ```powershell
 .\scripts\test-all.ps1
 ```
 
-Script chạy 35 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
+Script chạy 39 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
 
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
-Map, rules, team, màu, token demo, unit, HQ, quota và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
+Map, rules, team, màu, token demo, unit, HQ, resource node, building, quota và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
 
 Token mặc định chỉ dùng cho demo local:
 
@@ -127,7 +133,7 @@ Không dùng các token này cho môi trường public hoặc production.
 
 - State chỉ nằm trong RAM và chủ ý được tạo lại khi server restart.
 - Mỗi team có một unit seed sẵn, một HQ và có thể spawn tối đa năm unit theo profile mặc định.
-- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN và GET_STATE.
+- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE.
 - Spawn chỉ tạo WORKER ở ô kề HQ; chưa có chi phí tài nguyên hoặc công trình sản xuất.
 - Không có database, lobby, đăng nhập, matchmaking hoặc tài nguyên.
 - Desktop Code Studio chỉ biên dịch và chạy source trên máy local; source/class không được gửi lên server.

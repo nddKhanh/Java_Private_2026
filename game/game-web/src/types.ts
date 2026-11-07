@@ -7,6 +7,7 @@ export interface Team {
   id: string;
   displayName: string;
   color: string;
+  resources: number;
 }
 
 export interface Unit {
@@ -26,6 +27,20 @@ export interface Headquarters {
   hp: number;
 }
 
+export interface ResourceNode {
+  id: string;
+  position: Position;
+  amount: number;
+}
+
+export interface Building {
+  id: string;
+  teamId: string;
+  type: 'BARRACKS' | 'TOWER' | 'WALL';
+  position: Position;
+  hp: number;
+}
+
 export interface MatchState {
   matchId: string;
   setupId: string;
@@ -40,6 +55,8 @@ export interface MatchState {
   units: Unit[];
   retiredUnitIds: string[];
   headquarters: Headquarters[];
+  resourceNodes: ResourceNode[];
+  buildings: Building[];
   processedCommandIds: string[];
 }
 

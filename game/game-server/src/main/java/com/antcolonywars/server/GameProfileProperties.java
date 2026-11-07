@@ -12,7 +12,9 @@ public record GameProfileProperties(
         Rules rules,
         List<TeamProfile> teams,
         List<UnitProfile> units,
-        List<HeadquartersProfile> headquarters
+        List<HeadquartersProfile> headquarters,
+        List<ResourceProfile> resources,
+        List<BuildingProfile> buildings
 ) {
     public record Board(int width, int height) {
     }
@@ -22,7 +24,14 @@ public record GameProfileProperties(
             int attackDamage,
             int attackRange,
             int maxUnitsPerTeam,
-            int spawnedUnitHp
+            int spawnedUnitHp,
+            int startingResources,
+            int harvestAmount,
+            int harvestRange,
+            int barracksCost,
+            int towerCost,
+            int wallCost,
+            int buildingHp
     ) {
     }
 
@@ -42,6 +51,12 @@ public record GameProfileProperties(
     }
 
     public record HeadquartersProfile(String id, String teamId, int x, int y, int hp) {
+    }
+
+    public record ResourceProfile(String id, int x, int y, int amount) {
+    }
+
+    public record BuildingProfile(String id, String teamId, String type, int x, int y, int hp) {
     }
 
     public String teamIdForToken(String token) {

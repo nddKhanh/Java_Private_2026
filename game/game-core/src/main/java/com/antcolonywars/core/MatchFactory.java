@@ -20,10 +20,14 @@ public final class MatchFactory {
                 0,
                 setup.mapWidth(),
                 setup.mapHeight(),
-                setup.teams(),
+                setup.teams().stream()
+                        .map(team -> team.withResources(setup.rules().startingResources()))
+                        .toList(),
                 setup.units(),
                 List.of(),
                 setup.headquarters(),
+                setup.resourceNodes(),
+                setup.buildings(),
                 List.of()
         );
     }
@@ -44,6 +48,19 @@ public final class MatchFactory {
         }
         for (Headquarters headquarters : setup.headquarters()) {
             validateEntity(headquarters.id(), headquarters.teamId(), headquarters.position(), headquarters.hp(),
+                    setup, teamIds, entityIds, occupied);
+        }
+        for (ResourceNode resourceNode : setup.resourceNodes()) {
+            requireUnique(resourceNode.id(), entityIds, "resource");
+            if (!withinBounds(resourceNode.position(), setup.mapWidth(), setup.mapHeight())) {
+                throw new IllegalArgumentException("Resource is outside map: " + resourceNode.id());
+            }
+            if (resourceNode.amount() <= 0) {
+                throw new IllegalArgumentException("Seed resource amount must be positive: " + resourceNode.id());
+            }
+        }
+        for (Building building : setup.buildings()) {
+            validateEntity(building.id(), building.teamId(), building.position(), building.hp(),
                     setup, teamIds, entityIds, occupied);
         }
     }

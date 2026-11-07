@@ -6,11 +6,18 @@ game:
       width: 8
       height: 8
     rules:
-      version: r1-1
+      version: r2-1
       attack-damage: 1
       attack-range: 1
       max-units-per-team: 5
       spawned-unit-hp: 3
+      starting-resources: 0
+      harvest-amount: 3
+      harvest-range: 0
+      barracks-cost: 3
+      tower-cost: 2
+      wall-cost: 1
+      building-hp: 5
     teams:
       - id: BLUE
         display-name: Blue
@@ -48,3 +55,9 @@ game:
         x: 7
         y: 7
         hp: 3
+    resources:
+      - id: ore-center
+        x: 2
+        y: 2
+        amount: 10
+    buildings: []

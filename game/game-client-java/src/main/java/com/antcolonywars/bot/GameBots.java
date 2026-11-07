@@ -1,6 +1,7 @@
 package com.antcolonywars.bot;
 
 import com.antcolonywars.client.Direction;
+import com.antcolonywars.client.BuildingType;
 import com.antcolonywars.client.GameClient;
 import com.antcolonywars.client.GameState;
 
@@ -43,6 +44,19 @@ public final class GameBots {
         @Override
         public GameState spawn(String unitId, String displayName, Direction direction) {
             return client.spawn(unitId, displayName, direction);
+        }
+
+        @Override
+        public GameState harvest() {
+            return selectedUnitId == null ? client.harvest() : client.harvest(selectedUnitId);
+        }
+
+        @Override
+        public GameState build(String buildingId, BuildingType buildingType, Direction direction) {
+            if (selectedUnitId == null) {
+                return client.build(buildingId, buildingType, direction);
+            }
+            return client.build(selectedUnitId, buildingId, buildingType, direction);
         }
 
         @Override

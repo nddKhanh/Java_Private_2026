@@ -32,7 +32,23 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 - [Bằng chứng hoặc phạm vi đã kiểm tra].
 ```
 
-## 2026-11-07
+## 2026-11-07 — R2
+
+### Added
+
+- Thêm resource node, stockpile theo team và các command `HARVEST`/`BUILD` cho BARRACKS, TOWER, WALL.
+- Thêm `ResourceBuilderBot` và API Java SDK tương ứng.
+
+### Changed
+
+- Nâng protocol schema lên version 3 để truyền tài nguyên và công trình trong snapshot.
+- Phaser hiển thị resource node, số lượng tài nguyên của team và building trên map.
+
+### Verified
+
+- Xác minh 39 Maven test, frontend production build và npm audit 0 vulnerability cho R2.
+
+## 2026-11-07 — MVP và R1
 
 ### Added
 
