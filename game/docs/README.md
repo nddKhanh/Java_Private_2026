@@ -59,6 +59,8 @@ Viewer phải cập nhật vị trí, revision và command log mà không cần 
 
 ## Chạy Desktop Code Studio
 
+Desktop Code Studio là cửa sổ để nhập, biên dịch và chạy chương trình Java điều khiển quân.
+Trang bản đồ chỉ hiển thị trận đấu, không có ô nhập chương trình Java.
 Khởi động server và Phaser viewer như phần trên.
 Sau đó mở terminal thứ ba:
 
@@ -79,6 +81,7 @@ Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để St
 
 Nếu sửa source sau khi compile, ứng dụng bắt buộc compile lại trước khi Run.
 Nút Stop kết thúc ngay JVM con đang chạy.
+Các hành động đã thực hiện trong trận vẫn được giữ sau khi dừng chương trình.
 
 ## Đóng gói desktop
 

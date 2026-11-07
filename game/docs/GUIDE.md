@@ -42,11 +42,28 @@ Mở ba cửa sổ PowerShell tại thư mục gốc.
 
 Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 
-### Cửa sổ 3 — điều khiển quân bằng kịch bản mẫu
+### Cửa sổ 3 — mở nơi viết, biên dịch và chạy Java
 
 ```powershell
-.\scripts\run-demo.ps1 BlueBot
+.\scripts\start-desktop.ps1
 ```
+
+Chờ cửa sổ Desktop Code Studio xuất hiện.
+Đây là nơi nhập chương trình điều khiển quân; trang bản đồ chỉ dùng để quan sát.
+
+1. Trong ô `Server`, nhập `ws://localhost:8080/game`.
+2. Trong ô `Token`, nhập `blue-token` để điều khiển đội xanh.
+3. Giữ tên lớp `MyBot` và chương trình mẫu đang hiển thị.
+4. Nhấn `Compile` (`Ctrl+B`) để biên dịch; nếu có lỗi, sửa theo dòng và cột được thông báo.
+5. Khi biên dịch thành công, nhấn `Run` (`Ctrl+R`).
+6. Chuyển sang trang bản đồ để xem quân mới di chuyển, khai thác và xây doanh trại.
+7. Nhấn `Stop` (`Ctrl+K`) nếu muốn dừng chương trình đang chạy.
+
+Sau khi sửa chương trình, cần nhấn `Compile` lại trước khi nhấn `Run`.
+Dừng chương trình không hoàn tác các hành động đã thực hiện trong trận.
+Mỗi cửa sổ PowerShell chỉ chạy một lệnh khởi động tương ứng; giữ hai cửa sổ máy chủ và bản đồ hoạt động trong khi chơi.
+
+Nếu chỉ muốn xem kịch bản có sẵn, có thể chạy `.\scripts\run-demo.ps1 BlueBot` thay cho việc mở Desktop Code Studio.
 
 Để kiểm tra lại từ bản đồ ban đầu, hãy khởi động lại máy chủ trước mỗi kịch bản.
 Token mẫu của đội xanh là `blue-token`.
@@ -226,6 +243,29 @@ Các loại công trình hiện có là `BARRACKS`, `TOWER` và `WALL`.
 - [x] `ResourceBuilderBot`: tới điểm tài nguyên, khai thác và xây BARRACKS.
 
 ## 7. Desktop Code Studio
+
+Để tự thử hành động đơn giản, thay toàn bộ nội dung ô soạn thảo bằng chương trình dưới đây và giữ tên lớp là `MyBot`.
+Chương trình dùng `GameBot` được ứng dụng cung cấp theo máy chủ và mã truy cập đã nhập.
+Các ví dụ `client.*` ở mục 5 dành cho chương trình dùng `GameClient` trực tiếp; không dán riêng chúng vào ô soạn thảo mà thiếu lớp Java bao quanh.
+
+```java
+import com.antcolonywars.bot.BotProgram;
+import com.antcolonywars.bot.GameBot;
+import com.antcolonywars.client.Direction;
+
+public final class MyBot implements BotProgram {
+    @Override
+    public void run(GameBot bot) {
+        bot.selectUnit("worker-blue");
+        bot.move(Direction.RIGHT);
+        bot.waitTurn();
+        System.out.println("Quan xanh da di sang phai mot o.");
+    }
+}
+```
+
+Trên trận mới, quân xanh đi từ ô `(1, 0)` sang `(2, 0)` rồi đứng chờ.
+Nhấn `Compile`, sau đó `Run` để thực hiện; thay các lời gọi trong hàm `run` để thử hành động khác.
 
 ```powershell
 .\scripts\start-desktop.ps1

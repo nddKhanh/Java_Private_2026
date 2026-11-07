@@ -29,21 +29,25 @@ JavaFX editor → compiler → child JVM → GameClient → server → Phaser
 
 ## Chạy nhanh
 
-Mở ba terminal tại thư mục gốc project:
+Mở ba cửa sổ PowerShell tại thư mục gốc, chạy mỗi lệnh dưới đây trong một cửa sổ riêng:
 
 ```powershell
 .\scripts\start-server.ps1
 .\scripts\start-web.ps1
-.\scripts\run-demo.ps1 BlueBot
+.\scripts\start-desktop.ps1
 ```
 
 Mở `http://127.0.0.1:5173/` để xem Phaser viewer.
 Token demo mặc định là `blue-token` và `red-token`.
 
-Chạy Desktop Code Studio:
+Trong Desktop Code Studio, giữ lớp `MyBot`, nhập máy chủ `ws://localhost:8080/game` và mã truy cập `blue-token`.
+Nhấn `Compile` (`Ctrl+B`) rồi `Run` (`Ctrl+R`) để chạy chương trình mẫu; nhấn `Stop` (`Ctrl+K`) để dừng.
+Quan sát kết quả trên trang bản đồ.
+
+Nếu chỉ muốn chạy kịch bản có sẵn, dùng lệnh sau thay cho Desktop Code Studio:
 
 ```powershell
-.\scripts\start-desktop.ps1
+.\scripts\run-demo.ps1 BlueBot
 ```
 
 Chạy toàn bộ regression, frontend build và audit:
