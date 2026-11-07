@@ -14,6 +14,8 @@ Tài liệu này là checklist chuẩn để chạy game và ghi nhận kết qu
 - Client: Java SDK 21, JavaFX Desktop Code Studio và Phaser viewer.
 - Protocol hiện tại: schema 4.
 
+Khi README cấp gốc thay đổi về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật lại template này cùng `docs/README.md` và `docs/CHANGELOG.md`.
+
 ## 2. Chuẩn bị môi trường
 
 - [ ] JDK 21 đã cài và có trong `PATH`.

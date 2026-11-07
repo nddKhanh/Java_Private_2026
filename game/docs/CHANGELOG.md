@@ -3,6 +3,12 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-08 — Tài liệu cấp gốc
+
+### Added
+
+- Thêm README cấp gốc mô tả dự án, cách chạy, bản đồ tài liệu và quy tắc đồng bộ README với GUIDE, docs README và CHANGELOG.
+
 ## Template
 
 ```markdown

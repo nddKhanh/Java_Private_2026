@@ -4,6 +4,9 @@ MVP game chiến thuật 2D trong đó chương trình Java gửi command và Ph
 
 **Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R4 `VERIFIED`.
 
+README cấp gốc [`../README.md`](../README.md) là điểm vào chính của dự án.
+Khi thay đổi README cấp gốc về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật đồng thời `GUIDE.md`, `README.md` này và `CHANGELOG.md`.
+
 ## Kiến trúc
 
 ```text
