@@ -18,6 +18,7 @@ public final class MatchFactory {
                 null,
                 0,
                 0,
+                0,
                 setup.mapWidth(),
                 setup.mapHeight(),
                 setup.teams().stream()
@@ -28,6 +29,7 @@ public final class MatchFactory {
                 setup.headquarters(),
                 setup.resourceNodes(),
                 setup.buildings(),
+                List.of(),
                 List.of()
         );
     }
@@ -44,7 +46,7 @@ public final class MatchFactory {
             if (unit.displayName().isBlank() || unit.displayName().length() > 32) {
                 throw new IllegalArgumentException("Invalid unit display name: " + unit.id());
             }
-            validateEntity(unit.id(), unit.teamId(), unit.position(), unit.hp(), setup, teamIds, entityIds, occupied);
+            validateUnit(unit, setup, teamIds, entityIds, occupied);
         }
         for (Headquarters headquarters : setup.headquarters()) {
             validateEntity(headquarters.id(), headquarters.teamId(), headquarters.position(), headquarters.hp(),
@@ -62,6 +64,33 @@ public final class MatchFactory {
         for (Building building : setup.buildings()) {
             validateEntity(building.id(), building.teamId(), building.position(), building.hp(),
                     setup, teamIds, entityIds, occupied);
+        }
+    }
+
+    private static void validateUnit(
+            Unit unit,
+            MatchSetup setup,
+            Set<String> teamIds,
+            Set<String> entityIds,
+            Set<Position> occupied
+    ) {
+        requireUnique(unit.id(), entityIds, "entity");
+        if (!teamIds.contains(unit.teamId())) {
+            throw new IllegalArgumentException("Unknown team for entity: " + unit.id());
+        }
+        if (unit.hp() <= 0) {
+            throw new IllegalArgumentException("Seed entity hp must be positive: " + unit.id());
+        }
+        for (int y = 0; y < unit.height(); y++) {
+            for (int x = 0; x < unit.width(); x++) {
+                Position cell = new Position(unit.position().x() + x, unit.position().y() + y);
+                if (!withinBounds(cell, setup.mapWidth(), setup.mapHeight())) {
+                    throw new IllegalArgumentException("Entity is outside map: " + unit.id());
+                }
+                if (!occupied.add(cell)) {
+                    throw new IllegalArgumentException("Multiple entities occupy " + cell);
+                }
+            }
         }
     }
 

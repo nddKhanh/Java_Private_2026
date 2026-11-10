@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 4;
+    public static final int SCHEMA_VERSION = 5;
 
     private final MatchCoordinator coordinator;
     private final ObjectMapper objectMapper;
@@ -206,6 +206,13 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 return true;
             }
         });
+    }
+
+    public synchronized void broadcastSimulationUpdate(ApplyResult result) {
+        if (!result.accepted() || result.events().isEmpty()) {
+            return;
+        }
+        broadcastState(result.state(), result.events().getFirst());
     }
 
     private void sendState(WebSocketSession session, MatchState state, GameEvent event) throws IOException {

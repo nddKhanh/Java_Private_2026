@@ -26,6 +26,13 @@ public final class GameSession {
         return result;
     }
 
+    public ApplyResult advanceTick() {
+        if (state.projectiles().isEmpty()) {
+            return ApplyResult.success(state, List.of());
+        }
+        return apply(new TickCommand("system:tick:" + (state.simulationTick() + 1)));
+    }
+
     public MatchState state() {
         return state;
     }

@@ -105,17 +105,30 @@ export class BattleScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
+    for (const projectile of state.projectiles) {
+      const team = teams.get(projectile.teamId);
+      const center = this.cellCenter(originX, originY, cellSize, projectile.position.x, projectile.position.y);
+      const shape = this.add.circle(center.x, center.y, Math.max(4, cellSize * 0.09), this.teamColor(team), 1);
+      shape.setStrokeStyle(2, 0xf8fafc, 0.95);
+    }
+
     for (const unit of state.units) {
       const team = teams.get(unit.teamId);
-      const center = this.cellCenter(originX, originY, cellSize, unit.position.x, unit.position.y);
-      const radius = Math.max(10, cellSize * 0.3);
-      const shape = this.add.circle(
-        center.x,
-        center.y,
-        radius,
-        this.teamColor(team),
-        unit.hp > 0 ? 1 : 0.25,
+      const center = new Phaser.Math.Vector2(
+        originX + (unit.position.x + unit.width / 2) * cellSize,
+        originY + (unit.position.y + unit.height / 2) * cellSize,
       );
+      const radius = Math.max(10, cellSize * 0.3);
+      const shape = unit.width === 1 && unit.height === 1
+        ? this.add.circle(center.x, center.y, radius, this.teamColor(team), unit.hp > 0 ? 1 : 0.25)
+        : this.add.rectangle(
+          center.x,
+          center.y,
+          cellSize * unit.width * 0.82,
+          cellSize * unit.height * 0.82,
+          this.teamColor(team),
+          unit.hp > 0 ? 1 : 0.25,
+        );
       shape.setStrokeStyle(Math.max(2, cellSize * 0.04), 0xf8fafc, 0.9);
       this.add.text(center.x, center.y, `${unit.displayName}\n${unit.type} · ${unit.hp} HP`, {
         align: 'center',

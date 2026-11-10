@@ -4,10 +4,11 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 
 ## Trạng thái hiện tại
 
-- MVP Phase 00–05, Desktop D00–D05 và gameplay R1–R4 đã được ghi nhận `VERIFIED`.
+- MVP Phase 00–05, Desktop D00–D05 và gameplay R1–R4.1 đã được ghi nhận `VERIFIED`.
 - Chức năng hiện có gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE.
 - Server là nguồn sự thật duy nhất cho vị trí, HP, damage, resource, building, revision và winner.
 - R4 thêm rate limit 10 action/giây theo team và queue tuần tự capacity 32 theo profile mặc định.
+- R4.1 thêm footprint 2×2 cho SIEGE, projectile và nhịp mô phỏng mặc định 250 ms.
 
 ## Kiến trúc
 
@@ -81,6 +82,6 @@ Sau khi cập nhật, chạy `git diff --check` và ghi commit bằng tiếng An
 
 - State chỉ nằm trong RAM và reset khi server restart.
 - Chưa có database, account, lobby, matchmaking hoặc production deployment.
-- Chưa có load test quy mô lớn, footprint 2×2, projectile và fixed simulation tick.
+- Chưa có load test quy mô lớn hoặc kiểm thử trực quan projectile trên nhiều trình duyệt.
 - Building mới có placement/HP/cost; chưa có production hoặc defense behavior.
 - Desktop Code Studio chỉ nên chạy source do người dùng tin cậy.

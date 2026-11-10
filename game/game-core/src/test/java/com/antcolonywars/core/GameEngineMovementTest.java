@@ -72,6 +72,39 @@ class GameEngineMovementTest {
         assertSame(before, result.state());
     }
 
+    @Test
+    void validatesMovementAgainstEveryCellOfTwoByTwoSiegeFootprint() {
+        MatchSetup setup = new MatchSetup(
+                "footprint-setup", "footprint-match", 6, 6, RuleSet.mvp(),
+                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
+                List.of(
+                        new Unit("siege-blue", "BLUE", "SIEGE", new Position(1, 1), 3, Direction.LEFT),
+                        new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)
+                ),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-red", "RED", new Position(5, 5), 3)
+                )
+        );
+        GameSession blockedSession = new GameSession(setup);
+
+        ApplyResult blocked = blockedSession.apply(
+                new MoveCommand("siege-blocked", "BLUE", "siege-blue", Direction.RIGHT)
+        );
+
+        assertEquals(ErrorCode.CELL_OCCUPIED, blocked.error());
+        assertEquals(2, unit(blocked.state(), "siege-blue").width());
+
+        GameSession boundsSession = new GameSession(setup);
+        assertTrue(boundsSession.apply(
+                new MoveCommand("siege-left", "BLUE", "siege-blue", Direction.LEFT)
+        ).accepted());
+        ApplyResult outside = boundsSession.apply(
+                new MoveCommand("siege-outside", "BLUE", "siege-blue", Direction.LEFT)
+        );
+        assertEquals(ErrorCode.OUT_OF_BOUNDS, outside.error());
+    }
+
     private MatchSetup setupWithBlueAt(Position bluePosition) {
         return new MatchSetup(
                 "movement-setup",

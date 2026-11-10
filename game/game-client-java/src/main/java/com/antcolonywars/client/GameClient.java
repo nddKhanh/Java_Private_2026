@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 4;
+    private static final int SCHEMA_VERSION = 5;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -133,6 +133,34 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
             throw new GameClientException("NO_STATE", "The server has not sent a state snapshot");
         }
         return new GameState(state);
+    }
+
+    public GameState awaitSimulationIdle() {
+        return awaitSimulationIdle(timeout);
+    }
+
+    public GameState awaitSimulationIdle(Duration maximumWait) {
+        Objects.requireNonNull(maximumWait, "maximumWait");
+        ensureOpen();
+        long deadline = System.nanoTime() + maximumWait.toNanos();
+        synchronized (stateMonitor) {
+            while (latestState == null || !latestState.projectiles().isEmpty()) {
+                if (connectionFailure != null) {
+                    throw new GameClientException("CONNECTION_ERROR", "Connection failed", connectionFailure);
+                }
+                long remaining = deadline - System.nanoTime();
+                if (remaining <= 0) {
+                    throw new GameClientException("TIMEOUT", "Timed out waiting for simulation to become idle");
+                }
+                try {
+                    TimeUnit.NANOSECONDS.timedWait(stateMonitor, remaining);
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new GameClientException("INTERRUPTED", "Interrupted while waiting for simulation", exception);
+                }
+            }
+        }
+        return getLatestState();
     }
 
     public boolean isClosed() {

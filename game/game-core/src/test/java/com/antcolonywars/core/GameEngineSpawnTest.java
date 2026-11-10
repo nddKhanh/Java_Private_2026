@@ -75,8 +75,10 @@ class GameEngineSpawnTest {
         );
         session = new GameSession(combat);
 
-        ApplyResult result = session.apply(new AttackCommand("lethal-hit", "BLUE", "blue", "red"));
+        ApplyResult attack = session.apply(new AttackCommand("lethal-hit", "BLUE", "blue", "red"));
+        ApplyResult result = session.advanceTick();
 
+        assertTrue(attack.accepted());
         assertTrue(result.accepted());
         assertFalse(result.state().units().stream().anyMatch(unit -> unit.id().equals("red")));
         assertTrue(result.state().retiredUnitIds().contains("red"));

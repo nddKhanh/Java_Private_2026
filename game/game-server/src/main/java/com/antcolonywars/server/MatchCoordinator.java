@@ -21,7 +21,7 @@ public final class MatchCoordinator {
     private final Deque<GameCommand> commandQueue = new ArrayDeque<>();
 
     public MatchCoordinator(MatchSetup setup) {
-        this(setup, new GameProfileProperties.Limits(10, 32));
+        this(setup, new GameProfileProperties.Limits(10, 32, 250));
     }
 
     public MatchCoordinator(MatchSetup setup, GameProfileProperties.Limits limits) {
@@ -60,6 +60,10 @@ public final class MatchCoordinator {
 
     public synchronized MatchState state() {
         return session.state();
+    }
+
+    public synchronized ApplyResult advanceTick() {
+        return session.advanceTick();
     }
 
     int commandQueueCapacity() {

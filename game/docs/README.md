@@ -2,7 +2,7 @@
 
 MVP game chiến thuật 2D trong đó chương trình Java gửi command và Phaser hiển thị state do server xác nhận theo thời gian thực.
 
-**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R4 `VERIFIED`.
+**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R4.1 `VERIFIED`.
 
 README cấp gốc [`../README.md`](../README.md) là điểm vào chính của dự án.
 Khi thay đổi README cấp gốc về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật đồng thời `GUIDE.md`, `README.md` này và `CHANGELOG.md`.
@@ -100,7 +100,7 @@ Khởi động lại server để trận trở về state seed rồi chạy:
 .\scripts\run-demo.ps1 WinningScenario
 ```
 
-Bot BLUE đi tới cạnh HQ RED, tấn công ba lần và kết thúc trận với winner `BLUE` ở revision `15`.
+Bot BLUE đi tới cạnh HQ RED, bắn ba projectile và kết thúc trận với winner `BLUE` từ revision `16` trở lên.
 
 Khởi động lại server rồi chạy demo spawn và chọn đơn vị:
 
@@ -122,14 +122,14 @@ Chạy bot khai thác và xây dựng:
 .\scripts\test-all.ps1
 ```
 
-Script chạy 41 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
+Script chạy 42 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
 
 Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy các cửa sổ PowerShell đến viết và chạy Java, thử hành động, đối chiếu chức năng và ghi kết quả kiểm thử.
 
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
-Map, rules, team, màu, token demo, unit, HQ, resource node, building, quota action và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
+Map, rules, team, màu, token demo, unit, HQ, resource node, building, quota action, tick interval và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
 
 Profile mặc định giới hạn 10 action mỗi giây cho mỗi team và queue tuần tự tối đa 32 command.
 
@@ -145,6 +145,7 @@ Không dùng các token này cho môi trường public hoặc production.
 - State chỉ nằm trong RAM và chủ ý được tạo lại khi server restart.
 - Mỗi team có một unit seed sẵn, một HQ và có thể spawn tối đa năm unit theo profile mặc định.
 - Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server có rate limit theo team và queue tuần tự.
+- SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
 - Spawn tạo unit ở ô kề HQ; chi phí spawn chưa được áp dụng.
 - Resource node, harvest và building đã có; building production/defense chưa có.
 - Không có database, lobby, đăng nhập hoặc matchmaking.

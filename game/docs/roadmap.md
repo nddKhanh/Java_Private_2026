@@ -476,7 +476,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 - [x] Combat profile của RANGED/SIEGE được kiểm thử bằng unit test.
 - [x] Spawn type được truyền xuyên suốt từ client đến snapshot.
 
-**Phạm vi chuyển tiếp:** Footprint 2×2, projectile và fixed simulation tick được giữ cho phase cân bằng chiến đấu tiếp theo.
+**Phạm vi chuyển tiếp:** Footprint 2×2, projectile và fixed simulation tick được hoàn thiện trong R4.1.
 
 ## R4 — Hàng đợi và quota
 
@@ -492,6 +492,25 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 - [x] Cấu hình nằm trong profile, không đưa quota vào Game Core.
 
 **Bằng chứng:** 41 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
+
+## R4.1 — Footprint, projectile và simulation tick
+
+- SIEGE chiếm footprint 2×2 trong spawn, movement, occupancy, attack range và render.
+- ATTACK tạo projectile; damage và winner chỉ được áp dụng khi projectile chạm mục tiêu.
+- Server chạy simulation tick mặc định 250 ms ngoài quota hành động của team và phát state mới qua WebSocket schema 5.
+- Java SDK và `GameBot` có thể chờ simulation trở về trạng thái không còn projectile.
+
+**Nghiệm thu:**
+
+- [x] Mọi ô trong footprint 2×2 được kiểm tra bounds và occupancy.
+- [x] Projectile cùng tick được đưa vào snapshot, replay và state hash xác định.
+- [x] Simulation tick không tiêu thụ rate limit của team.
+- [x] Phaser hiển thị footprint SIEGE và projectile từ snapshot server-authoritative.
+- [x] Kịch bản Java client chờ projectile kết thúc trước khi đọc winner.
+
+**Bằng chứng:** 42 Maven test pass; frontend production build pass.
+
+**Chưa kiểm chứng:** Chưa kiểm thử trực quan chuyển động projectile trên trình duyệt hoặc app-image đóng gói và chưa chạy load test tick với nhiều kết nối.
 
 ## R5 — Tài khoản và dữ liệu bền vững
 

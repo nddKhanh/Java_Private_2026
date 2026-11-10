@@ -64,3 +64,4 @@ game:
     limits:
       actions-per-second: 10
       command-queue-capacity: 32
+      tick-millis: 250

@@ -35,9 +35,13 @@ class GameEngineAttackTest {
         ApplyResult result = session.apply(
                 new AttackCommand("attack-unit", "BLUE", "worker-blue", "worker-red")
         );
+        ApplyResult tick = session.advanceTick();
 
         assertTrue(result.accepted());
-        assertEquals(1, unit(result.state(), "worker-red").hp());
+        assertEquals(3, unit(result.state(), "worker-red").hp());
+        assertEquals(1, result.state().projectiles().size());
+        assertEquals(1, unit(tick.state(), "worker-red").hp());
+        assertEquals(0, tick.state().projectiles().size());
         assertEquals(1, result.state().revision());
     }
 
@@ -52,7 +56,8 @@ class GameEngineAttackTest {
 
         session.apply(new AttackCommand("hq-1", "BLUE", "worker-blue", "hq-red"));
         session.apply(new AttackCommand("hq-2", "BLUE", "worker-blue", "hq-red"));
-        ApplyResult finalHit = session.apply(new AttackCommand("hq-3", "BLUE", "worker-blue", "hq-red"));
+        session.apply(new AttackCommand("hq-3", "BLUE", "worker-blue", "hq-red"));
+        ApplyResult finalHit = session.advanceTick();
 
         assertTrue(finalHit.accepted());
         assertEquals(MatchStatus.FINISHED, finalHit.state().status());
@@ -74,8 +79,9 @@ class GameEngineAttackTest {
                 List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
                 List.of(
                         new Unit("ranged-blue", "BLUE", "RANGED", new Position(1, 1), 3, Direction.RIGHT),
-                        new Unit("siege-blue", "BLUE", "SIEGE", new Position(2, 1), 3, Direction.RIGHT),
-                        new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)
+                        new Unit("siege-blue", "BLUE", "SIEGE", new Position(1, 3), 3, Direction.RIGHT),
+                        new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT),
+                        new Unit("worker-red-2", "RED", "WORKER", new Position(3, 3), 3, Direction.LEFT)
                 ),
                 List.of(
                         new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
@@ -87,12 +93,15 @@ class GameEngineAttackTest {
         ApplyResult ranged = session.apply(new AttackCommand(
                 "ranged-attack", "BLUE", "ranged-blue", "worker-red"));
         assertTrue(ranged.accepted());
-        assertEquals(2, unit(ranged.state(), "worker-red").hp());
+        assertEquals(3, unit(ranged.state(), "worker-red").hp());
 
         ApplyResult siege = session.apply(new AttackCommand(
-                "siege-attack", "BLUE", "siege-blue", "worker-red"));
+                "siege-attack", "BLUE", "siege-blue", "worker-red-2"));
         assertTrue(siege.accepted());
-        assertTrue(siege.state().retiredUnitIds().contains("worker-red"));
+        ApplyResult firstTick = session.advanceTick();
+        assertEquals(1, unit(firstTick.state(), "worker-red-2").hp());
+        ApplyResult secondTick = session.advanceTick();
+        assertEquals(2, unit(secondTick.state(), "worker-red").hp());
     }
 
     private MatchSetup combatSetup(Position blue, Position red) {

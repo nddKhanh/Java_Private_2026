@@ -18,6 +18,8 @@ export interface Unit {
   position: Position;
   hp: number;
   facing: 'UP' | 'RIGHT' | 'DOWN' | 'LEFT';
+  width: number;
+  height: number;
 }
 
 export interface Headquarters {
@@ -41,6 +43,15 @@ export interface Building {
   hp: number;
 }
 
+export interface Projectile {
+  id: string;
+  teamId: string;
+  sourceUnitId: string;
+  targetId: string;
+  position: Position;
+  damage: number;
+}
+
 export interface MatchState {
   matchId: string;
   setupId: string;
@@ -49,6 +60,7 @@ export interface MatchState {
   winnerTeamId: string | null;
   revision: number;
   eventSequence: number;
+  simulationTick: number;
   mapWidth: number;
   mapHeight: number;
   teams: Team[];
@@ -57,6 +69,7 @@ export interface MatchState {
   headquarters: Headquarters[];
   resourceNodes: ResourceNode[];
   buildings: Building[];
+  projectiles: Projectile[];
   processedCommandIds: string[];
 }
 

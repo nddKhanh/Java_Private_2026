@@ -135,3 +135,13 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Bằng chứng:** 41 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 - **Tiếp theo:** Hoàn thiện footprint, projectile và fixed simulation tick trước khi mở rộng tài khoản/dữ liệu bền vững.
 - **Chưa kiểm chứng:** Chưa chạy load test nhiều kết nối hoặc kiểm thử trực quan trên trình duyệt.
+
+## 2026-11-10 — R4.1 footprint, projectile và simulation tick
+
+- **Trạng thái:** `VERIFIED`
+- **Đã đạt:** SIEGE dùng footprint 2×2 xuyên suốt spawn, movement, occupancy, attack range, snapshot và Phaser.
+- **Đã đạt:** ATTACK tạo projectile; server áp dụng damage và winner theo simulation tick mặc định 250 ms rồi phát state qua WebSocket schema 5.
+- **Đã đạt:** Tick nằm ngoài quota team; replay, state hash, Java SDK và `GameBot` đồng bộ được trạng thái sau projectile.
+- **Bằng chứng:** 42 Maven test pass; frontend production build pass.
+- **Tiếp theo:** Bắt đầu R5 với tài khoản, lobby và dữ liệu bền vững.
+- **Chưa kiểm chứng:** Chưa kiểm thử trực quan projectile trên trình duyệt/app-image hoặc load test tick với nhiều kết nối.

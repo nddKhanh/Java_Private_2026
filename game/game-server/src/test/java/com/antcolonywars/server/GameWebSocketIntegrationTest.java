@@ -186,7 +186,7 @@ class GameWebSocketIntegrationTest {
     private Map<String, Object> command(String commandId, String action, Map<String, Object> extra) {
         Map<String, Object> message = new java.util.HashMap<>(extra);
         message.put("type", "COMMAND");
-        message.put("schemaVersion", 4);
+        message.put("schemaVersion", 5);
         message.put("matchId", "match-default");
         message.put("commandId", commandId);
         message.put("action", action);

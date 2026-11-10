@@ -95,7 +95,8 @@ Mỗi dòng là một ví dụ riêng; cần đưa quân tới vị trí phù h�
 | Chọn quân | `bot.selectUnit("worker-blue");` | Quân thuộc đội đang điều khiển. |
 | Đi một ô | `bot.move(Direction.RIGHT);` | Ô đích trống và nằm trong bản đồ. |
 | Đứng chờ | `bot.waitTurn();` | Giữ nguyên vị trí. |
-| Tấn công | `bot.attack("hq-red");` | Nhà chính đối phương phải trong tầm. |
+| Tấn công | `bot.attack("hq-red");` | Nhà chính đối phương phải trong tầm; lệnh tạo projectile. |
+| Chờ đạn chạm mục tiêu | `bot.awaitSimulationIdle();` | Chờ toàn bộ projectile hiện tại kết thúc trước khi đọc HP hoặc winner. |
 | Tạo quân thợ | `bot.spawn("worker-blue-2", "Tho 2", Direction.DOWN);` | Ô dưới nhà chính trống, mã quân chưa dùng và đội còn chỗ. |
 | Khai thác | `bot.harvest();` | Mặc định đứng tại điểm tài nguyên còn trữ lượng. |
 | Xây doanh trại | `bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);` | Ô bên phải trống; mặc định tốn 3 tài nguyên. |
@@ -172,6 +173,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 
 - [x] Tấn công quân đối phương trong tầm.
 - [x] Tấn công nhà chính đối phương trong tầm.
+- [x] Nhìn thấy projectile di chuyển theo nhịp mô phỏng mặc định 250 ms.
 - [x] Làm giảm HP của mục tiêu.
 - [x] Hạ quân đối phương khi HP về 0.
 - [x] Phá nhà chính và kết thúc trận.
@@ -184,6 +186,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Tạo quân mới cạnh nhà chính của đội mình.
 - [x] Đặt tên cho quân mới.
 - [x] Tạo các loại WORKER, MELEE, RANGED và SIEGE.
+- [x] Quân SIEGE chiếm footprint 2×2 khi tạo và di chuyển.
 - [x] Chọn quân mới theo mã riêng và điều khiển độc lập.
 - [x] Bị từ chối khi vượt giới hạn số quân của đội.
 - [x] Bị từ chối khi tạo loại quân không được hỗ trợ.
@@ -218,9 +221,6 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 ## 6. Những khả năng chưa có
 
 - [ ] Công trình tự sản xuất quân hoặc tự phòng thủ.
-- [ ] Footprint 2×2.
-- [ ] Projectile.
-- [ ] Nhịp mô phỏng cố định.
 - [ ] Database, tài khoản, lobby, matchmaking và khôi phục sau khi khởi động lại.
 - [ ] Nhiều trận cùng lúc và kiểm tra tải quy mô lớn.
 - [ ] Kiểm tra hình ảnh trên nhiều trình duyệt hoặc thiết bị.

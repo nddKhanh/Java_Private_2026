@@ -18,6 +18,7 @@ public final class WinningScenario {
                 for (int hit = 0; hit < 3; hit++) {
                     state = bot.attack("hq-red");
                 }
+                state = bot.awaitSimulationIdle();
             }
             System.out.printf(
                     "Match status: %s, winner: %s, revision: %d.%n",

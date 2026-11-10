@@ -69,4 +69,31 @@ class SnapshotReplayTest {
         assertEquals("large-rules", configured.rulesVersion());
         assertNotEquals(codec.stateHash(first), codec.stateHash(configured));
     }
+
+    @Test
+    void replayIncludesProjectileTicksAndProducesTheSameFinishedState() {
+        MatchSetup setup = new MatchSetup(
+                "projectile-setup", "projectile-match", 5, 5, RuleSet.mvp(),
+                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
+                List.of(
+                        new Unit("worker-blue", "BLUE", "WORKER", new Position(1, 1), 3, Direction.RIGHT),
+                        new Unit("worker-red", "RED", "WORKER", new Position(3, 3), 3, Direction.LEFT)
+                ),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-red", "RED", new Position(2, 1), 3)
+                )
+        );
+        GameSession original = new GameSession(setup);
+        for (int hit = 1; hit <= 3; hit++) {
+            original.apply(new AttackCommand("attack-" + hit, "BLUE", "worker-blue", "hq-red"));
+        }
+        original.advanceTick();
+
+        MatchState replayed = new ReplayService().replay(setup, original.commandLog());
+
+        assertEquals(MatchStatus.FINISHED, replayed.status());
+        assertEquals(original.state(), replayed);
+        assertEquals(new SnapshotCodec().stateHash(original.state()), new SnapshotCodec().stateHash(replayed));
+    }
 }

@@ -72,10 +72,11 @@ class GameClientIntegrationTest {
                 client.attack("hq-red");
             }
 
-            GameState state = client.getLatestState();
+            GameState state = client.awaitSimulationIdle();
             assertEquals("FINISHED", state.status());
             assertEquals("BLUE", state.winnerTeamId());
-            assertEquals(15, state.revision());
+            assertTrue(state.revision() >= 16);
+            assertTrue(state.snapshot().simulationTick() >= 1);
             assertEquals(0, state.snapshot().headquarters().stream()
                     .filter(headquarters -> headquarters.id().equals("hq-red"))
                     .findFirst()

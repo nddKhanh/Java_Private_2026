@@ -9,7 +9,9 @@ public record Unit(
         String type,
         Position position,
         int hp,
-        Direction facing
+        Direction facing,
+        int width,
+        int height
 ) {
     public Unit {
         Objects.requireNonNull(id, "id");
@@ -21,17 +23,36 @@ public record Unit(
         if (hp < 0) {
             throw new IllegalArgumentException("Unit hp cannot be negative");
         }
+        if (width < 1 || height < 1) {
+            throw new IllegalArgumentException("Unit footprint must be positive");
+        }
     }
 
     public Unit(String id, String teamId, String type, Position position, int hp, Direction facing) {
-        this(id, id, teamId, type, position, hp, facing);
+        this(id, id, teamId, type, position, hp, facing, defaultSize(type), defaultSize(type));
+    }
+
+    public Unit(
+            String id,
+            String displayName,
+            String teamId,
+            String type,
+            Position position,
+            int hp,
+            Direction facing
+    ) {
+        this(id, displayName, teamId, type, position, hp, facing, defaultSize(type), defaultSize(type));
     }
 
     public Unit moveTo(Position nextPosition, Direction nextFacing) {
-        return new Unit(id, displayName, teamId, type, nextPosition, hp, nextFacing);
+        return new Unit(id, displayName, teamId, type, nextPosition, hp, nextFacing, width, height);
     }
 
     public Unit takeDamage(int damage) {
-        return new Unit(id, displayName, teamId, type, position, Math.max(0, hp - damage), facing);
+        return new Unit(id, displayName, teamId, type, position, Math.max(0, hp - damage), facing, width, height);
+    }
+
+    private static int defaultSize(String type) {
+        return UnitType.SIEGE.name().equals(type) ? 2 : 1;
     }
 }

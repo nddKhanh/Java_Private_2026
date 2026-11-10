@@ -11,6 +11,7 @@ public record MatchState(
         String winnerTeamId,
         long revision,
         long eventSequence,
+        long simulationTick,
         int mapWidth,
         int mapHeight,
         List<Team> teams,
@@ -19,6 +20,7 @@ public record MatchState(
         List<Headquarters> headquarters,
         List<ResourceNode> resourceNodes,
         List<Building> buildings,
+        List<Projectile> projectiles,
         List<String> processedCommandIds
 ) {
     public MatchState {
@@ -32,6 +34,7 @@ public record MatchState(
         headquarters = List.copyOf(headquarters);
         resourceNodes = List.copyOf(resourceNodes);
         buildings = List.copyOf(buildings);
+        projectiles = List.copyOf(projectiles);
         processedCommandIds = List.copyOf(processedCommandIds);
     }
 }

@@ -81,6 +81,11 @@ public final class GameBots {
         }
 
         @Override
+        public GameState awaitSimulationIdle() {
+            return client.awaitSimulationIdle();
+        }
+
+        @Override
         public GameState getLatestState() {
             return client.getLatestState();
         }

@@ -21,6 +21,8 @@ public interface GameBot extends AutoCloseable {
 
     GameState attack(String targetId);
 
+    GameState awaitSimulationIdle();
+
     GameState getLatestState();
 
     @Override

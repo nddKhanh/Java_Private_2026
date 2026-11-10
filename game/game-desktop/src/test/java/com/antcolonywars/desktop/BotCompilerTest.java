@@ -43,6 +43,7 @@ class BotCompilerTest {
                         for (int step = 0; step < 3; step++) {
                             bot.move(Direction.RIGHT);
                         }
+                        bot.awaitSimulationIdle();
                         System.out.println("moves-complete");
                     }
                 }

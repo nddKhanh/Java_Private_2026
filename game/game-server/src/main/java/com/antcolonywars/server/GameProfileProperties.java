@@ -17,10 +17,10 @@ public record GameProfileProperties(
         List<BuildingProfile> buildings,
         Limits limits
 ) {
-    public record Limits(int actionsPerSecond, int commandQueueCapacity) {
+    public record Limits(int actionsPerSecond, int commandQueueCapacity, int tickMillis) {
         public Limits {
-            if (actionsPerSecond < 1 || commandQueueCapacity < 1) {
-                throw new IllegalArgumentException("Rate and queue limits must be positive");
+            if (actionsPerSecond < 1 || commandQueueCapacity < 1 || tickMillis < 1) {
+                throw new IllegalArgumentException("Rate, queue and tick limits must be positive");
             }
         }
     }

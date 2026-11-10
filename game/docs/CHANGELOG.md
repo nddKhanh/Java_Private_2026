@@ -3,6 +3,22 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-10 — R4.1
+
+### Added
+
+- Thêm footprint 2×2 cho SIEGE, projectile server-authoritative và simulation tick cấu hình được.
+- Thêm API chờ simulation không còn projectile cho Java SDK và `GameBot`.
+
+### Changed
+
+- Nâng protocol schema lên version 5 để truyền footprint, projectile và simulation tick trong snapshot.
+- Phaser hiển thị SIEGE theo footprint và projectile theo state từ server.
+
+### Verified
+
+- Xác minh 42 Maven test và frontend production build cho R4.1.
+
 ## 2026-11-08 — Tài liệu cấp gốc
 
 ### Added
