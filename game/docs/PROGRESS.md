@@ -145,3 +145,37 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Bằng chứng:** 42 Maven test pass; frontend production build pass.
 - **Tiếp theo:** Bắt đầu R5 với tài khoản, lobby và dữ liệu bền vững.
 - **Chưa kiểm chứng:** Chưa kiểm thử trực quan projectile trên trình duyệt/app-image hoặc load test tick với nhiều kết nối.
+
+## 2026-11-11 — R5 account, lobby và dữ liệu bền vững
+
+- **Trạng thái:** `VERIFIED`
+- **Đã đạt:** Thêm REST đăng ký/đăng nhập/join team, BCrypt password, session token lưu hash và quyền WebSocket theo lobby membership.
+- **Đã đạt:** Nhiều account cùng team điều khiển chung state/quota; demo token cũ vẫn tương thích.
+- **Đã đạt:** Flyway V1 và H2 lưu account, session, membership, match snapshot cùng event history; GameSession tiếp tục được từ snapshot đã lưu.
+- **Đã đạt:** `start-server.ps1 -Fresh` chạy state seed bằng database in-memory mà không xóa file dữ liệu mặc định.
+- **Bằng chứng:** 46 Maven test pass; frontend không đổi so với production build R4.1 đã pass.
+- **Tiếp theo:** R6 — quy mô trận đầy đủ.
+- **Chưa kiểm chứng:** Chưa kiểm thử thủ công restart bằng file H2, penetration test, backup/restore hoặc tải đồng thời nhiều session.
+
+## 2026-11-11 — R6 quy mô trận đầy đủ
+
+- **Trạng thái:** `VERIFIED`
+- **Đã đạt:** Cấu hình 10 đội thuộc 2 phe, tối đa 50 đơn vị mỗi đội và luật thắng theo phe.
+- **Đã đạt:** Hai match route độc lập theo `matchId`; snapshot, event history, revision và tick state không trộn giữa match.
+- **Đã đạt:** Khóa database theo team giới hạn 5 account; năm WebSocket cùng team điều khiển chung state/quota, account thứ sáu nhận `TEAM_FULL`.
+- **Đã đạt:** Reconnect nhận snapshot authoritative mới nhất; endpoint `/api/matches` hiển thị revision và tick latency.
+- **Đã đạt:** Demo `WinningScenario` hạ đủ HQ phe đối phương thay vì chỉ hạ một HQ.
+- **Bằng chứng:** 49 Maven test pass; targeted R6 test chạy 400 match-tick và kiểm tra profile, faction, account cap, multi-match cùng reconnect.
+- **Tiếp theo:** R8 — trải nghiệm và phát hành; R7 chỉ mở khi Desktop Code Studio không đáp ứng.
+- **Chưa kiểm chứng:** Chưa benchmark production nhiều máy, kiểm thử UI 10 đội, penetration test, backup/restore hoặc database production.
+
+## 2026-11-11 — R8.1–R8.3 trải nghiệm viewer
+
+- **Trạng thái:** `IMPLEMENTED`, chưa có browser visual sign-off.
+- **Đã đạt:** Phòng vào trận tải danh sách từ `/api/matches`, chọn `matchId` và truyền session token đúng vào WebSocket.
+- **Đã đạt:** Viewer hiển thị trạng thái kết nối, revision, tick, winner, lực lượng, command gần nhất và banner kết thúc trận.
+- **Đã đạt:** Bố cục desktop/mobile được gom về một hệ giao diện, có đường quay lại đổi trận và tự nối lại khi mất kết nối.
+- **Đã đạt:** Server bind `0.0.0.0`, web viewer bind `0.0.0.0` và tự suy ra hostname để nhiều máy cùng Wi-Fi truy cập trực tiếp.
+- **Bằng chứng:** `game-web/npm run build` pass; copy lint gaming không có finding; gate không có FAIL trong phần đã chạy.
+- **Giới hạn:** consistency/layout browser chưa chạy vì Node 20 không đáp ứng yêu cầu Node 22 của bộ kiểm tra; chưa có visual sign-off thủ công.
+- **Tiếp theo:** R8.4 cân bằng trận và hoàn thiện animation/tutorial/replay trước khi đóng gói phát hành.

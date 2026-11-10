@@ -1,15 +1,34 @@
+server:
+  address: ${GAME_SERVER_ADDRESS:0.0.0.0}
+  port: ${GAME_SERVER_PORT:8080}
+
+spring:
+  datasource:
+    url: ${GAME_DB_URL:jdbc:h2:file:./data/ant-colony-wars}
+    username: ${GAME_DB_USERNAME:sa}
+    password: ${GAME_DB_PASSWORD:}
+  flyway:
+    enabled: true
+
 game:
+  security:
+    session-hours: 24
+  lobby:
+    max-accounts-per-team: 5
   profile:
     setup-id: mvp-default
     match-id: match-default
+    match-ids:
+      - match-default
+      - match-training
     board:
-      width: 8
-      height: 8
+      width: 24
+      height: 16
     rules:
-      version: r2-1
+      version: r6-1
       attack-damage: 1
       attack-range: 1
-      max-units-per-team: 5
+      max-units-per-team: 50
       spawned-unit-hp: 3
       starting-resources: 0
       harvest-amount: 3
@@ -23,10 +42,52 @@ game:
         display-name: Blue
         color: "#2563eb"
         token: blue-token
+        faction-id: ALLIANCE
+      - id: CYAN
+        display-name: Cyan
+        color: "#06b6d4"
+        token: cyan-token
+        faction-id: ALLIANCE
+      - id: GREEN
+        display-name: Green
+        color: "#16a34a"
+        token: green-token
+        faction-id: ALLIANCE
+      - id: TEAL
+        display-name: Teal
+        color: "#0d9488"
+        token: teal-token
+        faction-id: ALLIANCE
+      - id: NAVY
+        display-name: Navy
+        color: "#1e3a8a"
+        token: navy-token
+        faction-id: ALLIANCE
       - id: RED
         display-name: Red
         color: "#dc2626"
         token: red-token
+        faction-id: SWARM
+      - id: ORANGE
+        display-name: Orange
+        color: "#ea580c"
+        token: orange-token
+        faction-id: SWARM
+      - id: YELLOW
+        display-name: Yellow
+        color: "#ca8a04"
+        token: yellow-token
+        faction-id: SWARM
+      - id: MAGENTA
+        display-name: Magenta
+        color: "#c026d3"
+        token: magenta-token
+        faction-id: SWARM
+      - id: MAROON
+        display-name: Maroon
+        color: "#7f1d1d"
+        token: maroon-token
+        faction-id: SWARM
     units:
       - id: worker-blue
         display-name: Blue Worker 1
@@ -44,6 +105,70 @@ game:
         y: 7
         hp: 3
         facing: LEFT
+      - id: worker-cyan
+        display-name: Cyan Worker 1
+        team-id: CYAN
+        type: WORKER
+        x: 1
+        y: 4
+        hp: 3
+        facing: RIGHT
+      - id: worker-green
+        display-name: Green Worker 1
+        team-id: GREEN
+        type: WORKER
+        x: 1
+        y: 8
+        hp: 3
+        facing: RIGHT
+      - id: worker-teal
+        display-name: Teal Worker 1
+        team-id: TEAL
+        type: WORKER
+        x: 1
+        y: 12
+        hp: 3
+        facing: RIGHT
+      - id: worker-navy
+        display-name: Navy Worker 1
+        team-id: NAVY
+        type: WORKER
+        x: 4
+        y: 14
+        hp: 3
+        facing: UP
+      - id: worker-orange
+        display-name: Orange Worker 1
+        team-id: ORANGE
+        type: WORKER
+        x: 22
+        y: 4
+        hp: 3
+        facing: LEFT
+      - id: worker-yellow
+        display-name: Yellow Worker 1
+        team-id: YELLOW
+        type: WORKER
+        x: 22
+        y: 8
+        hp: 3
+        facing: LEFT
+      - id: worker-magenta
+        display-name: Magenta Worker 1
+        team-id: MAGENTA
+        type: WORKER
+        x: 22
+        y: 12
+        hp: 3
+        facing: LEFT
+      - id: worker-maroon
+        display-name: Maroon Worker 1
+        team-id: MAROON
+        type: WORKER
+        x: 19
+        y: 14
+        hp: 3
+        facing: UP
     headquarters:
       - id: hq-blue
         team-id: BLUE
@@ -54,6 +179,46 @@ game:
         team-id: RED
         x: 7
         y: 7
+        hp: 3
+      - id: hq-cyan
+        team-id: CYAN
+        x: 0
+        y: 4
+        hp: 3
+      - id: hq-green
+        team-id: GREEN
+        x: 0
+        y: 8
+        hp: 3
+      - id: hq-teal
+        team-id: TEAL
+        x: 0
+        y: 12
+        hp: 3
+      - id: hq-navy
+        team-id: NAVY
+        x: 4
+        y: 15
+        hp: 3
+      - id: hq-orange
+        team-id: ORANGE
+        x: 23
+        y: 4
+        hp: 3
+      - id: hq-yellow
+        team-id: YELLOW
+        x: 23
+        y: 8
+        hp: 3
+      - id: hq-magenta
+        team-id: MAGENTA
+        x: 23
+        y: 12
+        hp: 3
+      - id: hq-maroon
+        team-id: MAROON
+        x: 19
+        y: 15
         hp: 3
     resources:
       - id: ore-center

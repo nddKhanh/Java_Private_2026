@@ -40,16 +40,24 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         this.timeout = timeout;
     }
 
-    public static GameClient connect(String url, String teamToken) {
-        return connect(url, teamToken, DEFAULT_TIMEOUT);
+    public static GameClient connect(String url, String accessToken) {
+        return connect(url, accessToken, null, DEFAULT_TIMEOUT);
     }
 
-    public static GameClient connect(String url, String teamToken, Duration timeout) {
+    public static GameClient connect(String url, String accessToken, Duration timeout) {
+        return connect(url, accessToken, null, timeout);
+    }
+
+    public static GameClient connect(String url, String accessToken, String matchId) {
+        return connect(url, accessToken, matchId, DEFAULT_TIMEOUT);
+    }
+
+    public static GameClient connect(String url, String accessToken, String matchId, Duration timeout) {
         Objects.requireNonNull(url, "url");
-        Objects.requireNonNull(teamToken, "teamToken");
+        Objects.requireNonNull(accessToken, "accessToken");
         Objects.requireNonNull(timeout, "timeout");
         GameClient client = new GameClient(timeout);
-        client.open(withToken(url, teamToken));
+        client.open(withAccess(url, accessToken, matchId));
         return client;
     }
 
@@ -385,8 +393,12 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         }
     }
 
-    private static String withToken(String url, String token) {
+    private static String withAccess(String url, String token, String matchId) {
         String separator = url.contains("?") ? "&" : "?";
-        return url + separator + "token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+        String authenticated = url + separator + "token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+        if (matchId == null || matchId.isBlank()) {
+            return authenticated;
+        }
+        return authenticated + "&matchId=" + URLEncoder.encode(matchId, StandardCharsets.UTF_8);
     }
 }

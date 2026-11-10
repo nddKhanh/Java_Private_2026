@@ -12,6 +12,8 @@ import com.antcolonywars.core.RuleSet;
 import com.antcolonywars.core.Team;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
+import com.antcolonywars.core.GameEvent;
+import com.antcolonywars.core.MatchState;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -71,6 +74,50 @@ class MatchCoordinatorTest {
                 .findFirst().orElseThrow().hp());
     }
 
+    @Test
+    void restoresThePersistedSnapshotAndContinuesItsRevision() {
+        MatchSetup setup = DefaultMatchSetup.create();
+        RecordingPersistence persistence = new RecordingPersistence();
+        MatchCoordinator first = new MatchCoordinator(
+                setup, null, new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC(), persistence
+        );
+        assertTrue(first.apply(new WaitCommand("wait-before-restart", "BLUE", "worker-blue")).accepted());
+
+        MatchCoordinator restored = new MatchCoordinator(
+                setup,
+                persistence.load(setup.matchId()).orElseThrow(),
+                new GameProfileProperties.Limits(10, 32, 250),
+                Clock.systemUTC(),
+                persistence
+        );
+        ApplyResult next = restored.apply(new WaitCommand("wait-after-restart", "BLUE", "worker-blue"));
+
+        assertTrue(next.accepted());
+        assertEquals(2, next.state().revision());
+        assertEquals(2, persistence.history(setup.matchId()).size());
+    }
+
+    @Test
+    void advancesConfiguredMatchesAndRecordsTickLatencyUnderLoad() {
+        MatchRegistry registry = new MatchRegistry(
+                DefaultMatchSetup.create(),
+                List.of("load-one", "load-two"),
+                new GameProfileProperties.Limits(10, 32, 250),
+                Clock.systemUTC(),
+                MatchPersistence.none()
+        );
+
+        long started = System.nanoTime();
+        for (int sample = 0; sample < 200; sample++) {
+            registry.advanceTicks();
+        }
+        long elapsedMillis = (System.nanoTime() - started) / 1_000_000;
+
+        assertEquals(2, registry.runtimes().size());
+        assertTrue(registry.runtimes().stream().allMatch(runtime -> runtime.tickSamples() == 200));
+        assertTrue(elapsedMillis < 5_000, "400 match ticks took " + elapsedMillis + " ms");
+    }
+
     private static final class MutableClock extends Clock {
         private long millis;
 
@@ -91,6 +138,29 @@ class MatchCoordinatorTest {
 
         void advanceMillis(long amount) {
             millis += amount;
+        }
+    }
+
+    private static final class RecordingPersistence implements MatchPersistence {
+        private MatchState state;
+        private final java.util.ArrayList<GameEvent> events = new java.util.ArrayList<>();
+
+        @Override
+        public Optional<MatchState> load(String matchId) {
+            return Optional.ofNullable(state).filter(candidate -> candidate.matchId().equals(matchId));
+        }
+
+        @Override
+        public void save(MatchState state, GameEvent event) {
+            this.state = state;
+            if (event != null) {
+                events.add(event);
+            }
+        }
+
+        @Override
+        public List<GameEvent> history(String matchId) {
+            return events.stream().filter(event -> state.matchId().equals(matchId)).toList();
         }
     }
 }

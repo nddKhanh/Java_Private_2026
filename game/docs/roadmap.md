@@ -514,15 +514,44 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R5 — Tài khoản và dữ liệu bền vững
 
-- Đăng nhập, lobby và quan hệ tài khoản–đội.
-- Database, restart recovery và lịch sử trận.
-- Nhiều người cùng điều khiển một đội.
+- REST API đăng ký, đăng nhập và quan hệ account–team trong lobby.
+- Mật khẩu BCrypt, session token ngẫu nhiên chỉ lưu hash SHA-256 và hạn dùng cấu hình được.
+- Session token đã join team dùng trực tiếp cho WebSocket; demo token cũ tiếp tục hỗ trợ kịch bản local.
+- H2 dạng file và Flyway lưu account, session, lobby membership, snapshot cùng event history.
+- Server nạp snapshot tương thích với `MatchSetup` khi khởi động; nhiều account cùng team điều khiển chung state và quota.
+
+**Nghiệm thu:**
+
+- [x] Account đăng ký/đăng nhập và join team qua REST với lỗi trùng username hoặc credential không hợp lệ rõ ràng.
+- [x] Session chưa join team không thể điều khiển WebSocket; hai session cùng team đều điều khiển được quân của team đó.
+- [x] Mật khẩu và token không được lưu dạng rõ trong database.
+- [x] Accepted action và simulation tick cập nhật snapshot cùng event history transactionally.
+- [x] Snapshot JSON từ JDBC nạp lại được vào GameSession và tiếp tục revision sau restart.
+- [x] `start-server.ps1 -Fresh` tạo trận in-memory tạm thời mà không xóa database đã lưu.
+
+**Bằng chứng:** 46 Maven test pass; frontend không đổi so với production build R4.1 đã pass.
+
+**Chưa kiểm chứng:** Chưa chạy kiểm thử thủ công hai process server liên tiếp trên file H2, penetration test, session load test, backup/restore hoặc database production.
 
 ## R6 — Quy mô trận đầy đủ
 
-- 10 đội chia 2 phe.
-- Tối đa 50 đơn vị mỗi đội.
-- Load test, quan sát tick latency và xử lý reconnect.
+- 10 đội chia 2 phe; mỗi `Team` mang `factionId` và chỉ được tấn công phe đối địch.
+- Tối đa 50 đơn vị mỗi đội; tối đa 5 account cùng join và điều khiển một đội, được khóa theo team trong database transaction.
+- Hai match được tạo từ profile, route bằng `matchId` trên WebSocket và lưu snapshot/event theo match.
+- Reconnect nhận snapshot authoritative mới nhất; `GET /api/matches` trả revision, simulation tick và tick latency.
+
+**Nghiệm thu:**
+
+- [x] Profile có 10 đội và đúng 2 phe, với 50 đơn vị/team.
+- [x] Năm account cùng team gửi command thành công; account thứ sáu nhận `TEAM_FULL`.
+- [x] Thành viên cùng phe không thể tấn công nhau; match chỉ kết thúc khi phe đối phương mất toàn bộ HQ.
+- [x] `match-default` và `match-training` cô lập revision/state; WebSocket chọn match qua query `matchId`.
+- [x] Client reconnect nhận revision đã xác nhận; hai match vẫn giữ state riêng.
+- [x] Test chạy 400 match-tick và ghi nhận `lastTickMicros`/`maxTickMicros` qua runtime endpoint.
+
+**Bằng chứng:** 49 Maven test pass; targeted R6 integration kiểm tra 5 controller account, 2 match, reconnect và full-scale profile.
+
+**Chưa kiểm chứng:** Chưa benchmark production nhiều máy, kiểm thử thủ công UI 10 đội, penetration test, backup/restore hoặc database production.
 
 ## R7 — Editor Java trên web, chỉ khi desktop không đáp ứng
 
@@ -534,9 +563,13 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R8 — Trải nghiệm và phát hành
 
-- Pixel art, animation, tutorial, replay và log chi tiết.
+- **Đã triển khai R8.1–R8.3 và LAN:** phòng chọn match đọc từ `/api/matches`, nối WebSocket theo `matchId` và token, bảng revision/tick/lực lượng/command, banner thắng thua, bố cục responsive và viewer truy cập được từ cùng Wi-Fi.
+- Pixel art, animation, tutorial trong trận, replay và log chi tiết vẫn còn phía sau.
 - Cân bằng HP, damage, chi phí, map và thời lượng trận.
 - Matchmaking, xếp hạng và vận hành production nếu sản phẩm cần.
+
+**Bằng chứng R8.1–R8.3:** `npm run build` pass; copy lint gaming không có finding; gate không có FAIL trong phần đã chạy.
+**Giới hạn kiểm tra:** consistency/layout browser chưa chạy được vì môi trường hiện tại dùng Node 20 còn bộ kiểm tra yêu cầu Node 22 với WebSocket dựng sẵn.
 
 ## R9 — Phương án client simulation, chỉ khi được phê duyệt
 

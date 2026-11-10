@@ -8,6 +8,7 @@ import java.util.List;
 public record GameProfileProperties(
         String setupId,
         String matchId,
+        List<String> matchIds,
         Board board,
         Rules rules,
         List<TeamProfile> teams,
@@ -17,6 +18,14 @@ public record GameProfileProperties(
         List<BuildingProfile> buildings,
         Limits limits
 ) {
+    public GameProfileProperties {
+        List<String> configured = matchIds == null ? List.of() : matchIds;
+        matchIds = java.util.stream.Stream.concat(java.util.stream.Stream.of(matchId), configured.stream())
+                .filter(id -> id != null && !id.isBlank())
+                .distinct()
+                .toList();
+    }
+
     public record Limits(int actionsPerSecond, int commandQueueCapacity, int tickMillis) {
         public Limits {
             if (actionsPerSecond < 1 || commandQueueCapacity < 1 || tickMillis < 1) {
@@ -43,7 +52,7 @@ public record GameProfileProperties(
     ) {
     }
 
-    public record TeamProfile(String id, String displayName, String color, String token) {
+    public record TeamProfile(String id, String displayName, String color, String token, String factionId) {
     }
 
     public record UnitProfile(

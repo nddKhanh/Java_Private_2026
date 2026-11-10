@@ -11,12 +11,20 @@ public final class GameBots {
     private GameBots() {
     }
 
-    public static GameBot connect(String serverUrl, String teamToken) {
-        return new ClientGameBot(GameClient.connect(serverUrl, teamToken));
+    public static GameBot connect(String serverUrl, String accessToken) {
+        return new ClientGameBot(GameClient.connect(serverUrl, accessToken));
     }
 
-    public static GameBot connect(String serverUrl, String teamToken, Duration timeout) {
-        return new ClientGameBot(GameClient.connect(serverUrl, teamToken, timeout));
+    public static GameBot connect(String serverUrl, String accessToken, Duration timeout) {
+        return new ClientGameBot(GameClient.connect(serverUrl, accessToken, timeout));
+    }
+
+    public static GameBot connect(String serverUrl, String accessToken, String matchId) {
+        return new ClientGameBot(GameClient.connect(serverUrl, accessToken, matchId));
+    }
+
+    public static GameBot connect(String serverUrl, String accessToken, String matchId, Duration timeout) {
+        return new ClientGameBot(GameClient.connect(serverUrl, accessToken, matchId, timeout));
     }
 
     private static final class ClientGameBot implements GameBot {

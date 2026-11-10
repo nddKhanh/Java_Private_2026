@@ -4,11 +4,15 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 
 ## Trạng thái hiện tại
 
-- MVP Phase 00–05, Desktop D00–D05 và gameplay R1–R4.1 đã được ghi nhận `VERIFIED`.
+- MVP Phase 00–05, Desktop D00–D05 và gameplay R1–R6 đã được ghi nhận `VERIFIED`.
 - Chức năng hiện có gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE.
 - Server là nguồn sự thật duy nhất cho vị trí, HP, damage, resource, building, revision và winner.
 - R4 thêm rate limit 10 action/giây theo team và queue tuần tự capacity 32 theo profile mặc định.
 - R4.1 thêm footprint 2×2 cho SIEGE, projectile và nhịp mô phỏng mặc định 250 ms.
+- R5 thêm account, đăng nhập, lobby team, session token và H2/Flyway để phục hồi state cùng lịch sử trận sau khi khởi động lại.
+- R6 hoàn thiện 10 đội/2 phe, hai match độc lập, tối đa 5 account cùng đội và reconnect theo snapshot mới nhất.
+- R8.1–R8.3 thêm màn hình chọn trận, mã truy cập, bảng trạng thái trận và phản hồi thắng/thua cho Phaser viewer.
+- R8 LAN cho phép một máy phát server/viewer để nhiều máy cùng Wi-Fi truy cập trực tiếp, không qua dịch vụ trung gian.
 
 ## Kiến trúc
 
@@ -38,10 +42,14 @@ Mở ba cửa sổ PowerShell tại thư mục gốc, chạy mỗi lệnh dướ
 .\scripts\start-desktop.ps1
 ```
 
-Mở `http://127.0.0.1:5173/` để xem Phaser viewer.
+Máy chủ mở viewer tại `http://127.0.0.1:5173/`; các máy cùng Wi-Fi mở `http://IP_MAY_CHU:5173/`.
+Ví dụ: `http://192.168.1.23:5173/`.
 Token demo mặc định là `blue-token` và `red-token`.
+Profile mặc định có 10 đội thuộc 2 phe, tối đa 50 đơn vị mỗi đội và tối đa 5 account cùng điều khiển một đội.
+Hai match `match-default` và `match-training` được tạo từ cùng profile; Java client chọn match bằng overload `GameClient.connect(url, token, matchId)`.
 
-Trong Desktop Code Studio, giữ lớp `MyBot`, nhập máy chủ `ws://localhost:8080/game` và mã truy cập `blue-token`.
+Trong Desktop Code Studio cùng máy với server, giữ lớp `MyBot`, nhập máy chủ `ws://localhost:8080/game` và mã truy cập `blue-token`.
+Nếu chạy Desktop Code Studio trên máy khác cùng Wi-Fi, thay `localhost` bằng IPv4 của máy chủ.
 Nhấn `Compile` (`Ctrl+B`) rồi `Run` (`Ctrl+R`) để chạy chương trình mẫu; nhấn `Stop` (`Ctrl+K`) để dừng.
 Quan sát kết quả trên trang bản đồ.
 
@@ -80,8 +88,9 @@ Sau khi cập nhật, chạy `git diff --check` và ghi commit bằng tiếng An
 
 ## Giới hạn hiện tại
 
-- State chỉ nằm trong RAM và reset khi server restart.
-- Chưa có database, account, lobby, matchmaking hoặc production deployment.
+- H2 dạng file chỉ phù hợp demo local; chưa có backup, HA hoặc database production.
+- Chưa có nhiều trận cùng lúc, danh sách phòng, matchmaking hoặc production deployment.
+- Chưa có xác minh email, quên mật khẩu, thu hồi mọi session hoặc giới hạn số account mỗi team.
 - Chưa có load test quy mô lớn hoặc kiểm thử trực quan projectile trên nhiều trình duyệt.
 - Building mới có placement/HP/cost; chưa có production hoặc defense behavior.
 - Desktop Code Studio chỉ nên chạy source do người dùng tin cậy.

@@ -10,16 +10,27 @@ public final class WinningScenario {
 
     public static void main(String[] args) {
         try (GameClient bot = GameClient.connect(DemoConfig.serverUrl(), DemoConfig.blueToken())) {
-            move(bot, Direction.DOWN, 6);
             move(bot, Direction.RIGHT, 6);
+            move(bot, Direction.DOWN, 6);
+            destroy(bot, "hq-red");
 
-            GameState state = bot.getLatestState();
-            if (!"FINISHED".equals(state.status())) {
-                for (int hit = 0; hit < 3; hit++) {
-                    state = bot.attack("hq-red");
-                }
-                state = bot.awaitSimulationIdle();
-            }
+            move(bot, Direction.UP, 3);
+            move(bot, Direction.RIGHT, 16);
+            destroy(bot, "hq-orange");
+
+            move(bot, Direction.LEFT, 2);
+            move(bot, Direction.DOWN, 4);
+            move(bot, Direction.RIGHT, 2);
+            destroy(bot, "hq-yellow");
+
+            move(bot, Direction.LEFT, 2);
+            move(bot, Direction.DOWN, 4);
+            move(bot, Direction.RIGHT, 2);
+            destroy(bot, "hq-magenta");
+
+            move(bot, Direction.LEFT, 3);
+            move(bot, Direction.DOWN, 4);
+            GameState state = destroy(bot, "hq-maroon");
             System.out.printf(
                     "Match status: %s, winner: %s, revision: %d.%n",
                     state.status(),
@@ -33,5 +44,12 @@ public final class WinningScenario {
         for (int step = 0; step < steps; step++) {
             bot.move(direction);
         }
+    }
+
+    private static GameState destroy(GameClient bot, String headquartersId) {
+        for (int hit = 0; hit < 3; hit++) {
+            bot.attack(headquartersId);
+        }
+        return bot.awaitSimulationIdle();
     }
 }

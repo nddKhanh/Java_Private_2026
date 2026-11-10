@@ -17,11 +17,12 @@ public final class MatchCoordinator {
     private final int actionsPerSecond;
     private final int commandQueueCapacity;
     private final Clock clock;
+    private final MatchPersistence persistence;
     private final Map<String, Deque<Long>> actionTimes = new HashMap<>();
     private final Deque<GameCommand> commandQueue = new ArrayDeque<>();
 
     public MatchCoordinator(MatchSetup setup) {
-        this(setup, new GameProfileProperties.Limits(10, 32, 250));
+        this(setup, new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC());
     }
 
     public MatchCoordinator(MatchSetup setup, GameProfileProperties.Limits limits) {
@@ -29,10 +30,22 @@ public final class MatchCoordinator {
     }
 
     MatchCoordinator(MatchSetup setup, GameProfileProperties.Limits limits, Clock clock) {
-        session = new GameSession(setup);
+        this(setup, null, limits, clock, MatchPersistence.none());
+    }
+
+    MatchCoordinator(
+            MatchSetup setup,
+            MatchState restoredState,
+            GameProfileProperties.Limits limits,
+            Clock clock,
+            MatchPersistence persistence
+    ) {
+        session = new GameSession(setup, restoredState);
         actionsPerSecond = limits.actionsPerSecond();
         commandQueueCapacity = limits.commandQueueCapacity();
         this.clock = clock;
+        this.persistence = persistence;
+        persistence.save(session.state(), null);
     }
 
     public synchronized ApplyResult apply(GameCommand command) {
@@ -52,7 +65,9 @@ public final class MatchCoordinator {
         times.addLast(now);
         commandQueue.addLast(command);
         try {
-            return session.apply(commandQueue.removeFirst());
+            ApplyResult result = session.apply(commandQueue.removeFirst());
+            persist(result);
+            return result;
         } finally {
             commandQueue.remove(command);
         }
@@ -63,10 +78,18 @@ public final class MatchCoordinator {
     }
 
     public synchronized ApplyResult advanceTick() {
-        return session.advanceTick();
+        ApplyResult result = session.advanceTick();
+        persist(result);
+        return result;
     }
 
     int commandQueueCapacity() {
         return commandQueueCapacity;
+    }
+
+    private void persist(ApplyResult result) {
+        if (result.accepted() && !result.events().isEmpty()) {
+            persistence.save(result.state(), result.events().getFirst());
+        }
     }
 }

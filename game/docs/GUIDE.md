@@ -9,11 +9,13 @@ Tài liệu này mô tả những gì người chơi có thể nhìn thấy và 
 
 ## 1. Trạng thái hiện tại
 
-- Ngày cập nhật: 2026-11-08.
-- Kịch bản đã hoàn thành: R1, R2, R3 và R4.
+- Ngày cập nhật: 2026-11-11.
+- Kịch bản đã hoàn thành: R1, R2, R3, R4, R4.1, R5, R6 và R8.1–R8.3.
 - Người chơi điều khiển quân của mình bằng chương trình Java hoặc Desktop Code Studio.
 - Phaser là màn hình quan sát bản đồ và trạng thái trận đấu.
 - Máy chủ giữ kết quả chính thức của mọi hành động.
+- Web viewer mở đầu bằng phòng chọn trận, tự đọc danh sách từ `/api/matches` và cho phép nhập mã session token.
+- Trong trận, người chơi thấy revision, nhịp mô phỏng, lực lượng, command gần nhất và banner khi trận kết thúc.
 
 Khi README cấp gốc thay đổi về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật lại tài liệu này cùng `docs/README.md` và `docs/CHANGELOG.md`.
 
@@ -34,6 +36,13 @@ Mở ba cửa sổ PowerShell tại thư mục gốc.
 .\scripts\start-server.ps1
 ```
 
+Lệnh này dùng database H2 dạng file và tiếp tục account, lobby cùng trận đã lưu sau khi khởi động lại.
+Để chạy một trận tạm thời từ state seed mà không đụng database đã lưu, thay lệnh trên bằng:
+
+```powershell
+.\scripts\start-server.ps1 -Fresh
+```
+
 ### Cửa sổ 2 — bật màn hình bản đồ
 
 ```powershell
@@ -41,6 +50,19 @@ Mở ba cửa sổ PowerShell tại thư mục gốc.
 ```
 
 Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
+
+Chọn `match-default` hoặc `match-training` trong phòng vào trận.
+Nếu dùng account, dán session token vào trường mã truy cập trước khi bấm `Vào trận`.
+
+### Chơi cùng Wi-Fi trong mạng LAN
+
+Một máy làm máy chủ và chạy cả server lẫn web viewer.
+Tìm địa chỉ IPv4 của máy đó bằng `ipconfig`, ví dụ `192.168.1.23`.
+Chạy `.\scripts\start-server.ps1`, sau đó chạy `.\scripts\start-web.ps1`.
+Mở cổng TCP `8080` và `5173` trên Windows Firewall nếu máy khác không truy cập được.
+Người chơi khác cùng Wi-Fi mở `http://192.168.1.23:5173/` bằng địa chỉ IPv4 vừa tìm.
+Viewer tự nối API và WebSocket về đúng máy đang phát trang, nên không cần sửa mã nguồn hay đặt `localhost` thủ công.
+LAN nhanh hơn đường Internet vì dữ liệu đi thẳng trong mạng nội bộ.
 
 ### Cửa sổ 3 — mở nơi viết, biên dịch và chạy Java
 
@@ -51,11 +73,46 @@ Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 Chờ cửa sổ Desktop Code Studio xuất hiện.
 Giữ cả ba cửa sổ PowerShell hoạt động trong khi chơi; mỗi cửa sổ chạy một lệnh ở trên.
 
+### Tùy chọn — đăng nhập và join team thay cho demo token
+
+Sau khi server đã chạy, mở thêm PowerShell và đăng ký account:
+
+```powershell
+$register = @{
+    username = "blue_one"
+    displayName = "Blue One"
+    password = "strong-pass-123"
+} | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/accounts -ContentType application/json -Body $register
+```
+
+Đăng nhập để nhận session token:
+
+```powershell
+$login = @{ username = "blue_one"; password = "strong-pass-123" } | ConvertTo-Json
+$session = Invoke-RestMethod -Method Post -Uri http://localhost:8080/api/sessions -ContentType application/json -Body $login
+```
+
+Join đội BLUE:
+
+```powershell
+$headers = @{ Authorization = "Bearer $($session.token)" }
+$membership = @{ teamId = "BLUE" } | ConvertTo-Json
+Invoke-RestMethod -Method Put -Uri http://localhost:8080/api/lobby/membership -Headers $headers -ContentType application/json -Body $membership
+```
+
+Dùng `$session.token` ở trường Token của Desktop Code Studio.
+Account phải join team trước khi session token được phép điều khiển quân qua WebSocket.
+Có thể tạo tối đa năm account và join cùng BLUE; tất cả account dùng chung state và quota của đội.
+Account thứ sáu bị từ chối với mã `TEAM_FULL`.
+
 ## 4. Viết và chạy chương trình điều khiển
 
 ### Bước 1 — chọn đội và nhập chương trình
 
-Trong Desktop Code Studio, nhập `Server` là `ws://localhost:8080/game`, `Token` là `blue-token` và tên lớp là `MyBot`.
+Trong Desktop Code Studio cùng máy với server, nhập `Server` là `ws://localhost:8080/game`.
+Nếu Desktop Code Studio chạy ở máy khác cùng Wi-Fi, thay `localhost` bằng IPv4 của máy chủ, ví dụ `ws://192.168.1.23:8080/game`.
+Nhập `Token` là `blue-token` và tên lớp là `MyBot`.
 Thay nội dung ô soạn thảo bằng chương trình sau để thử trên trận mới:
 
 ```java
@@ -83,7 +140,8 @@ public final class MyBot implements BotProgram {
 
 Sau mỗi lần sửa, biên dịch lại trước khi chạy.
 Dừng chương trình không hoàn tác hành động đã thực hiện.
-Để thử một kịch bản từ đầu, dừng máy chủ bằng `Ctrl+C` ở cửa sổ 1 rồi chạy lại `.\scripts\start-server.ps1` và chờ bản đồ kết nối lại.
+Khởi động lại server mặc định sẽ phục hồi trận đã lưu.
+Để thử kịch bản từ state seed mà không xóa dữ liệu, dừng máy chủ bằng `Ctrl+C`, chạy `.\scripts\start-server.ps1 -Fresh` rồi chờ bản đồ kết nối lại.
 
 ### Bước 3 — thay hành động muốn thử
 
@@ -118,7 +176,7 @@ import com.antcolonywars.core.UnitType;
 Thay nội dung hàm `run` bằng đoạn dưới đây; trên trận mới, quân đánh xa xuất hiện dưới nhà chính xanh:
 
 ```java
-try (GameClient client = GameClient.connect("ws://localhost:8080/game", "blue-token")) {
+try (GameClient client = GameClient.connect("ws://localhost:8080/game", "blue-token", "match-training")) {
     client.spawn("ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);
     client.move("ranged-blue-1", Direction.RIGHT);
 }
@@ -139,7 +197,7 @@ Nếu muốn thử nhanh mà không viết Java, mở một cửa sổ PowerShel
 |---|---|
 | `BlueBot` | Quân xanh di chuyển. |
 | `RedBot` | Quân đỏ di chuyển. |
-| `WinningScenario` | Đội xanh phá nhà chính đỏ và thắng. |
+| `WinningScenario` | Đội xanh hạ đủ năm HQ phe SWARM và thắng. |
 | `ReinforcementBot` | Tạo quân mới rồi điều khiển quân đó. |
 | `ResourceBuilderBot` | Quân tới điểm tài nguyên, khai thác và xây doanh trại. |
 
@@ -151,12 +209,12 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 
 - [x] Mở bản đồ và xem trạng thái kết nối.
 - [x] Xem vị trí, tên, loại quân và HP của từng quân.
-- [x] Xem nhà chính của hai đội và điểm sinh lực còn lại.
+- [x] Xem nhà chính của 10 đội và điểm sinh lực còn lại.
 - [x] Xem điểm tài nguyên cùng số lượng còn lại.
 - [x] Xem số tài nguyên hiện có của mỗi đội.
 - [x] Xem BARRACKS, TOWER và WALL trên bản đồ.
 - [x] Theo dõi số lần thay đổi trạng thái của trận đấu.
-- [x] Theo dõi đội thắng khi nhà chính bị phá hủy.
+- [x] Theo dõi đội thắng khi toàn bộ HQ của phe đối phương bị phá hủy.
 
 ### Di chuyển và chờ lượt
 
@@ -218,11 +276,24 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Chương trình Java tự chờ rồi gửi lại khi bị giới hạn tốc độ.
 - [~] Hàng đợi có giới hạn 32 lệnh theo cấu hình mặc định; chưa có giao diện riêng để xem hàng đợi.
 
+### Account, lobby và dữ liệu đã lưu
+
+- [x] Đăng ký account và đăng nhập để nhận session token.
+- [x] Join BLUE hoặc RED trước khi dùng session token điều khiển quân.
+- [x] Năm account cùng team điều khiển chung state và dùng chung quota team.
+- [x] Account thứ sáu bị từ chối khi team đã đủ chỗ.
+- [x] Reconnect nhận lại snapshot mới nhất; `matchId` tách biệt giữa các match.
+- [x] Snapshot cùng event history được ghi vào H2 qua Flyway migration.
+- [x] State đã lưu được nạp lại và tiếp tục revision, processed command cùng simulation state.
+- [~] Demo token cũ vẫn dùng được; chưa có giao diện đăng nhập trong Desktop Code Studio.
+
 ## 6. Những khả năng chưa có
 
 - [ ] Công trình tự sản xuất quân hoặc tự phòng thủ.
-- [ ] Database, tài khoản, lobby, matchmaking và khôi phục sau khi khởi động lại.
-- [ ] Nhiều trận cùng lúc và kiểm tra tải quy mô lớn.
+- [x] Hai match chạy đồng thời với route WebSocket riêng và endpoint tick latency.
+- [~] Load gate 400 match-tick đã có trong test; chưa phải benchmark production nhiều máy.
+- [ ] Matchmaking, xác minh email, quên mật khẩu, quản lý/thu hồi session.
+- [ ] Backup, HA và database production.
 - [ ] Kiểm tra hình ảnh trên nhiều trình duyệt hoặc thiết bị.
 
 ## 7. Mẫu ghi nhận một lần kiểm thử

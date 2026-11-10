@@ -169,7 +169,7 @@ public final class GameEngine {
                 ? cells(targetUnit)
                 : List.of(targetHeadquarters.position());
         int targetHp = targetUnit != null ? targetUnit.hp() : targetHeadquarters.hp();
-        if (actor.teamId().equals(targetTeamId)) {
+        if (sameFaction(state, actor.teamId(), targetTeamId)) {
             return ApplyResult.failure(state, ErrorCode.FRIENDLY_TARGET);
         }
         if (targetHp == 0) {
@@ -224,7 +224,7 @@ public final class GameEngine {
             } else {
                 Headquarters damaged = targetHeadquarters.takeDamage(projectile.damage());
                 headquarters = replaceHeadquarters(headquarters, damaged);
-                if (damaged.hp() == 0) {
+                if (damaged.hp() == 0 && hasSingleActiveFaction(state.teams(), headquarters)) {
                     status = MatchStatus.FINISHED;
                     winnerTeamId = projectile.teamId();
                     remaining.clear();
@@ -381,6 +381,25 @@ public final class GameEngine {
     private Team findTeam(MatchState state, String teamId) {
         return state.teams().stream().filter(team -> team.id().equals(teamId)).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown team: " + teamId));
+    }
+
+    private boolean sameFaction(MatchState state, String firstTeamId, String secondTeamId) {
+        return findTeam(state, firstTeamId).factionId().equals(findTeam(state, secondTeamId).factionId());
+    }
+
+    private boolean hasSingleActiveFaction(List<Team> teams, List<Headquarters> headquarters) {
+        return headquarters.stream()
+                .filter(headquartersItem -> headquartersItem.hp() > 0)
+                .map(headquartersItem -> teams.stream()
+                        .filter(team -> team.id().equals(headquartersItem.teamId()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Unknown team: " + headquartersItem.teamId()
+                        ))
+                        .factionId())
+                .distinct()
+                .limit(2)
+                .count() == 1;
     }
 
     private int buildingCost(BuildingType type, RuleSet rules) {

@@ -1,11 +1,11 @@
 # ANT COLONY WARS — Kế hoạch sản phẩm và MVP (v1.0)
 
-> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05, gameplay R1–R4.1 đã được kiểm chứng.
+> **Trạng thái:** MVP Phase 00–05, Desktop Code Studio D00–D05, gameplay R1–R6 đã được kiểm chứng.
 > **Kiến trúc chính:** Server-authoritative; server giữ luật và state chính, client gửi command và render snapshot/event.
 > **Kiến trúc dự phòng:** `docs/ANT_COLONY_WARS_CLIENT_SIMULATION_MIGRATION_PLAN.md` chỉ là đề xuất sau MVP, chưa thay thế roadmap hiện tại.
 > **Mục tiêu dài hạn:** Game chiến thuật online 2D trên lưới ô vuông, trong đó người chơi điều khiển đơn vị bằng chương trình Java.
 > **Mục tiêu MVP:** Chứng minh một chương trình Java cơ bản có thể gửi hành động tới server, làm thay đổi trạng thái trận đấu và được Phaser hiển thị ngay qua WebSocket.
-> **Mục tiêu hậu MVP gần nhất:** Bổ sung tài khoản, lobby và dữ liệu bền vững trên nền gameplay R4.1.
+> **Mục tiêu hậu MVP gần nhất:** Hoàn thiện trải nghiệm và phát hành trên nền R6.
 
 ## 1. Quyết định kỹ thuật
 
@@ -15,8 +15,8 @@
 | Chương trình điều khiển | Java 21 | Một Java client nhỏ chạy local, gọi API mức cao |
 | Giao diện 2D | TypeScript + Phaser | Hiển thị map, đơn vị, HQ, HP, log và kết quả |
 | Giao tiếp online | WebSocket + JSON | Java client gửi lệnh; server phát kết quả và state |
-| Lưu trữ | Không dùng database | Seed từ profile cấu hình khi khởi động server |
-| Xác thực | Token demo từ cấu hình | Không đăng ký, đăng nhập hoặc phân quyền động |
+| Lưu trữ | H2 + Flyway | Account, session, lobby membership, match snapshot và event history |
+| Xác thực | BCrypt + session token | REST đăng ký/đăng nhập/join team; demo token giữ cho local flow |
 | Desktop Code Studio | Java 21 + JavaFX + Java Compiler API | Đã triển khai; editor, biên dịch local và child JVM runner |
 
 MVP không nhận source code Java rồi biên dịch trên server.
@@ -349,8 +349,8 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 4. R3 đã bổ sung các loại MELEE/RANGED/SIEGE và combat profile cơ bản.
 5. R4 đã bổ sung rate limit theo team và hàng đợi tuần tự có capacity.
 6. R4.1 đã bổ sung footprint 2×2 cho SIEGE, projectile và simulation tick cấu hình được.
-7. Tiếp theo thêm tài khoản, lobby, database và nhiều người cùng đội.
-8. Thêm 10 đội chia 2 phe và tối đa 50 đơn vị mỗi đội.
+7. R5 đã bổ sung account, lobby membership, session token, H2/Flyway và restart recovery.
+8. R6 đã thêm 10 đội chia 2 phe, hai match, tối đa 50 đơn vị mỗi đội, 5 account/team và load gate tick/reconnect.
 9. Chỉ thiết kế editor web nếu Desktop Code Studio không đáp ứng; compiler service và sandbox phải tách khỏi game server.
 10. Nếu cần client simulation, thực hiện theo tài liệu migration dự phòng sau khi snapshot, command log và deterministic core đã được kiểm chứng.
 11. Bổ sung pixel art, animation, tutorial, replay và cân bằng.

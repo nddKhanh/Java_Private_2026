@@ -1,8 +1,17 @@
+param(
+    [switch]$Fresh
+)
+
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path $PSScriptRoot -Parent
+$previousDatabaseUrl = $env:GAME_DB_URL
+$hadDatabaseUrl = Test-Path Env:GAME_DB_URL
 Push-Location $projectRoot
 try {
+    if ($Fresh) {
+        $env:GAME_DB_URL = "jdbc:h2:mem:ant-colony-wars"
+    }
     & .\mvnw.cmd -pl game-server -am install -DskipTests
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -19,4 +28,10 @@ try {
 }
 finally {
     Pop-Location
+    if ($hadDatabaseUrl) {
+        $env:GAME_DB_URL = $previousDatabaseUrl
+    }
+    else {
+        Remove-Item Env:GAME_DB_URL -ErrorAction SilentlyContinue
+    }
 }

@@ -27,6 +27,15 @@ export class GameSocket {
     });
   }
 
+  disconnect(): void {
+    if (this.reconnectTimer !== null) {
+      window.clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.socket?.close();
+    this.socket = null;
+  }
+
   private receive(raw: unknown): void {
     if (typeof raw !== 'string') {
       return;

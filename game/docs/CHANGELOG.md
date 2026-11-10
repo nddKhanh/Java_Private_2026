@@ -3,6 +3,49 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-11 — R8.1–R8.3
+
+### Added
+
+- Thêm phòng chọn match, mã truy cập session và kết nối WebSocket theo match đã chọn.
+- Thêm bảng revision/tick/lực lượng/command, banner kết quả và bố cục viewer responsive.
+- Mở server và web viewer cho mạng LAN; viewer tự dùng IPv4 của máy phát để giảm độ trễ và không cần sửa biến môi trường.
+
+### Verified
+
+- Frontend build và copy lint gaming pass; gate không có FAIL trong phần kiểm tra chạy được.
+- Browser consistency/layout cần Node 22 nên chưa được xác nhận trong môi trường Node 20 hiện tại.
+
+## 2026-11-11 — R6
+
+### Added
+
+- Thêm 10 đội thuộc 2 phe, giới hạn 50 đơn vị/team và luật thắng theo phe.
+- Thêm hai match route theo `matchId`, reconnect snapshot và endpoint runtime tick latency.
+- Thêm giới hạn 5 account/team với database team lock và lỗi `TEAM_FULL`.
+- Mở rộng `WinningScenario` để hạ đủ HQ của phe đối phương.
+
+### Verified
+
+- 49 Maven test pass, gồm load gate 400 match-tick và integration cho 5 account cùng điều khiển một team.
+
+## 2026-11-11 — R5
+
+### Added
+
+- Thêm REST API đăng ký, đăng nhập, xem account và join lobby team với BCrypt password cùng session token lưu hash.
+- Thêm Flyway V1 và H2 persistence cho account, session, membership, match snapshot và event history.
+- Thêm endpoint đọc match history và chế độ `start-server.ps1 -Fresh` dùng database in-memory.
+
+### Changed
+
+- WebSocket chấp nhận session token của account đã join team bên cạnh demo token cũ.
+- MatchCoordinator ghi accepted event và nạp snapshot tương thích để tiếp tục state sau restart.
+
+### Verified
+
+- Xác minh 46 Maven test cho R5; frontend không đổi so với production build R4.1 đã pass.
+
 ## 2026-11-10 — R4.1
 
 ### Added

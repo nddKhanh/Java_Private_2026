@@ -2,7 +2,7 @@
 
 MVP game chiến thuật 2D trong đó chương trình Java gửi command và Phaser hiển thị state do server xác nhận theo thời gian thực.
 
-**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R4.1 `VERIFIED`.
+**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R6 `VERIFIED`; R8.1–R8.3 đã triển khai trong web viewer.
 
 README cấp gốc [`../README.md`](../README.md) là điểm vào chính của dự án.
 Khi thay đổi README cấp gốc về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật đồng thời `GUIDE.md`, `README.md` này và `CHANGELOG.md`.
@@ -16,6 +16,8 @@ Java bot → GameClient → WebSocket /game → Spring Boot → Game Core → ST
 
 Server là nguồn sự thật duy nhất cho movement, damage, HP và winner.
 Phaser chỉ render snapshot và không tự tính gameplay.
+Web viewer có màn hình chọn match, trường mã phiên và bảng trạng thái revision, tick, lực lượng cùng kết quả trận.
+Khi chạy `start-web.ps1`, viewer mở trên mọi địa chỉ mạng để các máy cùng Wi-Fi truy cập bằng IPv4 của máy chủ.
 
 Desktop Code Studio dùng JavaFX để viết, biên dịch và chạy source Java local trong JVM con, sau đó tái sử dụng `GameClient` để điều khiển server.
 
@@ -40,13 +42,17 @@ Terminal thứ nhất chạy server:
 .\scripts\start-server.ps1
 ```
 
+Server mặc định lưu account, lobby, snapshot và event history vào `game-server/data/ant-colony-wars.mv.db`.
+Muốn chạy một trận tạm thời từ state seed mà không đọc hoặc sửa database đã lưu, dùng `.\scripts\start-server.ps1 -Fresh`.
+
 Terminal thứ hai chạy Phaser viewer:
 
 ```powershell
 .\scripts\start-web.ps1
 ```
 
-Mở `http://127.0.0.1:5173/` và chờ trạng thái `Đang trực tuyến`.
+Máy chủ mở `http://127.0.0.1:5173/`; các máy cùng Wi-Fi mở `http://IP_MAY_CHU:5173/` và chờ trạng thái `Đang trực tuyến`.
+Ví dụ: `http://192.168.1.23:5173/`.
 
 Terminal thứ ba chạy một bot mẫu:
 
@@ -70,7 +76,7 @@ Sau đó mở terminal thứ ba:
 
 Trong ứng dụng:
 
-1. Giữ Server là `ws://localhost:8080/game`.
+1. Trên cùng máy chạy server, giữ Server là `ws://localhost:8080/game`; nếu Desktop Code Studio chạy trên máy khác, dùng `ws://IP_MAY_CHU:8080/game`.
 2. Nhập Token là `blue-token`.
 3. Giữ Bot class là `MyBot` và source mẫu mặc định.
 4. Nhấn **Compile**; trạng thái phải chuyển thành `Compiled`.
@@ -82,6 +88,17 @@ Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để St
 Nếu sửa source sau khi compile, ứng dụng bắt buộc compile lại trước khi Run.
 Nút Stop kết thúc ngay JVM con đang chạy.
 Các hành động đã thực hiện trong trận vẫn được giữ sau khi dừng chương trình.
+
+## Account và lobby team
+
+REST API hỗ trợ đăng ký qua `POST /api/accounts`, đăng nhập qua `POST /api/sessions`, xem account qua `GET /api/lobby/me` và join team qua `PUT /api/lobby/membership`.
+Mật khẩu được lưu bằng BCrypt; session token trả về cho client chỉ được lưu dưới dạng SHA-256 trong database.
+Sau khi join team, dùng session token ở trường Token của Desktop Code Studio hoặc tham số thứ hai của `GameClient.connect`/`GameBots.connect`.
+Tối đa 5 account có thể join cùng team và dùng chung unit, quota cùng state server-authoritative; account thứ 6 nhận lỗi `TEAM_FULL`.
+Các demo token `blue-token` và `red-token` vẫn hoạt động cho kịch bản local cũ.
+
+Lịch sử event của trận mặc định đọc tại `GET /api/matches/match-default/history`.
+Danh sách match và tick latency đọc tại `GET /api/matches`; match training dùng WebSocket `ws://localhost:8080/game?matchId=match-training` hoặc thay `localhost` bằng IPv4 máy chủ khi chạy qua LAN.
 
 ## Đóng gói desktop
 
@@ -100,7 +117,7 @@ Khởi động lại server để trận trở về state seed rồi chạy:
 .\scripts\run-demo.ps1 WinningScenario
 ```
 
-Bot BLUE đi tới cạnh HQ RED, bắn ba projectile và kết thúc trận với winner `BLUE` từ revision `16` trở lên.
+Bot BLUE đi qua bản đồ, hạ đủ năm HQ của phe `SWARM` và kết thúc trận với winner `BLUE`.
 
 Khởi động lại server rồi chạy demo spawn và chọn đơn vị:
 
@@ -122,33 +139,43 @@ Chạy bot khai thác và xây dựng:
 .\scripts\test-all.ps1
 ```
 
-Script chạy 42 Maven test, cài frontend theo lockfile và build TypeScript/Vite.
+Script chạy Maven reactor tests, cài frontend theo lockfile và build TypeScript/Vite.
 
 Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy các cửa sổ PowerShell đến viết và chạy Java, thử hành động, đối chiếu chức năng và ghi kết quả kiểm thử.
 
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
-Map, rules, team, màu, token demo, unit, HQ, resource node, building, quota action, tick interval và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
+Map, rules, match list, team, faction, màu, token demo, unit, HQ, resource node, building, quota action, tick interval, session lifetime và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
 
 Profile mặc định giới hạn 10 action mỗi giây cho mỗi team và queue tuần tự tối đa 32 command.
 
 Token mặc định chỉ dùng cho demo local:
 
 - BLUE: `blue-token`.
+- CYAN: `cyan-token`.
+- GREEN: `green-token`.
+- TEAL: `teal-token`.
+- NAVY: `navy-token`.
 - RED: `red-token`.
+- ORANGE: `orange-token`.
+- YELLOW: `yellow-token`.
+- MAGENTA: `magenta-token`.
+- MAROON: `maroon-token`.
 
 Không dùng các token này cho môi trường public hoặc production.
 
-## Hành vi và giới hạn MVP
+## Hành vi và giới hạn hiện tại
 
-- State chỉ nằm trong RAM và chủ ý được tạo lại khi server restart.
-- Mỗi team có một unit seed sẵn, một HQ và có thể spawn tối đa năm unit theo profile mặc định.
+- Server mặc định phục hồi state từ H2 sau khi restart; chế độ `-Fresh` mới chủ ý giữ state trong RAM.
+- Có 10 team trong 2 faction; mỗi team có một unit seed, một HQ và có thể spawn tối đa 50 unit theo profile mặc định.
 - Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server có rate limit theo team và queue tuần tự.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
 - Spawn tạo unit ở ô kề HQ; chi phí spawn chưa được áp dụng.
 - Resource node, harvest và building đã có; building production/defense chưa có.
-- Không có database, lobby, đăng nhập hoặc matchmaking.
+- Account, lobby membership, session, snapshot và event history được lưu bằng H2/Flyway; file database mặc định nằm trong `game-server/data/`.
+- Hai match được route độc lập theo `matchId`; reconnect nhận snapshot authoritative mới nhất.
+- Chưa có matchmaking, email verification, quên mật khẩu, backup hoặc database production.
 - Desktop Code Studio chỉ biên dịch và chạy source trên máy local; source/class không được gửi lên server.
 - JVM con có heap 64 MB, timeout cấu hình được và output giới hạn 64 KiB mỗi stream.
 - Các giới hạn process không phải sandbox an toàn cho code không tin cậy.

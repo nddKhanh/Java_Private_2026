@@ -13,10 +13,19 @@ import java.util.Map;
 @Component
 public class TokenHandshakeInterceptor implements HandshakeInterceptor {
     public static final String TEAM_ID_ATTRIBUTE = "teamId";
+    public static final String MATCH_ID_ATTRIBUTE = "matchId";
 
+    private final AccountService accountService;
+    private final MatchRegistry matchRegistry;
     private final GameProfileProperties profile;
 
-    public TokenHandshakeInterceptor(GameProfileProperties profile) {
+    public TokenHandshakeInterceptor(
+            AccountService accountService,
+            MatchRegistry matchRegistry,
+            GameProfileProperties profile
+    ) {
+        this.accountService = accountService;
+        this.matchRegistry = matchRegistry;
         this.profile = profile;
     }
 
@@ -27,12 +36,24 @@ public class TokenHandshakeInterceptor implements HandshakeInterceptor {
             WebSocketHandler wsHandler,
             Map<String, Object> attributes
     ) {
-        String token = queryParameter(request.getURI().getRawQuery(), "token");
+        String query = request.getURI().getRawQuery();
+        String matchId = queryParameter(query, "matchId");
+        if (matchId == null || matchId.isBlank()) {
+            matchId = profile.matchId();
+        }
+        MatchCoordinator coordinator = matchRegistry.find(matchId).orElse(null);
+        if (coordinator == null) {
+            return false;
+        }
+        attributes.put(MATCH_ID_ATTRIBUTE, matchId);
+
+        String token = queryParameter(query, "token");
         if (token == null) {
             return true;
         }
-        String teamId = profile.teamIdForToken(token);
-        if (teamId == null) {
+        String teamId = accountService.resolveTeamId(token);
+        boolean teamExists = coordinator.state().teams().stream().anyMatch(team -> team.id().equals(teamId));
+        if (teamId == null || !teamExists) {
             return false;
         }
         attributes.put(TEAM_ID_ATTRIBUTE, teamId);

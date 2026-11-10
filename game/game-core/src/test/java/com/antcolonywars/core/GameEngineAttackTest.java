@@ -104,6 +104,49 @@ class GameEngineAttackTest {
         assertEquals(2, unit(secondTick.state(), "worker-red").hp());
     }
 
+    @Test
+    void treatsFactionMembersAsAlliesAndFinishesAfterTheEnemyFactionLosesEveryHeadquarters() {
+        MatchSetup setup = new MatchSetup(
+                "faction-setup", "faction-match", 5, 5, RuleSet.mvp(),
+                List.of(
+                        new Team("BLUE", "Blue", "blue", "ALLIANCE"),
+                        new Team("CYAN", "Cyan", "cyan", "ALLIANCE"),
+                        new Team("RED", "Red", "red", "SWARM"),
+                        new Team("ORANGE", "Orange", "orange", "SWARM")
+                ),
+                List.of(
+                        new Unit("worker-blue", "BLUE", "WORKER", new Position(1, 1), 3, Direction.RIGHT),
+                        new Unit("worker-cyan", "CYAN", "WORKER", new Position(4, 4), 3, Direction.UP)
+                ),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-cyan", "CYAN", new Position(0, 4), 3),
+                        new Headquarters("hq-red", "RED", new Position(2, 1), 3),
+                        new Headquarters("hq-orange", "ORANGE", new Position(1, 2), 3)
+                )
+        );
+        GameSession session = new GameSession(setup);
+
+        ApplyResult friendly = session.apply(new AttackCommand(
+                "friendly", "BLUE", "worker-blue", "worker-cyan"));
+        assertEquals(ErrorCode.FRIENDLY_TARGET, friendly.error());
+
+        for (int hit = 0; hit < 3; hit++) {
+            assertTrue(session.apply(new AttackCommand(
+                    "red-" + hit, "BLUE", "worker-blue", "hq-red")).accepted());
+        }
+        MatchState afterRed = session.advanceTick().state();
+        assertEquals(MatchStatus.RUNNING, afterRed.status());
+
+        for (int hit = 0; hit < 3; hit++) {
+            assertTrue(session.apply(new AttackCommand(
+                    "orange-" + hit, "BLUE", "worker-blue", "hq-orange")).accepted());
+        }
+        MatchState finished = session.advanceTick().state();
+        assertEquals(MatchStatus.FINISHED, finished.status());
+        assertEquals("BLUE", finished.winnerTeamId());
+    }
+
     private MatchSetup combatSetup(Position blue, Position red) {
         return combatSetup(blue, red, RuleSet.mvp(), new Position(4, 4));
     }

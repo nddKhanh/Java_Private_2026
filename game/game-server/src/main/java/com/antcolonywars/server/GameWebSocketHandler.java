@@ -17,6 +17,7 @@ import com.antcolonywars.core.WaitCommand;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -30,19 +31,24 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GameWebSocketHandler extends TextWebSocketHandler {
     public static final int SCHEMA_VERSION = 5;
 
-    private final MatchCoordinator coordinator;
+    private final MatchRegistry matchRegistry;
     private final ObjectMapper objectMapper;
     private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
-    public GameWebSocketHandler(MatchCoordinator coordinator, ObjectMapper objectMapper) {
-        this.coordinator = coordinator;
+    @Autowired
+    public GameWebSocketHandler(MatchRegistry matchRegistry, ObjectMapper objectMapper) {
+        this.matchRegistry = matchRegistry;
         this.objectMapper = objectMapper;
+    }
+
+    GameWebSocketHandler(MatchCoordinator coordinator, ObjectMapper objectMapper) {
+        this(new MatchRegistry(coordinator), objectMapper);
     }
 
     @Override
     public synchronized void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
-        sendState(session, coordinator.state(), null);
+        sendState(session, coordinator(session).state(), null);
     }
 
     @Override
@@ -59,13 +65,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             sendFailure(session, request.commandId(), "UNSUPPORTED_SCHEMA_VERSION");
             return;
         }
+        MatchCoordinator coordinator = coordinator(session);
         MatchState state = coordinator.state();
         if (!state.matchId().equals(request.matchId())) {
             sendFailure(session, request.commandId(), "MATCH_NOT_FOUND");
             return;
         }
         if ("GET_STATE".equals(request.type())) {
-            handleGetState(session, request);
+            handleGetState(session, request, coordinator);
             return;
         }
         if (!"COMMAND".equals(request.type())) {
@@ -122,7 +129,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void handleGetState(WebSocketSession session, ClientMessage request) throws IOException {
+    private void handleGetState(
+            WebSocketSession session,
+            ClientMessage request,
+            MatchCoordinator coordinator
+    ) throws IOException {
         MatchState state = coordinator.state();
         send(session, CommandResultMessage.success(
                 state.matchId(),
@@ -184,7 +195,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private void sendFailure(WebSocketSession session, String commandId, String error) throws IOException {
-        MatchState state = coordinator.state();
+        MatchState state = coordinator(session).state();
         send(session, CommandResultMessage.failure(
                 state.matchId(),
                 commandId,
@@ -198,6 +209,9 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         sessions.removeIf(session -> {
             if (!session.isOpen()) {
                 return true;
+            }
+            if (!state.matchId().equals(session.getAttributes().get(TokenHandshakeInterceptor.MATCH_ID_ATTRIBUTE))) {
+                return false;
             }
             try {
                 sendState(session, state, event);
@@ -221,5 +235,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
 
     private void send(WebSocketSession session, Object payload) throws IOException {
         session.sendMessage(new TextMessage(objectMapper.writeValueAsString(payload)));
+    }
+
+    private MatchCoordinator coordinator(WebSocketSession session) {
+        String matchId = (String) session.getAttributes().get(TokenHandshakeInterceptor.MATCH_ID_ATTRIBUTE);
+        return matchRegistry.require(matchId);
     }
 }

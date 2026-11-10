@@ -1,3 +1,7 @@
+param(
+    [string]$BindAddress = "0.0.0.0"
+)
+
 $ErrorActionPreference = "Stop"
 
 $projectRoot = Split-Path $PSScriptRoot -Parent
@@ -9,7 +13,7 @@ try {
         exit $LASTEXITCODE
     }
 
-    & npm run dev -- --host 127.0.0.1
+    & npm run dev -- --host $BindAddress
     exit $LASTEXITCODE
 }
 finally {

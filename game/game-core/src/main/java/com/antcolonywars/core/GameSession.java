@@ -11,10 +11,18 @@ public final class GameSession {
     private MatchState state;
 
     public GameSession(MatchSetup setup) {
+        this(setup, null);
+    }
+
+    public GameSession(MatchSetup setup, MatchState restoredState) {
         Objects.requireNonNull(setup, "setup");
         this.rules = setup.rules();
         this.engine = new GameEngine();
-        this.state = MatchFactory.create(setup);
+        MatchState initialState = MatchFactory.create(setup);
+        if (restoredState != null) {
+            validateRestoredState(initialState, restoredState);
+        }
+        this.state = restoredState == null ? initialState : restoredState;
     }
 
     public ApplyResult apply(GameCommand command) {
@@ -39,5 +47,17 @@ public final class GameSession {
 
     public List<ActionCommand> commandLog() {
         return List.copyOf(commandLog);
+    }
+
+    private void validateRestoredState(MatchState initialState, MatchState restoredState) {
+        if (!initialState.matchId().equals(restoredState.matchId())
+                || !initialState.setupId().equals(restoredState.setupId())
+                || !initialState.rulesVersion().equals(restoredState.rulesVersion())
+                || initialState.mapWidth() != restoredState.mapWidth()
+                || initialState.mapHeight() != restoredState.mapHeight()
+                || !initialState.teams().stream().map(Team::id).toList()
+                .equals(restoredState.teams().stream().map(Team::id).toList())) {
+            throw new IllegalArgumentException("Restored state does not match the configured setup");
+        }
     }
 }

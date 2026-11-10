@@ -92,3 +92,13 @@ export interface StateUpdatedMessage {
   state: MatchState;
   event: GameEvent | null;
 }
+
+export interface MatchRuntime {
+  matchId: string;
+  status: 'RUNNING' | 'FINISHED' | string;
+  revision: number;
+  simulationTick: number;
+  lastTickMicros: number;
+  maxTickMicros: number;
+  tickSamples: number;
+}

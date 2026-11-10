@@ -12,6 +12,10 @@ import com.antcolonywars.core.Unit;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.Clock;
 
 @Configuration
 @EnableConfigurationProperties(GameProfileProperties.class)
@@ -38,7 +42,7 @@ public class GameServerConfiguration {
                         profile.rules().buildingHp()
                 ),
                 profile.teams().stream()
-                        .map(team -> new Team(team.id(), team.displayName(), team.color()))
+                        .map(team -> new Team(team.id(), team.displayName(), team.color(), team.factionId()))
                         .toList(),
                 profile.units().stream()
                         .map(unit -> new Unit(
@@ -76,7 +80,27 @@ public class GameServerConfiguration {
     }
 
     @Bean
-    public MatchCoordinator matchCoordinator(MatchSetup setup, GameProfileProperties profile) {
-        return new MatchCoordinator(setup, profile.limits());
+    public Clock clock() {
+        return Clock.systemUTC();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public MatchRegistry matchRegistry(
+            MatchSetup setup,
+            GameProfileProperties profile,
+            MatchPersistence persistence,
+            Clock clock
+    ) {
+        return new MatchRegistry(setup, profile.matchIds(), profile.limits(), clock, persistence);
+    }
+
+    @Bean
+    public MatchCoordinator matchCoordinator(MatchSetup setup, MatchRegistry registry) {
+        return registry.require(setup.matchId());
     }
 }
