@@ -160,9 +160,9 @@ Mỗi dòng là một ví dụ riêng; cần đưa quân tới vị trí phù h�
 | Chọn quân | `bot.selectUnit("worker-blue");` | Quân thuộc đội đang điều khiển. |
 | Đi một ô | `bot.move(Direction.RIGHT);` | Ô đích trống và nằm trong bản đồ. |
 | Đứng chờ | `bot.waitTurn();` | Giữ nguyên vị trí. |
-| Tấn công | `bot.attack("hq-red");` | Nhà chính đối phương phải trong tầm; lệnh tạo projectile. |
+| Tấn công | `bot.attack("ranged-blue-1", Direction.RIGHT);` | Quét sang phải đến hết tầm; mục tiêu đầu tiên trên đường bắn nhận projectile. |
 | Chờ đạn chạm mục tiêu | `bot.awaitSimulationIdle();` | Chờ toàn bộ projectile hiện tại kết thúc trước khi đọc HP hoặc winner. |
-| Tạo quân thợ | `bot.spawn("worker-blue-2", "Tho 2", Direction.DOWN);` | Ô dưới nhà chính trống, mã quân chưa dùng và đội còn chỗ. |
+| Tạo quân | `bot.spawn("ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);` | Hỗ trợ `WORKER`, `MELEE`, `RANGED`, `SIEGE`; vùng xuất quân phải trống. |
 | Khai thác | `bot.harvest();` | Mặc định đứng tại điểm tài nguyên còn trữ lượng. |
 | Xây doanh trại | `bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);` | Ô bên phải trống; mặc định tốn 3 tài nguyên. |
 | Xây tháp | `bot.build("tower-blue", BuildingType.TOWER, Direction.DOWN);` | Ô bên dưới trống; mặc định tốn 2 tài nguyên. |
@@ -172,25 +172,24 @@ Mỗi dòng là một ví dụ riêng; cần đưa quân tới vị trí phù h�
 Sau khi tạo quân mới, gọi `bot.selectUnit("worker-blue-2");` để điều khiển quân đó.
 Để thử đội đỏ, dùng mã truy cập `red-token` và chọn `worker-red`.
 
-**Tạo loại quân khác:** Các lệnh `bot.spawn` hiện chỉ tạo quân thợ.
-Để thử quân cận chiến, đánh xa hoặc công thành trong Desktop Code Studio, thêm các dòng nhập sau ở đầu chương trình:
+**Tạo loại quân khác:** Thêm import sau ở đầu chương trình Desktop Code Studio:
 
 ```java
-import com.antcolonywars.client.GameClient;
 import com.antcolonywars.core.UnitType;
 ```
 
-Thay nội dung hàm `run` bằng đoạn dưới đây; trên trận mới, quân đánh xa xuất hiện dưới nhà chính xanh:
+Trong hàm `run`, có thể tạo và điều khiển quân đánh xa như sau:
 
 ```java
-try (GameClient client = GameClient.connect("ws://localhost:8080/game", "blue-token", "match-training")) {
-    client.spawn("ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);
-    client.move("ranged-blue-1", Direction.RIGHT);
-}
+bot.spawn("ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);
+bot.selectUnit("ranged-blue-1");
+bot.move(Direction.RIGHT);
+bot.attack(Direction.RIGHT);
 ```
 
 Đổi `UnitType.RANGED` thành `MELEE` (cận chiến), `SIEGE` (công thành) hoặc `WORKER` (quân thợ).
-Kết nối này dùng mã truy cập ghi trong đoạn chương trình.
+Nếu đã gọi `bot.selectUnit("ranged-blue-1")`, có thể viết ngắn `bot.attack(Direction.RIGHT)`.
+Nếu không có mục tiêu trên đường bắn trong tầm, server trả `TARGET_NOT_FOUND`; nếu đồng minh đứng trước, server trả `FRIENDLY_TARGET`.
 
 ### Cách khác — chạy kịch bản có sẵn
 

@@ -10,15 +10,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GameEngineAttackTest {
     @Test
-    void rejectsTargetOutsideAttackRange() {
-        GameSession session = new GameSession(combatSetup(new Position(1, 1), new Position(3, 3)));
+    void rejectsWhenNoTargetIsFoundInTheAttackDirectionAndRange() {
+        GameSession session = new GameSession(combatSetup(new Position(1, 1), new Position(3, 1)));
         MatchState before = session.state();
 
         ApplyResult result = session.apply(
-                new AttackCommand("attack-far", "BLUE", "worker-blue", "worker-red")
+                new AttackCommand("attack-far", "BLUE", "worker-blue", Direction.RIGHT)
         );
 
-        assertEquals(ErrorCode.OUT_OF_RANGE, result.error());
+        assertEquals(ErrorCode.TARGET_NOT_FOUND, result.error());
         assertSame(before, result.state());
     }
 
@@ -33,7 +33,7 @@ class GameEngineAttackTest {
         ));
 
         ApplyResult result = session.apply(
-                new AttackCommand("attack-unit", "BLUE", "worker-blue", "worker-red")
+                new AttackCommand("attack-unit", "BLUE", "worker-blue", Direction.RIGHT)
         );
         ApplyResult tick = session.advanceTick();
 
@@ -54,9 +54,9 @@ class GameEngineAttackTest {
                 new Position(2, 1)
         ));
 
-        session.apply(new AttackCommand("hq-1", "BLUE", "worker-blue", "hq-red"));
-        session.apply(new AttackCommand("hq-2", "BLUE", "worker-blue", "hq-red"));
-        session.apply(new AttackCommand("hq-3", "BLUE", "worker-blue", "hq-red"));
+        session.apply(new AttackCommand("hq-1", "BLUE", "worker-blue", Direction.RIGHT));
+        session.apply(new AttackCommand("hq-2", "BLUE", "worker-blue", Direction.RIGHT));
+        session.apply(new AttackCommand("hq-3", "BLUE", "worker-blue", Direction.RIGHT));
         ApplyResult finalHit = session.advanceTick();
 
         assertTrue(finalHit.accepted());
@@ -91,12 +91,12 @@ class GameEngineAttackTest {
         GameSession session = new GameSession(setup);
 
         ApplyResult ranged = session.apply(new AttackCommand(
-                "ranged-attack", "BLUE", "ranged-blue", "worker-red"));
+                "ranged-attack", "BLUE", "ranged-blue", Direction.RIGHT));
         assertTrue(ranged.accepted());
         assertEquals(3, unit(ranged.state(), "worker-red").hp());
 
         ApplyResult siege = session.apply(new AttackCommand(
-                "siege-attack", "BLUE", "siege-blue", "worker-red-2"));
+                "siege-attack", "BLUE", "siege-blue", Direction.RIGHT));
         assertTrue(siege.accepted());
         ApplyResult firstTick = session.advanceTick();
         assertEquals(1, unit(firstTick.state(), "worker-red-2").hp());
@@ -116,31 +116,31 @@ class GameEngineAttackTest {
                 ),
                 List.of(
                         new Unit("worker-blue", "BLUE", "WORKER", new Position(1, 1), 3, Direction.RIGHT),
-                        new Unit("worker-cyan", "CYAN", "WORKER", new Position(4, 4), 3, Direction.UP)
+                        new Unit("worker-cyan", "CYAN", "WORKER", new Position(2, 1), 3, Direction.LEFT)
                 ),
                 List.of(
                         new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
                         new Headquarters("hq-cyan", "CYAN", new Position(0, 4), 3),
-                        new Headquarters("hq-red", "RED", new Position(2, 1), 3),
-                        new Headquarters("hq-orange", "ORANGE", new Position(1, 2), 3)
+                        new Headquarters("hq-red", "RED", new Position(1, 2), 3),
+                        new Headquarters("hq-orange", "ORANGE", new Position(0, 1), 3)
                 )
         );
         GameSession session = new GameSession(setup);
 
         ApplyResult friendly = session.apply(new AttackCommand(
-                "friendly", "BLUE", "worker-blue", "worker-cyan"));
+                "friendly", "BLUE", "worker-blue", Direction.RIGHT));
         assertEquals(ErrorCode.FRIENDLY_TARGET, friendly.error());
 
         for (int hit = 0; hit < 3; hit++) {
             assertTrue(session.apply(new AttackCommand(
-                    "red-" + hit, "BLUE", "worker-blue", "hq-red")).accepted());
+                    "red-" + hit, "BLUE", "worker-blue", Direction.DOWN)).accepted());
         }
         MatchState afterRed = session.advanceTick().state();
         assertEquals(MatchStatus.RUNNING, afterRed.status());
 
         for (int hit = 0; hit < 3; hit++) {
             assertTrue(session.apply(new AttackCommand(
-                    "orange-" + hit, "BLUE", "worker-blue", "hq-orange")).accepted());
+                    "orange-" + hit, "BLUE", "worker-blue", Direction.LEFT)).accepted());
         }
         MatchState finished = session.advanceTick().state();
         assertEquals(MatchStatus.FINISHED, finished.status());

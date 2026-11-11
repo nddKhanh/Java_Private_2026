@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 5;
+    public static final int SCHEMA_VERSION = 6;
 
     private final MatchRegistry matchRegistry;
     private final ObjectMapper objectMapper;
@@ -167,7 +167,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             );
             case "WAIT" -> new WaitCommand(request.commandId(), teamId, unitId);
             case "ATTACK" -> new AttackCommand(
-                    request.commandId(), teamId, unitId, requireText(request.targetId())
+                    request.commandId(), teamId, unitId, Direction.valueOf(requireText(request.direction()))
             );
             case "HARVEST" -> new HarvestCommand(request.commandId(), teamId, unitId);
             case "BUILD" -> new BuildCommand(

@@ -6,21 +6,22 @@ final class DefaultBotSource {
             import com.antcolonywars.bot.BotProgram;
             import com.antcolonywars.bot.GameBot;
             import com.antcolonywars.client.Direction;
-            import com.antcolonywars.client.BuildingType;
+            import com.antcolonywars.core.UnitType;
 
             public final class MyBot implements BotProgram {
                 @Override
                 public void run(GameBot bot) {
-                    bot.spawn("worker-blue-2", "Blue Worker 2", Direction.DOWN);
-                    bot.selectUnit("worker-blue-2");
-                    for (int step = 0; step < 2; step++) {
-                        bot.move(Direction.RIGHT);
-                    }
-                    bot.move(Direction.DOWN);
-                    bot.harvest();
-                    bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
+                    var state = bot.getLatestState().snapshot();
+                    System.out.printf("Match %s: %d units, %d resources.%n",
+                            state.matchId(), state.units().size(), state.resourceNodes().size());
 
-                    System.out.println("Spawned, harvested and built a barracks.");
+                    // Spawn any supported type next to your headquarters:
+                    // bot.spawn("ranged-1", "Ranged 1", UnitType.RANGED, Direction.DOWN);
+                    // Attack from a selected unit in one direction up to its maximum range:
+                    // bot.attack("ranged-1", Direction.RIGHT);
+
+                    bot.waitTurn();
+                    System.out.println("Bot command accepted.");
                 }
             }
             """;

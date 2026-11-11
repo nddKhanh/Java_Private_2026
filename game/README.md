@@ -6,6 +6,7 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 
 - MVP Phase 00–05, Desktop D00–D05 và gameplay R1–R6 đã được ghi nhận `VERIFIED`.
 - Chức năng hiện có gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE.
+- SPAWN hỗ trợ WORKER, MELEE, RANGED và SIEGE; ATTACK nhận mã quân cùng hướng và quét mục tiêu đầu tiên đến hết tầm đánh.
 - Server là nguồn sự thật duy nhất cho vị trí, HP, damage, resource, building, revision và winner.
 - R4 thêm rate limit 10 action/giây theo team và queue tuần tự capacity 32 theo profile mặc định.
 - R4.1 thêm footprint 2×2 cho SIEGE, projectile và nhịp mô phỏng mặc định 250 ms.

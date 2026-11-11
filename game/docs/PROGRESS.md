@@ -189,3 +189,10 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Đã đạt:** Match động được đưa vào registry, simulation và WebSocket; trạng thái lobby/setup phục hồi từ H2.
 - **Bằng chứng:** `LobbyFlowIntegrationTest` pass và `game-web/npm run build` pass.
 - **Giới hạn:** Chưa có danh sách phòng công khai, mời bạn bè, matchmaking tự động hoặc quyền quản trị phòng nâng cao.
+
+## 2026-11-11 — spawn đa loại và tấn công theo hướng
+
+- **Trạng thái:** `VERIFIED`.
+- **Đã đạt:** `GameBot` spawn trực tiếp bốn `UnitType`; attack nhận mã quân và hướng, chọn thực thể đầu tiên trên đường bắn trong tầm riêng của loại quân.
+- **Đã đạt:** Bot mẫu đọc state và dùng lệnh an toàn, không còn đi/thu hoạch theo tọa độ cố định của map mặc định.
+- **Bằng chứng:** `GameEngineAttackTest`, `GameEngineSpawnTest`, replay, coordinator, `GameClientIntegrationTest` và `BotCompilerTest` pass.

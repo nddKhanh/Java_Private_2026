@@ -16,6 +16,7 @@ Java bot → GameClient → WebSocket /game → Spring Boot → Game Core → ST
 
 Server là nguồn sự thật duy nhất cho movement, damage, HP và winner.
 Phaser chỉ render snapshot và không tự tính gameplay.
+Bot có thể spawn `WORKER`, `MELEE`, `RANGED`, `SIEGE`; lệnh attack nhận mã quân và hướng, rồi server chọn mục tiêu đầu tiên trong tầm trên đường bắn.
 Web viewer có đăng ký/đăng nhập, tạo/tìm trận, phòng chờ theo đội, cùng bảng trạng thái revision, tick, lực lượng và kết quả trận.
 Khi chạy `start-web.ps1`, viewer mở trên mọi địa chỉ mạng để các máy cùng Wi-Fi truy cập bằng IPv4 của máy chủ.
 

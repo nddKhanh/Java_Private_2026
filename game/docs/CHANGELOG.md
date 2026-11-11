@@ -3,6 +3,17 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-11 — spawn đa loại và tấn công theo hướng
+
+### Changed
+
+- `GameBot.spawn` hỗ trợ trực tiếp `WORKER`, `MELEE`, `RANGED`, `SIEGE` và `ATTACK` dùng mã quân + hướng để chọn mục tiêu đầu tiên đến hết tầm.
+- Bot mẫu không còn giả định tọa độ tài nguyên cố định nên chạy được trên map script động.
+
+### Verified
+
+- Test engine, projectile/replay, coordinator, WebSocket client, spawn qua `GameBot` và compiler Desktop đều pass.
+
 ## 2026-11-11 — R8.4 lobby động
 
 ### Added

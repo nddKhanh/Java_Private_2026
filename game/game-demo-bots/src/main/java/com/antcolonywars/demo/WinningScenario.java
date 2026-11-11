@@ -12,25 +12,25 @@ public final class WinningScenario {
         try (GameClient bot = GameClient.connect(DemoConfig.serverUrl(), DemoConfig.blueToken())) {
             move(bot, Direction.RIGHT, 6);
             move(bot, Direction.DOWN, 6);
-            destroy(bot, "hq-red");
+            destroy(bot, Direction.DOWN);
 
             move(bot, Direction.UP, 3);
             move(bot, Direction.RIGHT, 16);
-            destroy(bot, "hq-orange");
+            destroy(bot, Direction.DOWN);
 
             move(bot, Direction.LEFT, 2);
             move(bot, Direction.DOWN, 4);
             move(bot, Direction.RIGHT, 2);
-            destroy(bot, "hq-yellow");
+            destroy(bot, Direction.DOWN);
 
             move(bot, Direction.LEFT, 2);
             move(bot, Direction.DOWN, 4);
             move(bot, Direction.RIGHT, 2);
-            destroy(bot, "hq-magenta");
+            destroy(bot, Direction.DOWN);
 
             move(bot, Direction.LEFT, 3);
             move(bot, Direction.DOWN, 4);
-            GameState state = destroy(bot, "hq-maroon");
+            GameState state = destroy(bot, Direction.LEFT);
             System.out.printf(
                     "Match status: %s, winner: %s, revision: %d.%n",
                     state.status(),
@@ -46,9 +46,9 @@ public final class WinningScenario {
         }
     }
 
-    private static GameState destroy(GameClient bot, String headquartersId) {
+    private static GameState destroy(GameClient bot, Direction direction) {
         for (int hit = 0; hit < 3; hit++) {
-            bot.attack(headquartersId);
+            bot.attack(direction);
         }
         return bot.awaitSimulationIdle();
     }

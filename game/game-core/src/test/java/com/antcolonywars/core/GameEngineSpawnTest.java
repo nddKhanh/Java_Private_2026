@@ -8,6 +8,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GameEngineSpawnTest {
     @Test
+    void spawnsEverySupportedUnitType() {
+        for (UnitType type : UnitType.values()) {
+            GameSession session = new GameSession(DefaultMatchSetup.create());
+            String unitId = "spawned-" + type.name().toLowerCase();
+
+            ApplyResult result = session.apply(new SpawnCommand(
+                    "spawn-" + type.name(), "BLUE", unitId, type.name(), type.name(), Direction.DOWN
+            ));
+
+            assertTrue(result.accepted(), type.name());
+            Unit unit = unit(result.state(), unitId);
+            assertEquals(type.name(), unit.type());
+            assertEquals(type == UnitType.SIEGE ? 2 : 1, unit.width());
+            assertEquals(type == UnitType.SIEGE ? 2 : 1, unit.height());
+        }
+    }
+
+    @Test
     void spawnsNamedUnitBesideHeadquartersAndLetsItAct() {
         GameSession session = new GameSession(DefaultMatchSetup.create());
 
@@ -75,7 +93,7 @@ class GameEngineSpawnTest {
         );
         session = new GameSession(combat);
 
-        ApplyResult attack = session.apply(new AttackCommand("lethal-hit", "BLUE", "blue", "red"));
+        ApplyResult attack = session.apply(new AttackCommand("lethal-hit", "BLUE", "blue", Direction.RIGHT));
         ApplyResult result = session.advanceTick();
 
         assertTrue(attack.accepted());

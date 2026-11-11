@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 5;
+    private static final int SCHEMA_VERSION = 6;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -79,14 +79,14 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         return sendUnitAction("WAIT", unitId, Map.of());
     }
 
-    public GameState attack(String targetId) {
-        Objects.requireNonNull(targetId, "targetId");
-        return sendAction("ATTACK", Map.of("targetId", targetId));
+    public GameState attack(Direction direction) {
+        Objects.requireNonNull(direction, "direction");
+        return sendAction("ATTACK", Map.of("direction", direction.name()));
     }
 
-    public GameState attack(String unitId, String targetId) {
-        Objects.requireNonNull(targetId, "targetId");
-        return sendUnitAction("ATTACK", unitId, Map.of("targetId", targetId));
+    public GameState attack(String unitId, Direction direction) {
+        Objects.requireNonNull(direction, "direction");
+        return sendUnitAction("ATTACK", unitId, Map.of("direction", direction.name()));
     }
 
     public GameState spawn(String unitId, String displayName, Direction direction) {

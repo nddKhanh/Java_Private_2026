@@ -3,6 +3,7 @@ package com.antcolonywars.bot;
 import com.antcolonywars.client.Direction;
 import com.antcolonywars.client.BuildingType;
 import com.antcolonywars.client.GameState;
+import com.antcolonywars.core.UnitType;
 
 public interface GameBot extends AutoCloseable {
     GameBot selectUnit(String unitId);
@@ -10,6 +11,8 @@ public interface GameBot extends AutoCloseable {
     String selectedUnitId();
 
     GameState spawn(String unitId, String displayName, Direction direction);
+
+    GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction);
 
     GameState harvest();
 
@@ -19,7 +22,9 @@ public interface GameBot extends AutoCloseable {
 
     GameState waitTurn();
 
-    GameState attack(String targetId);
+    GameState attack(Direction direction);
+
+    GameState attack(String unitId, Direction direction);
 
     GameState awaitSimulationIdle();
 

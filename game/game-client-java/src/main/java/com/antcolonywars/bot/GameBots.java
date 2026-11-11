@@ -4,6 +4,7 @@ import com.antcolonywars.client.Direction;
 import com.antcolonywars.client.BuildingType;
 import com.antcolonywars.client.GameClient;
 import com.antcolonywars.client.GameState;
+import com.antcolonywars.core.UnitType;
 
 import java.time.Duration;
 
@@ -55,6 +56,11 @@ public final class GameBots {
         }
 
         @Override
+        public GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction) {
+            return client.spawn(unitId, displayName, unitType, direction);
+        }
+
+        @Override
         public GameState harvest() {
             return selectedUnitId == null ? client.harvest() : client.harvest(selectedUnitId);
         }
@@ -82,10 +88,15 @@ public final class GameBots {
         }
 
         @Override
-        public GameState attack(String targetId) {
+        public GameState attack(Direction direction) {
             return selectedUnitId == null
-                    ? client.attack(targetId)
-                    : client.attack(selectedUnitId, targetId);
+                    ? client.attack(direction)
+                    : client.attack(selectedUnitId, direction);
+        }
+
+        @Override
+        public GameState attack(String unitId, Direction direction) {
+            return client.attack(unitId, direction);
         }
 
         @Override

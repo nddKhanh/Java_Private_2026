@@ -64,7 +64,7 @@ class MatchCoordinatorTest {
         SimulationTicker ticker = new SimulationTicker(coordinator, handler);
 
         assertTrue(coordinator.apply(
-                new AttackCommand("attack-1", "BLUE", "worker-blue", "worker-red")
+                new AttackCommand("attack-1", "BLUE", "worker-blue", Direction.RIGHT)
         ).accepted());
         ticker.tick();
 

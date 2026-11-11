@@ -159,35 +159,63 @@ public final class GameEngine {
     }
 
     private ApplyResult applyAttack(MatchState state, Unit actor, AttackCommand command, RuleSet rules) {
-        Unit targetUnit = findUnit(state, command.targetId());
-        Headquarters targetHeadquarters = findHeadquarters(state, command.targetId());
-        if (targetUnit == null && targetHeadquarters == null) {
+        AttackTarget target = firstAttackTarget(
+                state, actor, command.direction(), rules.attackRangeFor(actor.type())
+        );
+        if (target == null) {
             return ApplyResult.failure(state, ErrorCode.TARGET_NOT_FOUND);
         }
-        String targetTeamId = targetUnit != null ? targetUnit.teamId() : targetHeadquarters.teamId();
-        List<Position> targetCells = targetUnit != null
-                ? cells(targetUnit)
-                : List.of(targetHeadquarters.position());
-        int targetHp = targetUnit != null ? targetUnit.hp() : targetHeadquarters.hp();
-        if (sameFaction(state, actor.teamId(), targetTeamId)) {
+        if (sameFaction(state, actor.teamId(), target.teamId())) {
             return ApplyResult.failure(state, ErrorCode.FRIENDLY_TARGET);
-        }
-        if (targetHp == 0) {
-            return ApplyResult.failure(state, ErrorCode.TARGET_DESTROYED);
-        }
-        if (distance(cells(actor), targetCells) > rules.attackRangeFor(actor.type())) {
-            return ApplyResult.failure(state, ErrorCode.OUT_OF_RANGE);
         }
 
         List<Projectile> projectiles = new ArrayList<>(state.projectiles());
-        Position targetCell = closestCell(targetCells, actor.position());
+        Position targetCell = closestCell(target.cells(), actor.position());
         projectiles.add(new Projectile(
-                "projectile:" + command.commandId(), actor.teamId(), actor.id(), command.targetId(),
+                "projectile:" + command.commandId(), actor.teamId(), actor.id(), target.id(),
                 closestCell(cells(actor), targetCell), rules.attackDamageFor(actor.type())
         ));
         return accept(state, state.units(), state.retiredUnitIds(), state.headquarters(), state.status(),
                 state.resourceNodes(), state.buildings(), state.teams(), projectiles,
-                state.winnerTeamId(), command, command.targetId());
+                state.winnerTeamId(), command, target.id());
+    }
+
+    private AttackTarget firstAttackTarget(
+            MatchState state, Unit actor, Direction direction, int range
+    ) {
+        List<AttackTarget> targets = new ArrayList<>();
+        state.units().stream()
+                .filter(unit -> unit.hp() > 0 && !unit.id().equals(actor.id()))
+                .forEach(unit -> targets.add(new AttackTarget(
+                        unit.id(), unit.teamId(), cells(unit),
+                        distanceInDirection(cells(actor), cells(unit), direction)
+                )));
+        state.headquarters().stream()
+                .filter(headquarters -> headquarters.hp() > 0)
+                .forEach(headquarters -> targets.add(new AttackTarget(
+                        headquarters.id(), headquarters.teamId(), List.of(headquarters.position()),
+                        distanceInDirection(cells(actor), List.of(headquarters.position()), direction)
+                )));
+        return targets.stream()
+                .filter(target -> target.distance() >= 1 && target.distance() <= range)
+                .min(java.util.Comparator.comparingInt(AttackTarget::distance).thenComparing(AttackTarget::id))
+                .orElse(null);
+    }
+
+    private int distanceInDirection(
+            List<Position> sourceCells, List<Position> targetCells, Direction direction
+    ) {
+        return sourceCells.stream()
+                .flatMapToInt(source -> targetCells.stream()
+                        .filter(target -> switch (direction) {
+                            case RIGHT -> target.y() == source.y() && target.x() > source.x();
+                            case LEFT -> target.y() == source.y() && target.x() < source.x();
+                            case DOWN -> target.x() == source.x() && target.y() > source.y();
+                            case UP -> target.x() == source.x() && target.y() < source.y();
+                        })
+                        .mapToInt(source::manhattanDistance))
+                .min()
+                .orElse(Integer.MAX_VALUE);
     }
 
     private ApplyResult applyTick(MatchState state, TickCommand command) {
@@ -428,5 +456,8 @@ public final class GameEngine {
 
     private List<Team> replaceTeam(List<Team> teams, Team replacement) {
         return teams.stream().map(team -> team.id().equals(replacement.id()) ? replacement : team).toList();
+    }
+
+    private record AttackTarget(String id, String teamId, List<Position> cells, int distance) {
     }
 }

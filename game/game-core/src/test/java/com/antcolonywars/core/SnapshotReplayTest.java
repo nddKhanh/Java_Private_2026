@@ -86,7 +86,7 @@ class SnapshotReplayTest {
         );
         GameSession original = new GameSession(setup);
         for (int hit = 1; hit <= 3; hit++) {
-            original.apply(new AttackCommand("attack-" + hit, "BLUE", "worker-blue", "hq-red"));
+            original.apply(new AttackCommand("attack-" + hit, "BLUE", "worker-blue", Direction.RIGHT));
         }
         original.advanceTick();
 
