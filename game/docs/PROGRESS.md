@@ -178,4 +178,14 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Đã đạt:** Server bind `0.0.0.0`, web viewer bind `0.0.0.0` và tự suy ra hostname để nhiều máy cùng Wi-Fi truy cập trực tiếp.
 - **Bằng chứng:** `game-web/npm run build` pass; copy lint gaming không có finding; gate không có FAIL trong phần đã chạy.
 - **Giới hạn:** consistency/layout browser chưa chạy vì Node 20 không đáp ứng yêu cầu Node 22 của bộ kiểm tra; chưa có visual sign-off thủ công.
-- **Tiếp theo:** R8.4 cân bằng trận và hoàn thiện animation/tutorial/replay trước khi đóng gói phát hành.
+- **Tiếp theo:** R8.4 lobby tài khoản và trận động; sau đó cân bằng, animation/tutorial/replay.
+
+## 2026-11-11 — R8.4 lobby tài khoản và trận động
+
+- **Trạng thái:** `IMPLEMENTED`.
+- **Đã đạt:** Đăng ký/đăng nhập web tối giản, session khôi phục từ local storage và đăng xuất.
+- **Đã đạt:** Tạo setup từ JSON map script, sinh mã trận/token đội, phòng chờ theo slot và chủ phòng bắt đầu.
+- **Đã đạt:** Tìm trận bằng mã + token, khóa capacity trong transaction và trả lỗi `TEAM_FULL`.
+- **Đã đạt:** Match động được đưa vào registry, simulation và WebSocket; trạng thái lobby/setup phục hồi từ H2.
+- **Bằng chứng:** `LobbyFlowIntegrationTest` pass và `game-web/npm run build` pass.
+- **Giới hạn:** Chưa có danh sách phòng công khai, mời bạn bè, matchmaking tự động hoặc quyền quản trị phòng nâng cao.

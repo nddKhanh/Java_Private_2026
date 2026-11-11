@@ -343,6 +343,13 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 
 ## 11. Hướng phát triển sau MVP
 
+### Lobby web và trận động
+
+- Người chơi đăng ký/đăng nhập bằng username/password trước khi tạo hoặc tìm trận.
+- Trận tùy chỉnh được mô tả bằng JSON map script với kích thước vuông, tài nguyên, HQ, lính, số đội và capacity tài khoản/đội.
+- Server sinh mã trận và token đội, giữ phòng chờ trong H2 và chỉ đăng ký match vào simulation khi chủ phòng bắt đầu.
+- Tham gia trận dùng mã trận + token đội; kiểm tra capacity được thực hiện transactionally trên server.
+
 1. R1 đã bổ sung spawn WORKER cạnh HQ, ID toàn trận, tên hiển thị, chọn đơn vị và giới hạn theo đội.
 2. Đơn vị bị hạ được xóa khỏi snapshot để giải phóng ô và quota.
 3. R2 đã bổ sung resource node, stockpile, khai thác và xây BARRACKS/TOWER/WALL qua schema 3.

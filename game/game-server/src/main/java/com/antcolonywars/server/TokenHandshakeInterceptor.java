@@ -18,15 +18,18 @@ public class TokenHandshakeInterceptor implements HandshakeInterceptor {
     private final AccountService accountService;
     private final MatchRegistry matchRegistry;
     private final GameProfileProperties profile;
+    private final LobbyService lobbyService;
 
     public TokenHandshakeInterceptor(
             AccountService accountService,
             MatchRegistry matchRegistry,
-            GameProfileProperties profile
+            GameProfileProperties profile,
+            LobbyService lobbyService
     ) {
         this.accountService = accountService;
         this.matchRegistry = matchRegistry;
         this.profile = profile;
+        this.lobbyService = lobbyService;
     }
 
     @Override
@@ -51,8 +54,13 @@ public class TokenHandshakeInterceptor implements HandshakeInterceptor {
         if (token == null) {
             return true;
         }
-        String teamId = accountService.resolveTeamId(token);
-        boolean teamExists = coordinator.state().teams().stream().anyMatch(team -> team.id().equals(teamId));
+        String teamId = lobbyService.resolveTeamId(matchId, token);
+        if (teamId == null) {
+            teamId = accountService.resolveTeamId(token);
+        }
+        String resolvedTeamId = teamId;
+        boolean teamExists = coordinator.state().teams().stream()
+                .anyMatch(team -> team.id().equals(resolvedTeamId));
         if (teamId == null || !teamExists) {
             return false;
         }

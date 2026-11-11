@@ -102,3 +102,38 @@ export interface MatchRuntime {
   maxTickMicros: number;
   tickSamples: number;
 }
+
+export interface Account {
+  id: string;
+  username: string;
+  displayName: string;
+  teamId: string | null;
+}
+
+export interface Session {
+  token: string;
+  expiresAt: string;
+  account: Account;
+}
+
+export interface LobbyMember {
+  accountId: string;
+  username: string;
+}
+
+export interface LobbyTeam {
+  teamId: string;
+  displayName: string;
+  color: string;
+  token: string;
+  capacity: number;
+  members: LobbyMember[];
+}
+
+export interface LobbyView {
+  matchCode: string;
+  status: 'WAITING' | 'RUNNING';
+  currentAccountId: string;
+  owner: boolean;
+  teams: LobbyTeam[];
+}

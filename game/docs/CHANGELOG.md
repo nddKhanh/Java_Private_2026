@@ -3,6 +3,19 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-11 — R8.4 lobby động
+
+### Added
+
+- Thêm giao diện đăng ký/đăng nhập bằng username/password, sảnh tạo hoặc tìm trận và lưu session trong trình duyệt.
+- Thêm map script JSON cho bản đồ vuông, tài nguyên, HQ, lính, số đội và số tài khoản mỗi đội.
+- Thêm phòng chờ với mã trận, token đội, slot thành viên, kiểm tra đội đầy và nút bắt đầu của chủ phòng.
+- Thêm Flyway V3 cùng API lobby động và đăng ký match runtime khi bắt đầu.
+
+### Verified
+
+- Integration test pass cho đăng ký, đăng nhập, tạo/join, giới hạn slot, token đội và bắt đầu trận; frontend production build pass.
+
 ## 2026-11-11 — R8.1–R8.3
 
 ### Added

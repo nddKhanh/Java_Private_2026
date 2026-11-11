@@ -2,7 +2,7 @@
 
 MVP game chiến thuật 2D trong đó chương trình Java gửi command và Phaser hiển thị state do server xác nhận theo thời gian thực.
 
-**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R6 `VERIFIED`; R8.1–R8.3 đã triển khai trong web viewer.
+**Trạng thái:** Phase 00–05, Desktop D00–D05 và R1–R6 `VERIFIED`; R8.1–R8.4 đã triển khai trong web viewer.
 
 README cấp gốc [`../README.md`](../README.md) là điểm vào chính của dự án.
 Khi thay đổi README cấp gốc về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật đồng thời `GUIDE.md`, `README.md` này và `CHANGELOG.md`.
@@ -16,7 +16,7 @@ Java bot → GameClient → WebSocket /game → Spring Boot → Game Core → ST
 
 Server là nguồn sự thật duy nhất cho movement, damage, HP và winner.
 Phaser chỉ render snapshot và không tự tính gameplay.
-Web viewer có màn hình chọn match, trường mã phiên và bảng trạng thái revision, tick, lực lượng cùng kết quả trận.
+Web viewer có đăng ký/đăng nhập, tạo/tìm trận, phòng chờ theo đội, cùng bảng trạng thái revision, tick, lực lượng và kết quả trận.
 Khi chạy `start-web.ps1`, viewer mở trên mọi địa chỉ mạng để các máy cùng Wi-Fi truy cập bằng IPv4 của máy chủ.
 
 Desktop Code Studio dùng JavaFX để viết, biên dịch và chạy source Java local trong JVM con, sau đó tái sử dụng `GameClient` để điều khiển server.
@@ -53,6 +53,8 @@ Terminal thứ hai chạy Phaser viewer:
 
 Máy chủ mở `http://127.0.0.1:5173/`; các máy cùng Wi-Fi mở `http://IP_MAY_CHU:5173/` và chờ trạng thái `Đang trực tuyến`.
 Ví dụ: `http://192.168.1.23:5173/`.
+
+Đăng ký bằng username/password trên web. Sau khi đăng nhập, chọn **Tạo trận** để nhập JSON map script hoặc **Tìm trận** để nhập mã trận cùng token đội. Phòng chờ hiển thị mã trận, token từng đội, slot tài khoản và nút bắt đầu dành cho chủ phòng.
 
 Terminal thứ ba chạy một bot mẫu:
 
@@ -92,6 +94,8 @@ Các hành động đã thực hiện trong trận vẫn được giữ sau khi 
 ## Account và lobby team
 
 REST API hỗ trợ đăng ký qua `POST /api/accounts`, đăng nhập qua `POST /api/sessions`, xem account qua `GET /api/lobby/me` và join team qua `PUT /api/lobby/membership`.
+Web viewer gọi trực tiếp các API này; display name mặc định bằng username nên form đăng ký chỉ cần username/password.
+Lobby động dùng `POST /api/lobbies`, `POST /api/lobbies/join`, `GET /api/lobbies/{matchCode}` và `POST /api/lobbies/{matchCode}/start`.
 Mật khẩu được lưu bằng BCrypt; session token trả về cho client chỉ được lưu dưới dạng SHA-256 trong database.
 Sau khi join team, dùng session token ở trường Token của Desktop Code Studio hoặc tham số thứ hai của `GameClient.connect`/`GameBots.connect`.
 Tối đa 5 account có thể join cùng team và dùng chung unit, quota cùng state server-authoritative; account thứ 6 nhận lỗi `TEAM_FULL`.
@@ -175,7 +179,7 @@ Không dùng các token này cho môi trường public hoặc production.
 - Resource node, harvest và building đã có; building production/defense chưa có.
 - Account, lobby membership, session, snapshot và event history được lưu bằng H2/Flyway; file database mặc định nằm trong `game-server/data/`.
 - Hai match được route độc lập theo `matchId`; reconnect nhận snapshot authoritative mới nhất.
-- Chưa có matchmaking, email verification, quên mật khẩu, backup hoặc database production.
+- Chưa có danh sách phòng công khai, matchmaking tự động, email verification, quên mật khẩu, backup hoặc database production.
 - Desktop Code Studio chỉ biên dịch và chạy source trên máy local; source/class không được gửi lên server.
 - JVM con có heap 64 MB, timeout cấu hình được và output giới hạn 64 KiB mỗi stream.
 - Các giới hạn process không phải sandbox an toàn cho code không tin cậy.

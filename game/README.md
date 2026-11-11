@@ -12,6 +12,7 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - R5 thêm account, đăng nhập, lobby team, session token và H2/Flyway để phục hồi state cùng lịch sử trận sau khi khởi động lại.
 - R6 hoàn thiện 10 đội/2 phe, hai match độc lập, tối đa 5 account cùng đội và reconnect theo snapshot mới nhất.
 - R8.1–R8.3 thêm màn hình chọn trận, mã truy cập, bảng trạng thái trận và phản hồi thắng/thua cho Phaser viewer.
+- R8.4 thêm đăng ký/đăng nhập trên web, tạo trận từ JSON map script, tìm trận bằng mã + token đội và phòng chờ theo slot.
 - R8 LAN cho phép một máy phát server/viewer để nhiều máy cùng Wi-Fi truy cập trực tiếp, không qua dịch vụ trung gian.
 
 ## Kiến trúc
@@ -47,6 +48,8 @@ Ví dụ: `http://192.168.1.23:5173/`.
 Token demo mặc định là `blue-token` và `red-token`.
 Profile mặc định có 10 đội thuộc 2 phe, tối đa 50 đơn vị mỗi đội và tối đa 5 account cùng điều khiển một đội.
 Hai match `match-default` và `match-training` được tạo từ cùng profile; Java client chọn match bằng overload `GameClient.connect(url, token, matchId)`.
+
+Trên web, đăng ký bằng username/password hoặc đăng nhập tài khoản đã có. Sau đó chọn **Tạo trận** để dùng map script JSON, hoặc **Tìm trận** để nhập mã trận và token đội. Chủ phòng bắt đầu trận từ phòng chờ; token của đội dùng trong Desktop Code Studio.
 
 Trong Desktop Code Studio cùng máy với server, giữ lớp `MyBot`, nhập máy chủ `ws://localhost:8080/game` và mã truy cập `blue-token`.
 Nếu chạy Desktop Code Studio trên máy khác cùng Wi-Fi, thay `localhost` bằng IPv4 của máy chủ.
@@ -89,7 +92,7 @@ Sau khi cập nhật, chạy `git diff --check` và ghi commit bằng tiếng An
 ## Giới hạn hiện tại
 
 - H2 dạng file chỉ phù hợp demo local; chưa có backup, HA hoặc database production.
-- Chưa có nhiều trận cùng lúc, danh sách phòng, matchmaking hoặc production deployment.
+- Có thể tạo nhiều trận riêng bằng mã; chưa có danh sách phòng công khai, matchmaking tự động hoặc production deployment.
 - Chưa có xác minh email, quên mật khẩu, thu hồi mọi session hoặc giới hạn số account mỗi team.
 - Chưa có load test quy mô lớn hoặc kiểm thử trực quan projectile trên nhiều trình duyệt.
 - Building mới có placement/HP/cost; chưa có production hoặc defense behavior.

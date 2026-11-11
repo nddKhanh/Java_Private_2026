@@ -165,6 +165,10 @@ public class AccountService {
         return authenticatedAccount(token).map(Account::teamId).orElse(null);
     }
 
+    public Optional<Account> findAccount(String token) {
+        return authenticatedAccount(token);
+    }
+
     private Optional<Account> authenticatedAccount(String token) {
         if (token == null || token.isBlank()) {
             return Optional.empty();
@@ -221,8 +225,8 @@ public class AccountService {
 
     private void validatePassword(String password) {
         int byteLength = password == null ? 0 : password.getBytes(StandardCharsets.UTF_8).length;
-        if (byteLength < 8 || byteLength > 72) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD", "Password must contain 8 to 72 UTF-8 bytes");
+        if (byteLength < 1 || byteLength > 72) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_PASSWORD", "Password must contain 1 to 72 UTF-8 bytes");
         }
     }
 

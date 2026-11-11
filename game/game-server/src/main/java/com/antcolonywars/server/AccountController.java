@@ -23,7 +23,10 @@ public final class AccountController {
     @ResponseStatus(HttpStatus.CREATED)
     public AccountService.Account register(@RequestBody RegisterRequest request) {
         requireRequest(request);
-        return accountService.register(request.username(), request.displayName(), request.password());
+        String displayName = request.displayName() == null || request.displayName().isBlank()
+                ? request.username()
+                : request.displayName();
+        return accountService.register(request.username(), displayName, request.password());
     }
 
     @PostMapping("/sessions")

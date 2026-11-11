@@ -14,6 +14,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class MatchRegistry {
     private final Map<String, MatchCoordinator> coordinators;
     private final Map<String, TickMetrics> tickMetrics = new ConcurrentHashMap<>();
+    private final GameProfileProperties.Limits limits;
+    private final Clock clock;
+    private final MatchPersistence persistence;
 
     MatchRegistry(
             MatchSetup template,
@@ -22,6 +25,9 @@ public final class MatchRegistry {
             Clock clock,
             MatchPersistence persistence
     ) {
+        this.limits = limits;
+        this.clock = clock;
+        this.persistence = persistence;
         Map<String, MatchCoordinator> configured = new LinkedHashMap<>();
         for (String matchId : matchIds) {
             MatchSetup setup = copyForMatch(template, matchId);
@@ -30,13 +36,31 @@ public final class MatchRegistry {
             configured.put(matchId, coordinator);
             tickMetrics.put(matchId, new TickMetrics(0, 0, 0));
         }
-        coordinators = java.util.Collections.unmodifiableMap(configured);
+        coordinators = new ConcurrentHashMap<>(configured);
     }
 
     MatchRegistry(MatchCoordinator coordinator) {
         String matchId = coordinator.state().matchId();
-        coordinators = Map.of(matchId, coordinator);
+        coordinators = new ConcurrentHashMap<>(Map.of(matchId, coordinator));
+        limits = null;
+        clock = null;
+        persistence = null;
         tickMetrics.put(matchId, new TickMetrics(0, 0, 0));
+    }
+
+    public synchronized MatchCoordinator register(MatchSetup setup) {
+        MatchCoordinator existing = coordinators.get(setup.matchId());
+        if (existing != null) {
+            return existing;
+        }
+        if (limits == null || clock == null || persistence == null) {
+            throw new IllegalStateException("This registry does not support dynamic matches");
+        }
+        MatchState restored = persistence.load(setup.matchId()).orElse(null);
+        MatchCoordinator coordinator = new MatchCoordinator(setup, restored, limits, clock, persistence);
+        coordinators.put(setup.matchId(), coordinator);
+        tickMetrics.put(setup.matchId(), new TickMetrics(0, 0, 0));
+        return coordinator;
     }
 
     public Optional<MatchCoordinator> find(String matchId) {

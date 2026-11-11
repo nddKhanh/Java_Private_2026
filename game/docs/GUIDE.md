@@ -10,7 +10,7 @@ Tài liệu này mô tả những gì người chơi có thể nhìn thấy và 
 ## 1. Trạng thái hiện tại
 
 - Ngày cập nhật: 2026-11-11.
-- Kịch bản đã hoàn thành: R1, R2, R3, R4, R4.1, R5, R6 và R8.1–R8.3.
+- Kịch bản đã hoàn thành: R1, R2, R3, R4, R4.1, R5, R6 và R8.1–R8.4.
 - Người chơi điều khiển quân của mình bằng chương trình Java hoặc Desktop Code Studio.
 - Phaser là màn hình quan sát bản đồ và trạng thái trận đấu.
 - Máy chủ giữ kết quả chính thức của mọi hành động.
@@ -51,8 +51,15 @@ Lệnh này dùng database H2 dạng file và tiếp tục account, lobby cùng 
 
 Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 
-Chọn `match-default` hoặc `match-training` trong phòng vào trận.
-Nếu dùng account, dán session token vào trường mã truy cập trước khi bấm `Vào trận`.
+Đăng ký hoặc đăng nhập ngay trên web. Sau đó có thể tạo trận mới, tìm trận bằng mã + token đội, hoặc mở một trận đang chạy để quan sát.
+
+### Tạo và tìm trận trên web
+
+1. Chọn **Tạo trận**, giữ hoặc sửa JSON mẫu rồi bấm **Tạo phòng chờ**.
+2. Map script dùng `map: "nxn"`, `teams`, `accountsPerTeam` và các mảng `resources`, `headquarters`, `units`.
+3. Gửi mã trận và token của đội mong muốn cho người chơi khác.
+4. Người chơi khác chọn **Tìm trận**, nhập đúng hai mã; nếu đội đầy, giao diện báo lỗi.
+5. Chủ phòng bấm **Bắt đầu trận đấu**. Sau khi bắt đầu, dùng token đội trong Desktop Code Studio và thêm `?matchId=MA_TRAN` vào URL server.
 
 ### Chơi cùng Wi-Fi trong mạng LAN
 
