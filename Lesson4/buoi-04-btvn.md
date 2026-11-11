@@ -211,6 +211,10 @@ Giữ lại menu và những chức năng đã có ở buổi 03. Chỉ cần b�
 
 Những trường hợp khó nhập từ menu có thể được thử bằng một đoạn mã ngắn trong `main`.
 
+### E. Sơ đồ lớp HitShop
+
+![Sơ đồ lớp HitShop — Buổi 04](./buoi-04-class-diagram.png)
+
 ## III. Năm tình huống kiểm tra
 
 Năm tình huống sau dùng để kiểm tra bài tập lớn. Hãy chạy từng tình huống với dữ liệu mẫu được tạo mới, để kết quả của bài thử này không ảnh hưởng đến bài thử khác.
@@ -222,6 +226,8 @@ Năm tình huống sau dùng để kiểm tra bài tập lớn. Hãy chạy từ
 | **3** | Tạo đơn O01 cho C01, thêm `P01 × 2` và `P02 × 1`; sau đó thử thêm P01 lần nữa và thử thêm `P04 × 4`. | Đơn chỉ có hai dòng hợp lệ; tiền hàng `350000`, phí vận chuyển `30000`, tổng thanh toán `380000`. |
 | **4** | Tạo O02 với `P04 × 3`; sau đó giảm tồn kho P04 xuống `2` rồi mới xác nhận. | Không xác nhận được, trạng thái vẫn `PENDING`, nội dung đơn không thay đổi. |
 | **5** | Xác nhận một đơn hợp lệ rồi thử thêm hàng và hủy đơn. Với một đơn khác, hủy ngay từ đầu rồi thử xác nhận. | Đơn đầu vẫn `CONFIRMED`, đơn sau vẫn `CANCELLED`; thao tác bị từ chối không làm thay đổi dữ liệu. |
+
+
 
 ## IV. Lưu ý khi làm bài
 
