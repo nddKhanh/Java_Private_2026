@@ -1,21 +1,21 @@
 # Bài Tập Về Nhà — Buổi 11
 
-## I. Tổng Kết Bài Tập Về Nhà Buổi 10
+## I. Tổng Kết Bài Tập Về Nhà Buổi 09
 
-Sau bài tập buổi 10, project đã được refactor theo luồng View → Controller → Service → Repository interface → JDBC implementation và giữ nguyên hành vi nghiệp vụ.
+Sau buổi 8 đã gộp nội dung MVC và buổi 9 bổ sung Order nhiều bảng, project được tổ chức theo luồng View → Controller → Service → Repository interface → JDBC implementation và giữ nguyên hành vi nghiệp vụ.
 
 ### 1. Các Test Case Phải Chạy Được
 
 | Mã | Thao tác | Kết quả mong đợi |
 |---|---|---|
-| `TC10-01` | Chạy CRUD Product sau refactor | Kết quả giống trước refactor |
-| `TC10-02` | Tạo và xem Order id `1` | Customer, items, giá lịch sử và tổng đúng |
-| `TC10-03` | Kiểm tra source các tầng | View không gọi JDBC; Controller không chứa nghiệp vụ; Service không chứa SQL |
-| `TC10-04` | Chạy `ProductService` với JDBC repository | Đọc đúng dữ liệu MySQL |
-| `TC10-05` | Chạy cùng `ProductService` với memory repository | Tìm/liệt kê Product mà không sửa Service |
-| `TC10-06` | Khởi động ứng dụng | Composition root tạo và nối đầy đủ dependency |
+| `TC08-10` | Chạy ProductService với memory repository | Tìm/liệt kê Product mà không sửa Service |
+| `TC08-11` | Kiểm tra main | Composition root tạo và nối dependency |
+| `TC09-03` | Xem Order id 1 | Customer, items, giá lịch sử và tổng 350000 đúng |
+| `TC09-06` | Chạy báo cáo ngày 2026-01-15 | Doanh thu 500000 |
+| `TC09-09` | Nhập dữ liệu tạo đơn | View chỉ nhận productId/quantity, Service chốt giá |
+| `TC09-10` | Kiểm tra kiến trúc | View không gọi JDBC; Controller không chứa nghiệp vụ; Service không chứa SQL |
 
-### 2. Cây Thư Mục Sau Buổi 10
+### 2. Cây Thư Mục Sau Buổi 09
 
 Cấu trúc source tối thiểu của phần bắt buộc; các package cũ vẫn được giữ nếu còn được sử dụng:
 
@@ -46,7 +46,7 @@ src/main/java/
 
 ## II. Bài Bắt Buộc — Form Và Bảng Product Bằng Swing
 
-### 1. Kế Thừa Từ Buổi 10
+### 1. Kế Thừa Từ Buổi 09
 
 Tiếp tục repository `HitShop` bằng JDK 17, class `HitShop` và `ProductService`/repository đã có. Thêm cửa sổ Swing làm View thay cho màn hình console; lấy Product từ cùng `ProductService`, không tạo danh sách sản phẩm hoặc repository riêng cho giao diện.
 

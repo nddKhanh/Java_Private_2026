@@ -10,7 +10,7 @@ Sau buổi học, học viên có thể:
 - Xử lý một conflict nhỏ mà không mất thay đổi của người khác.
 - Review theo hành vi, kiến trúc và khả năng chạy, không chỉ nhìn format.
 - Tạo JFrame, JPanel, JTextField, JButton, JTable và JScrollPane.
-- Hiển thị Product từ cùng ProductService của buổi 10 trong Swing.
+- Hiển thị Product từ cùng ProductService đã tách tầng ở buổi 8 và tiếp tục dùng ở buổi 9 trong Swing.
 
 > **Kết quả cuối buổi:** một feature branch tạo được cửa sổ Swing lấy dữ liệu qua Service và được đưa vào `develop` bằng pull request.
 

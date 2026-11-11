@@ -79,7 +79,19 @@ Khi tạo OrderItem, Service chụp `product.getPrice()` vào `unitPrice`. Khi x
 
 Đây là sự khác biệt với CartItem buổi 3: CartItem là giỏ tạm và đọc giá hiện tại; OrderItem là dòng giao dịch đã chốt.
 
-## IV. Insert Order Và Lấy Generated Key
+## IV. Input Từ View Và Generated Key
+
+Áp dụng ranh giới các tầng đã học ở buổi 8: View chỉ nhận mã sản phẩm và số lượng, Controller chuyển yêu cầu sang Service. DTO đầu vào, đặt trong file `OrderItemInput.java` thuộc package `dto`:
+
+```java
+public record OrderItemInput(String productId, int quantity) {}
+```
+
+`OrderService.createOrder(String customerId, List<OrderItemInput> inputs, LocalDateTime createdAt)` trả `long` id mới. Service tìm Customer/Product qua repository, kiểm tra input và tạo OrderItem với `product.getPrice()`. View không tạo OrderItem hoàn chỉnh hoặc yêu cầu người dùng nhập unitPrice. Không khai báo thêm overload chỉ đổi `List<OrderItemInput>` thành `List<OrderItem>` vì type erasure.
+
+Controller chỉ điều phối; Service ghép dữ liệu và chốt giá. Phần áp dụng vào project nằm trong BTVN; các truy vấn dưới đây minh họa cơ chế JDBC.
+
+### Insert Order Và Lấy Generated Key
 
 ```java
 String sql = "INSERT INTO orders(customer_id, status, created_at) VALUES (?, ?, ?)";

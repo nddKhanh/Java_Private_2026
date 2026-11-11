@@ -6,7 +6,7 @@
 
 Sau buổi học, mỗi nhóm có thể:
 
-- Nối kiến thức 11 buổi thành một luồng ứng dụng hoàn chỉnh.
+- Nối kiến thức các buổi đã học thành một luồng ứng dụng hoàn chỉnh.
 - Chọn đề tài và thu hẹp phạm vi thành sản phẩm demo được.
 - Thiết kế entity, ERD, use case nhiều bảng và ranh giới tầng.
 - Lập kế hoạch transaction, test case, Git/PR và demo.

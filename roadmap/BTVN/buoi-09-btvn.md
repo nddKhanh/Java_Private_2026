@@ -2,18 +2,19 @@
 
 ## I. Tổng Kết Bài Tập Về Nhà Buổi 08
 
-Sau bài tập buổi 8, project đã tách luồng console → service → repository interface → JDBC implementation, dùng `Optional` cho kết quả tìm kiếm và `OrderStatus` cho trạng thái đơn.
+Sau bài tập buổi 8, project đã tách luồng View → Controller → Service → Repository interface → JDBC implementation, dùng `Optional` cho kết quả tìm kiếm và `OrderStatus` cho trạng thái đơn.
 
 ### 1. Các Test Case Phải Chạy Được
 
 | Mã | Thao tác | Kết quả mong đợi |
 |---|---|---|
-| `TC08-01` | Chạy CRUD Product qua `ProductService` | Kết quả giữ nguyên như buổi 7 |
-| `TC08-02` | Tìm P99 hoặc C99 | Service trả `Optional.empty()`, console không bị lỗi null |
-| `TC08-03` | Thêm Product giá `0` hoặc Customer có phone rỗng | Service từ chối, repository không ghi dữ liệu |
-| `TC08-04` | Liệt kê C01, C02 | Trả đúng hai Customer chuẩn |
-| `TC08-05` | Xác nhận Order mới rồi thử hủy | Trạng thái là `CONFIRMED` và không đổi |
-| `TC08-06` | Kiểm tra dependency và SQL | Console không gọi repository; service không chứa SQL |
+| `TC08-01` | Chạy CRUD Product qua Controller/ProductService | Kết quả giữ nguyên như buổi 7 |
+| `TC08-02` | Tìm P01 rồi P99 | P01 trả đúng dữ liệu; P99 là Optional.empty() |
+| `TC08-05` | Tìm C01 rồi C99 | C01 trả đúng dữ liệu; C99 là Optional.empty() |
+| `TC08-07` | Xác nhận Order rồi thử hủy | Trạng thái CONFIRMED không đổi |
+| `TC08-09` | Kiểm tra View/Controller | View không gọi Service/Repository; Controller chỉ điều phối |
+| `TC08-10` | Chạy ProductService với memory | Tìm/liệt kê P01/P02 không cần MySQL |
+| `TC08-11` | Kiểm tra main | Lắp dependency tại composition root |
 
 ### 2. Cây Thư Mục Sau Buổi 08
 
@@ -26,7 +27,9 @@ sql/
 ├── schema.sql
 └── seed.sql
 src/main/java/
-├── HitShop.java
+├── app/HitShop.java
+├── controller/ShopController.java
+├── view/ConsoleView.java
 ├── config/ConnectionFactory.java
 ├── model/
 │   ├── Product.java
@@ -37,6 +40,7 @@ src/main/java/
 ├── repository/
 │   ├── ProductRepository.java
 │   ├── CustomerRepository.java
+│   ├── MemoryProductRepository.java
 │   └── jdbc/
 │       ├── JdbcProductRepository.java
 │       └── JdbcCustomerRepository.java
@@ -83,10 +87,15 @@ CREATE TABLE order_items (
 - `OrderRepository.findById(long id): Optional<Order>` nạp phần header và Customer, khởi tạo items rỗng.
 - `OrderItemRepository.insertAll(long orderId, List<OrderItem> items): void`.
 - `OrderItemRepository.findByOrderId(long orderId): List<OrderItem>` JOIN Product để tạo từng OrderItem.
-- `OrderService.createOrder(String customerId, List<OrderItem> items, LocalDateTime createdAt): long` tạo Order, nhận generated id rồi truyền id đó cho `OrderItemRepository.insertAll` để lưu các dòng hàng.
+- Tạo record `OrderItemInput(String productId, int quantity)` trong package `dto`. `ConsoleView.readOrderItems(): List<OrderItemInput>` chỉ thu productId/quantity; không tra Product hoặc nhận unitPrice.
+- `OrderService.createOrder(String customerId, List<OrderItemInput> inputs, LocalDateTime createdAt): long` tra Customer/Product qua repository, kiểm tra dữ liệu rồi tạo OrderItem với giá hiện tại. Nhận generated id của Order và truyền cho `OrderItemRepository.insertAll`.
+- `ShopController` nhận input từ View và gọi Service; thêm `ConsoleView.readCustomerId(): String`, `readCreatedAt(): LocalDateTime` và method hiển thị đơn/báo cáo. Main nối thêm OrderService/repository vào kiến trúc buổi 8.
+- Không giữ thêm overload `createOrder` nhận `List<OrderItem>` vì trùng chữ ký sau type erasure với `List<OrderItemInput>`.
 - `OrderService.findOrderById(long id): Optional<Order>` gọi cả hai repository và gắn danh sách item trước khi trả kết quả. View không tự ghép dữ liệu.
 - `OrderRepository.findRevenueByDay(): List<DailyRevenue>`.
 - `OrderRepository.findRevenueByCustomer(): List<CustomerRevenue>`.
+
+Các method của class ở hợp đồng trên là public; constructor nhận dependency cần dùng. `findOrderById` trả Optional như buổi 8, không đổi thành Order trực tiếp.
 
 ### 4. Sơ Đồ Lớp Và Quan Hệ
 
@@ -140,6 +149,8 @@ Reset database để Order đầu tiên có id `1` trước khi chạy bộ test
 | `TC09-06` | Chạy báo cáo ngày `2026-01-15` | Doanh thu ngày bằng `500000` |
 | `TC09-07` | Chạy báo cáo theo Customer | C01 bằng `350000`, C02 bằng `150000`, sắp xếp theo id tăng dần |
 | `TC09-08` | Kiểm tra code tạo Order | Dùng generated key của lệnh INSERT, không dùng `MAX(id)` |
+| `TC09-09` | Nhập productId/quantity qua console | View tạo OrderItemInput; Service tra Product và chốt giá, không lấy unitPrice từ người dùng |
+| `TC09-10` | Chạy lại Product/Customer sau khi thêm Order | Luồng View → Controller → Service → Repository vẫn đúng, không có SQL ngoài JDBC repository |
 
 ### 2. Cây Thư Mục Sau Buổi 09
 
@@ -152,9 +163,12 @@ sql/
 ├── schema.sql
 └── seed.sql
 src/main/java/
-├── HitShop.java
+├── app/HitShop.java
+├── controller/ShopController.java
+├── view/ConsoleView.java
 ├── config/ConnectionFactory.java
 ├── dto/
+│   ├── OrderItemInput.java
 │   ├── DailyRevenue.java
 │   └── CustomerRevenue.java
 ├── model/
@@ -166,6 +180,7 @@ src/main/java/
 ├── repository/
 │   ├── ProductRepository.java
 │   ├── CustomerRepository.java
+│   ├── MemoryProductRepository.java
 │   ├── OrderRepository.java
 │   ├── OrderItemRepository.java
 │   └── jdbc/

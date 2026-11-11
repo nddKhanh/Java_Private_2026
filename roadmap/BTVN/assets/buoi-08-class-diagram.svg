@@ -1,44 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="900" viewBox="0 0 1380 900" role="img" aria-labelledby="title desc">
-  <title id="title">BTVN Buổi 08 — Repository, Service, Optional và enum</title>
-  <desc id="desc">Console chỉ gọi Service; JDBC implementation hiện thực repository interface</desc>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/></marker>
-    <marker id="arrowSmall" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/></marker>
-    <marker id="triangle" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/></marker>
-    <marker id="diamond" viewBox="0 0 14 10" refX="13" refY="5" markerWidth="12" markerHeight="10" orient="auto"><path d="M 1 5 L 6 1 L 13 5 L 6 9 z" fill="#000000"/></marker>
-  </defs>
-  <style>
-    .title { font: 700 27px Arial, sans-serif; fill: #000000; }
-    .subtitle { font: 14px Arial, sans-serif; fill: #000000; }
-    .class-title { font: 700 16px Arial, sans-serif; fill: #000000; }
-    .member { font: 10px Consolas, monospace; fill: #000000; }
-    .method { fill: #000000; }
-    .edge-label { font: 12px Arial, sans-serif; fill: #000000; }
-    .note { font: 12px Arial, sans-serif; fill: #000000; }
-    .legend { font: 12px Arial, sans-serif; fill: #000000; }
-  </style>
-  <rect width="100%" height="100%" fill="#FFFFFF"/>
-  <text x="40" y="42" class="title">BTVN Buổi 08 — Repository, Service, Optional và enum</text>
-  <text x="40" y="66" class="subtitle">Console chỉ gọi Service; JDBC implementation hiện thực repository interface</text>
-  <path d="M 295 170 L 380 170" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrow)"/><text x="337.5" y="156.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 337.5 156.0)" class="edge-label">uses</text>
-<path d="M 295 220 L 380 500" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrow)"/><text x="350.9" y="355.9" text-anchor="middle" dominant-baseline="middle" transform="rotate(73.1 350.9 355.9)" class="edge-label">uses</text>
-<path d="M 665 170 L 755 170" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrowSmall)"/><text x="710.0" y="156.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 710.0 156.0)" class="edge-label">HAS-A</text>
-<path d="M 665 500 L 755 500" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrowSmall)"/><text x="710.0" y="486.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 710.0 486.0)" class="edge-label">HAS-A</text>
-<path d="M 1110 175 L 1035 175" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#triangle)"/><text x="1072.5" y="189.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 1072.5 189.0)" class="edge-label">implements</text>
-<path d="M 1110 515 L 1035 515" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#triangle)"/><text x="1072.5" y="529.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 1072.5 529.0)" class="edge-label">implements</text>
-<path d="M 665 750 L 755 750" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrowSmall)"/><text x="710.0" y="736.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 710.0 736.0)" class="edge-label">HAS-A (1)</text>
-  <g class="class-box"><rect x="45" y="110" width="250" height="106" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 53 110 H 287 Q 295 110 295 118 V 158 H 45 V 118 Q 45 110 53 110" fill="#FFFFFF"/><line x1="45" y1="158" x2="295" y2="158" stroke="#000000" stroke-width="1.5"/><text x="170" y="148" text-anchor="middle" class="class-title">HitShop</text><text x="57" y="180" class="member method">+ main(args: String[]): void</text><text x="57" y="200" class="member method">+ showMenu(): void</text></g>
-<g class="class-box"><rect x="380" y="80" width="285" height="182" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 388 80 H 657 Q 665 80 665 88 V 116 H 380 V 88 Q 380 80 388 80" fill="#FFFFFF"/><line x1="380" y1="116" x2="665" y2="116" stroke="#000000" stroke-width="1.5"/><text x="522.5" y="104" text-anchor="middle" class="class-title">ProductService</text><text x="392" y="138" class="member">- repository: ProductRepository</text><line x1="380" y1="148" x2="665" y2="148" stroke="#000000"/><text x="392" y="162" class="member method">+ addProduct(Product): boolean</text><text x="392" y="182" class="member method">+ findAllProducts(): List&lt;Product&gt;</text><text x="392" y="202" class="member method">+ findProductById(String): Optional&lt;Product&gt;</text><text x="392" y="222" class="member method">+ updateProduct(Product): boolean</text><text x="392" y="242" class="member method">+ deleteProduct(String): boolean</text></g>
-<g class="class-box"><rect x="380" y="420" width="285" height="142" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 388 420 H 657 Q 665 420 665 428 V 456 H 380 V 428 Q 380 420 388 420" fill="#FFFFFF"/><line x1="380" y1="456" x2="665" y2="456" stroke="#000000" stroke-width="1.5"/><text x="522.5" y="444" text-anchor="middle" class="class-title">CustomerService</text><text x="392" y="478" class="member">- repository: CustomerRepository</text><line x1="380" y1="488" x2="665" y2="488" stroke="#000000"/><text x="392" y="502" class="member method">+ addCustomer(Customer): boolean</text><text x="392" y="522" class="member method">+ findAllCustomers(): List&lt;Customer&gt;</text><text x="392" y="542" class="member method">+ findCustomerById(String): Optional&lt;Customer&gt;</text></g>
-<g class="class-box"><rect x="755" y="65" width="280" height="166" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 763 65 H 1027 Q 1035 65 1035 73 V 113 H 755 V 73 Q 755 65 763 65" fill="#FFFFFF"/><line x1="755" y1="113" x2="1035" y2="113" stroke="#000000" stroke-width="1.5"/><text x="895" y="103" text-anchor="middle" class="class-title">ProductRepository</text><text x="767" y="135" class="member method">+ insert(Product): boolean</text><text x="767" y="155" class="member method">+ findAll(): List&lt;Product&gt;</text><text x="767" y="175" class="member method">+ findById(String): Optional&lt;Product&gt;</text><text x="767" y="195" class="member method">+ update(Product): boolean</text><text x="767" y="215" class="member method">+ deleteById(String): boolean</text></g>
-<g class="class-box"><rect x="755" y="420" width="280" height="126" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 763 420 H 1027 Q 1035 420 1035 428 V 468 H 755 V 428 Q 755 420 763 420" fill="#FFFFFF"/><line x1="755" y1="468" x2="1035" y2="468" stroke="#000000" stroke-width="1.5"/><text x="895" y="458" text-anchor="middle" class="class-title">CustomerRepository</text><text x="767" y="490" class="member method">+ insert(Customer): boolean</text><text x="767" y="510" class="member method">+ findAll(): List&lt;Customer&gt;</text><text x="767" y="530" class="member method">+ findById(String): Optional&lt;Customer&gt;</text></g>
-<g class="class-box"><rect x="1110" y="95" width="240" height="88" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 1118 95 H 1342 Q 1350 95 1350 103 V 131 H 1110 V 103 Q 1110 95 1118 95" fill="#FFFFFF"/><line x1="1110" y1="131" x2="1350" y2="131" stroke="#000000" stroke-width="1.5"/><text x="1230" y="119" text-anchor="middle" class="class-title">JdbcProductRepository</text><text x="1122" y="153" class="member">implements ProductRepository</text></g>
-<g class="class-box"><rect x="1110" y="450" width="240" height="88" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 1118 450 H 1342 Q 1350 450 1350 458 V 486 H 1110 V 458 Q 1110 450 1118 450" fill="#FFFFFF"/><line x1="1110" y1="486" x2="1350" y2="486" stroke="#000000" stroke-width="1.5"/><text x="1230" y="474" text-anchor="middle" class="class-title">JdbcCustomerRepository</text><text x="1122" y="508" class="member">implements CustomerRepository</text></g>
-<g class="class-box"><rect x="755" y="690" width="280" height="126" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 763 690 H 1027 Q 1035 690 1035 698 V 738 H 755 V 698 Q 755 690 763 690" fill="#FFFFFF"/><line x1="755" y1="738" x2="1035" y2="738" stroke="#000000" stroke-width="1.5"/><text x="895" y="728" text-anchor="middle" class="class-title">OrderStatus</text><text x="767" y="760" class="member">PENDING</text><text x="767" y="780" class="member">CONFIRMED</text><text x="767" y="800" class="member">CANCELLED</text></g>
-<g class="class-box"><rect x="380" y="700" width="285" height="142" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 388 700 H 657 Q 665 700 665 708 V 736 H 380 V 708 Q 380 700 388 700" fill="#FFFFFF"/><line x1="380" y1="736" x2="665" y2="736" stroke="#000000" stroke-width="1.5"/><text x="522.5" y="724" text-anchor="middle" class="class-title">Order</text><text x="392" y="758" class="member">- status: OrderStatus</text><line x1="380" y1="768" x2="665" y2="768" stroke="#000000"/><text x="392" y="782" class="member method">+ getStatus(): OrderStatus</text><text x="392" y="802" class="member method">+ confirm(): void</text><text x="392" y="822" class="member method">+ cancel(): void</text></g>
-  <g><rect x="1065" y="690" width="285" height="58" rx="8" fill="#FFFFFF" stroke="#000000" stroke-dasharray="5 4"/><text x="1077" y="713" class="note">Optional.empty(): không tìm thấy</text><text x="1077" y="732" class="note">Không trả null từ findById.</text></g>
-  <g transform="translate(40 875)">
-    <text class="legend">Tam giác: extends/implements · Hình thoi: HAS-A · Nét đứt: uses (dependency)</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="720" viewBox="0 0 1220 720" role="img" aria-labelledby="title desc">
+<title id="title">BTVN Buổi 08 — Repository, MVC và SRP/DIP</title>
+<desc id="desc">View calls Controller; Controller calls Service; Service uses repository interfaces. Main wires dependencies. JDBC and memory implement the same contract.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect width="1220" height="720" fill="white"/>
+<g font-family="Arial, sans-serif" fill="black">
+<text x="40" y="38" font-size="24" font-weight="bold">BTVN Buổi 08 — Repository, MVC và SRP/DIP</text>
+<text x="40" y="65" font-size="15">Call flow: View → Controller → Service → Repository; composition root selects implementations.</text>
+<rect x="40" y="100" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="52" y="123" font-size="16" font-weight="bold">ConsoleView</text>
+<text x="52" y="146" font-size="13">readChoice(), readId()</text>
+<text x="52" y="165" font-size="13">readProduct(), readCustomer()</text>
+<text x="52" y="184" font-size="13">showProducts(), showCustomers()</text>
+<rect x="440" y="100" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="452" y="123" font-size="16" font-weight="bold">ShopController</text>
+<text x="452" y="146" font-size="13">run(), handleChoice(int)</text>
+<text x="452" y="165" font-size="13">ProductService + CustomerService</text>
+<rect x="840" y="100" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="852" y="123" font-size="16" font-weight="bold">Services</text>
+<text x="852" y="146" font-size="13">ProductService(ProductRepository)</text>
+<text x="852" y="165" font-size="13">CustomerService(CustomerRepository)</text>
+<text x="852" y="184" font-size="13">Validation + use cases</text>
+<rect x="840" y="310" width="340" height="115" rx="6" fill="white" stroke="black"/>
+<text x="852" y="333" font-size="16" font-weight="bold">Repository interfaces</text>
+<text x="852" y="356" font-size="13">ProductRepository: CRUD + Optional</text>
+<text x="852" y="375" font-size="13">CustomerRepository: insert/list/find</text>
+<text x="852" y="394" font-size="13">Implementations keep same contract</text>
+<rect x="40" y="310" width="340" height="115" rx="6" fill="white" stroke="black"/>
+<text x="52" y="333" font-size="16" font-weight="bold">JDBC implementations</text>
+<text x="52" y="356" font-size="13">JdbcProductRepository</text>
+<text x="52" y="375" font-size="13">JdbcCustomerRepository</text>
+<text x="52" y="394" font-size="13">SQL + mapping via ConnectionFactory</text>
+<rect x="440" y="310" width="340" height="115" rx="6" fill="white" stroke="black"/>
+<text x="452" y="333" font-size="16" font-weight="bold">MemoryProductRepository</text>
+<text x="452" y="356" font-size="13">implements ProductRepository</text>
+<text x="452" y="375" font-size="13">List&lt;Product&gt; products</text>
+<text x="452" y="394" font-size="13">All five CRUD methods; no MySQL</text>
+<rect x="40" y="550" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="52" y="573" font-size="16" font-weight="bold">app.HitShop (composition root)</text>
+<text x="52" y="596" font-size="13">Choose jdbc / memory</text>
+<text x="52" y="615" font-size="13">Create and connect dependencies</text>
+<text x="52" y="634" font-size="13">Start controller or memory demo</text>
+<rect x="440" y="550" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="452" y="573" font-size="16" font-weight="bold">Models</text>
+<text x="452" y="596" font-size="13">Product, Customer, CartItem, Order</text>
+<text x="452" y="615" font-size="13">Order keeps String id before session 9</text>
+<text x="452" y="634" font-size="13">No SQL or console I/O</text>
+<rect x="840" y="550" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="852" y="573" font-size="16" font-weight="bold">OrderStatus (enum)</text>
+<text x="852" y="596" font-size="13">PENDING, CONFIRMED, CANCELLED</text>
+<text x="852" y="615" font-size="13">Order controls legal transitions</text>
+</g>
+<g fill="none" stroke="black" stroke-width="1.5" marker-end="url(#arrow)">
+<path d="M380 150 H440"/><path d="M780 150 H840"/><path d="M1010 200 V310"/>
+<path d="M210 310 V260 H940 V310" stroke-dasharray="6 4"/>
+<path d="M610 310 V280 H980 V310" stroke-dasharray="6 4"/>
+<path d="M780 600 H840"/>
+</g>
+<text x="40" y="692" font-family="Arial" font-size="14">Solid arrows: calls/uses. Dashed arrows: implements. Main wires dependencies (not shown as call edges).</text>
 </svg>
