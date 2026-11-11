@@ -98,11 +98,31 @@ class DesktopBotIntegrationTest {
         }
     }
 
+    @Test
+    void explicitMatchCodeIsPassedToChildJvm() throws Exception {
+        BotCompiler compiler = new BotCompiler();
+        try (BotCompilation compilation = compiler.compile("WrongMatchBot", BotCompilerTest.validSource("WrongMatchBot"));
+             BotProcessRunner runner = new BotProcessRunner()) {
+            BotRunResult result = runner.start(request(
+                            compilation, "blue-token", "missing-match", Duration.ofSeconds(5)))
+                    .completion()
+                    .get(10, TimeUnit.SECONDS);
+
+            assertEquals(4, result.exitCode());
+            assertTrue(result.standardError().contains("CONNECTION_FAILED"));
+        }
+    }
+
     private BotRunRequest request(BotCompilation compilation, String token, Duration timeout) {
+        return request(compilation, token, "", timeout);
+    }
+
+    private BotRunRequest request(BotCompilation compilation, String token, String matchId, Duration timeout) {
         return new BotRunRequest(
                 compilation.className(),
                 compilation.classesDirectory(),
                 serverUrl(),
+                matchId,
                 token,
                 timeout,
                 64,

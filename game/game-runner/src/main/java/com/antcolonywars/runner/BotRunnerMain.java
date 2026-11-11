@@ -12,6 +12,7 @@ import java.util.Map;
 public final class BotRunnerMain {
     static final String SERVER_URL_ENV = "GAME_WS_URL";
     static final String TEAM_TOKEN_ENV = "GAME_TEAM_TOKEN";
+    static final String MATCH_ID_ENV = "GAME_MATCH_ID";
     static final String CONNECTION_TIMEOUT_ENV = "GAME_CONNECTION_TIMEOUT_SECONDS";
 
     private BotRunnerMain() {
@@ -32,6 +33,7 @@ public final class BotRunnerMain {
 
         String serverUrl = requiredEnvironment(environment, SERVER_URL_ENV, err);
         String teamToken = requiredEnvironment(environment, TEAM_TOKEN_ENV, err);
+        String matchId = environment.getOrDefault(MATCH_ID_ENV, "").trim();
         if (serverUrl == null || teamToken == null) {
             return 2;
         }
@@ -49,7 +51,10 @@ public final class BotRunnerMain {
             return 3;
         }
 
-        try (GameBot bot = GameBots.connect(serverUrl, teamToken, connectionTimeout(environment))) {
+        Duration timeout = connectionTimeout(environment);
+        try (GameBot bot = matchId.isBlank()
+                ? GameBots.connect(serverUrl, teamToken, timeout)
+                : GameBots.connect(serverUrl, teamToken, matchId, timeout)) {
             out.printf("Connected. Running %s.%n", args[0]);
             program.run(bot);
             out.println("Bot finished successfully.");

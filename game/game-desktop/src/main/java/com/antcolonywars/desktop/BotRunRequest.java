@@ -8,6 +8,7 @@ public record BotRunRequest(
         String className,
         Path classesDirectory,
         String serverUrl,
+        String matchId,
         String teamToken,
         Duration timeout,
         int maxHeapMegabytes,
@@ -17,6 +18,7 @@ public record BotRunRequest(
         Objects.requireNonNull(className, "className");
         Objects.requireNonNull(classesDirectory, "classesDirectory");
         Objects.requireNonNull(serverUrl, "serverUrl");
+        Objects.requireNonNull(matchId, "matchId");
         Objects.requireNonNull(teamToken, "teamToken");
         Objects.requireNonNull(timeout, "timeout");
         if (className.isBlank() || serverUrl.isBlank() || teamToken.isBlank()) {

@@ -34,6 +34,7 @@ public final class CodeStudioApplication extends Application {
     private final BotProcessRunner processRunner = new BotProcessRunner();
     private final ExecutorService background = Executors.newVirtualThreadPerTaskExecutor();
     private final TextField serverUrl = new TextField("ws://localhost:8080/game");
+    private final TextField matchId = new TextField();
     private final PasswordField teamToken = new PasswordField();
     private final TextField className = new TextField(DefaultBotSource.CLASS_NAME);
     private final Spinner<Integer> timeoutSeconds = new Spinner<>(1, 300, 15);
@@ -49,6 +50,7 @@ public final class CodeStudioApplication extends Application {
     @Override
     public void start(Stage stage) {
         teamToken.setPromptText("Team token");
+        matchId.setPromptText("Match code (blank = match-default)");
         editor.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px;");
         console.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
         console.setEditable(false);
@@ -100,16 +102,22 @@ public final class CodeStudioApplication extends Application {
         HBox connection = new HBox(
                 8,
                 new Label("Server"), serverUrl,
-                new Label("Token"), teamToken,
                 new Label("Timeout"), timeoutSeconds,
                 new Label("seconds")
         );
         HBox.setHgrow(serverUrl, Priority.ALWAYS);
+
+        HBox match = new HBox(
+                8,
+                new Label("Match code"), matchId,
+                new Label("Team token"), teamToken
+        );
+        HBox.setHgrow(matchId, Priority.ALWAYS);
         HBox.setHgrow(teamToken, Priority.ALWAYS);
 
         HBox source = new HBox(8, new Label("Bot class"), className);
         HBox.setHgrow(className, Priority.ALWAYS);
-        return new VBox(8, connection, source);
+        return new VBox(8, connection, match, source);
     }
 
     private VBox bottomPanel() {
@@ -164,6 +172,7 @@ public final class CodeStudioApplication extends Application {
                 activeCompilation.className(),
                 activeCompilation.classesDirectory(),
                 serverUrl.getText().trim(),
+                matchId.getText().trim(),
                 teamToken.getText(),
                 Duration.ofSeconds(timeoutSeconds.getValue()),
                 64,

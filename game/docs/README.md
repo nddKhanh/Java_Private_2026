@@ -78,7 +78,7 @@ Sau đó mở terminal thứ ba:
 
 Trong ứng dụng:
 
-1. Trên cùng máy chạy server, giữ Server là `ws://localhost:8080/game`; nếu Desktop Code Studio chạy trên máy khác, dùng `ws://IP_MAY_CHU:8080/game`.
+1. Trên cùng máy chạy server, giữ Server là `ws://localhost:8080/game`; nếu Desktop Code Studio chạy trên máy khác, dùng `ws://IP_MAY_CHU:8080/game`. Với phòng tạo từ web, điền mã phòng vào `Match code` và token đội vào `Team token`.
 2. Nhập Token là `blue-token`.
 3. Giữ Bot class là `MyBot` và source mẫu mặc định.
 4. Nhấn **Compile**; trạng thái phải chuyển thành `Compiled`.

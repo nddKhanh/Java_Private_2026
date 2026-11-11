@@ -117,7 +117,7 @@ Account thứ sáu bị từ chối với mã `TEAM_FULL`.
 
 ### Bước 1 — chọn đội và nhập chương trình
 
-Trong Desktop Code Studio cùng máy với server, nhập `Server` là `ws://localhost:8080/game`.
+Trong Desktop Code Studio cùng máy với server, nhập `Server` là `ws://localhost:8080/game`. Với trận tạo từ web, nhập thêm mã phòng vào ô `Match code` và token đội vào ô `Team token`; chỉ để trống `Match code` khi chạy `match-default`.
 Nếu Desktop Code Studio chạy ở máy khác cùng Wi-Fi, thay `localhost` bằng IPv4 của máy chủ, ví dụ `ws://192.168.1.23:8080/game`.
 Nhập `Token` là `blue-token` và tên lớp là `MyBot`.
 Thay nội dung ô soạn thảo bằng chương trình sau để thử trên trận mới:
