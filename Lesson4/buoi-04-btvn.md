@@ -1,23 +1,23 @@
-# Bài Tập Về Nhà — Buổi 04
+# BÀI TẬP VỀ NHÀ — BUỔI 04
 
-## I. Tổng Kết Bài Tập Về Nhà Buổi 03
+## HITSHOP — MỞ RỘNG QUẢN LÝ SẢN PHẨM VÀ ĐƠN HÀNG
 
-Sau bài tập buổi 3, `HitShop` đã thay ba danh sách song song bằng các object `Product`, `Customer`, `CartItem` và một `List<CartItem>`.
+**Ngôn ngữ:** Java (JDK 17)  
+**Hình thức:** Tiếp tục làm trên repository `HitShop` của buổi 03, không tạo dự án mới.
 
-### 1. Các Test Case Phải Chạy Được
+## I. Nhìn lại buổi 03
 
-| Mã | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| `TC03-01` | Xem giỏ rỗng rồi xem tổng | In khách hàng hiện tại, báo `Giỏ hàng đang trống.`, tổng bằng `0` |
-| `TC03-02` | Thêm mã khác `P01`, `P02` | Báo `Không tìm thấy sản phẩm.` và giỏ không đổi |
-| `TC03-03` | Thêm `P01` với quantity không dương | Báo `Số lượng phải lớn hơn 0.` và giỏ không đổi |
-| `TC03-04` | Thêm `P01 × 2`, `P02 × 1` | Giỏ có hai dòng, tổng bằng `350000` |
-| `TC03-05` | Thêm cùng một Product hai lần | Tạo hai `CartItem` riêng, không gộp dòng |
-| `TC03-06` | Xóa số thứ tự không tồn tại | Báo `Không tìm thấy mặt hàng.` và giỏ không đổi |
+Ở buổi trước, các bạn đã xây dựng một chương trình quản lý giỏ hàng với các lớp `Product`, `Customer`, `CartItem` và danh sách `List<CartItem>`. Chương trình đã có thể thêm sản phẩm vào giỏ, xóa một dòng hàng, xem giỏ và tính tổng tiền hàng.
 
-### 2. Cây Thư Mục Sau Buổi 03
+Những chức năng cũ phải tiếp tục hoạt động đúng sau khi mở rộng:
 
-Cấu trúc source tối thiểu cần đạt:
+| Tình huống | Kết quả cần giữ |
+|---|---|
+| Giỏ hàng trống | Thông báo giỏ trống, tổng tiền bằng `0` |
+| Thêm `P01 × 2` và `P02 × 1` | Có hai dòng hàng, tổng tiền hàng bằng `350000` |
+| Xóa vị trí không tồn tại | Có thông báo phù hợp, giỏ hàng không thay đổi |
+
+**Cây thư mục ở đầu buổi:**
 
 ```text
 src/
@@ -28,70 +28,216 @@ src/
     └── CartItem.java
 ```
 
-## II. Bài Bắt Buộc — Kế Thừa, Đa Hình Và Trạng Thái Đơn
+## II. Bài tập lớn: HitShop
 
-### 1. Kế Thừa Từ Buổi 03
+### Bối cảnh
 
-Tiếp tục repository `HitShop` bằng JDK 17 và các class `Product`, `Customer`, `CartItem`. Giữ sản phẩm P01/P02, khách C01, giỏ P01 × 2 và P02 × 1. `HitShop` tiếp tục cung cấp các chức năng `addItem`, `removeItem`, `printItems`, `calculateTotal`, đồng thời bổ sung `Book` và `Order`.
+HitShop đang bán các sản phẩm thông thường và chuẩn bị kinh doanh thêm **sách** và **đồ điện tử**. Mỗi loại đều là sản phẩm, nhưng cách giới thiệu và phí vận chuyển lại khác nhau.
 
-### 2. Bài Toán
+Cửa hàng cũng muốn quản lý **đơn hàng** của khách. Khi đơn còn chờ xử lý, khách có thể thêm hoặc bỏ sản phẩm. Khi đơn đã được xác nhận hoặc đã hủy, các thao tác làm thay đổi đơn không còn được phép.
 
-Mở rộng mô hình `Product`, `Customer`, `CartItem` từ buổi 3 để biểu diễn một loại sản phẩm chuyên biệt và một đơn hàng. Ví dụ dùng sách; mọi dữ liệu hiển thị phải đến từ method của object phù hợp, không rẽ nhánh theo tên loại sản phẩm.
+Nhiệm vụ của các bạn là mở rộng chương trình đang có để giải quyết những yêu cầu này. **Không chia thành ba chương trình riêng.**
 
-### 3. Class, Field Và Quan Hệ
+### A. Thuộc tính cần bổ sung
 
-- `Product` giữ `id`, `name`, `price`, `stock` và có method `getDescription()` trả về tên sản phẩm. Các field tiếp tục private; không truy cập trực tiếp từ lớp con.
-- `Book extends Product`, có field private `author` và `getAuthor()`. Constructor nhận `id`, `name`, `price`, `stock`, `author`; khởi tạo phần Product cùng dữ liệu đó. Override `getDescription()` trả về đúng mẫu `Tên sách — tác giả: Tên tác giả`.
-- Một `List<Product>` chứa cả object Product thường và Book. Phần hiển thị danh sách gọi cùng `getDescription()` cho mọi phần tử.
-- `Order` có các field private: `id`, `customer` kiểu `Customer`, `items` kiểu `List<CartItem>` và `status` kiểu `String`. Constructor nhận `id` và `customer`; trạng thái ban đầu là `PENDING`. Order HAS-A Customer và HAS-A nhiều CartItem; mỗi CartItem vẫn HAS-A một Product.
-- `Order.addItem(CartItem item)` thêm một dòng và `getTotal()` trả tổng các giá trị `CartItem.getTotal()`. `confirm()` chuyển `PENDING` thành `CONFIRMED`; `cancel()` chuyển `PENDING` thành `CANCELLED`. Khi trạng thái không còn là `PENDING`, `confirm()` và `cancel()` không thay đổi trạng thái.
-- Các chữ ký là `void addItem(CartItem item)`, `double getTotal()`, `void confirm()`, `void cancel()`, `String getStatus()`, `String getId()`, `Customer getCustomer()` và `List<CartItem> getItems()`. `getItems()` không được trả null.
-- Tên class chạy chương trình vẫn là `HitShop`; giữ menu console và các luồng giỏ hàng đã có ở buổi 2–3, đồng thời bổ sung hiển thị danh sách đa hình và thao tác với Order.
+Chỉ liệt kê những thuộc tính **mới so với buổi 03**. Các thuộc tính cũ của `Product`, `Customer` và `CartItem` được giữ lại.
 
-### 4. Sơ Đồ Lớp Và Quan Hệ
+#### `Book extends Product` — lớp mới
 
-![Sơ đồ lớp BTVN buổi 04](assets/buoi-04-class-diagram.svg)
+```java
+private String author;
+```
 
-Mũi tên tam giác biểu diễn `Book extends Product`; hình thoi tại `Order` biểu diễn một đơn chứa nhiều `CartItem`.
+Một cuốn sách có thêm tên tác giả. Những thông tin chung như mã, tên, giá và tồn kho vẫn dùng từ `Product`.
 
-### 5. Dữ Liệu Chuẩn Và Kết Quả
+#### `ElectronicProduct extends Product` — lớp mới
 
-- Product thường tiếp tục từ buổi 3: `P01 / Áo thun / 150000 / stock 20`; `P02 / Bình nước / 50000 / stock 10`.
-- Book mới: `P03 / Java cơ bản / 120000 / stock 5 / An Nguyen`.
-- List hiển thị ba mô tả: `Áo thun`, `Bình nước` và `Java cơ bản — tác giả: An Nguyen`.
-- Customer `C01 / Linh Nguyễn / 0900000001`; Order `O01` tiếp nhận giỏ đã xây dựng ở buổi trước, gồm `P01 × 2` và `P02 × 1`; tổng đơn là `350000`.
-- Trước xác nhận, status là `PENDING`; sau `confirm()`, status là `CONFIRMED`. Lời gọi `cancel()` tiếp theo không đổi status.
-- Một Order khác ở trạng thái `PENDING`, khi gọi `cancel()`, chuyển thành `CANCELLED`; gọi lại `cancel()` không đổi trạng thái.
+```java
+private int warrantyMonths;
+```
 
-### 6. Nộp Bài
+Đồ điện tử có thêm thời hạn bảo hành, tính bằng tháng.
 
-Nộp source các model và `HitShop`; kèm output danh sách mô tả, menu/giỏ hàng đang có, tổng đơn và trạng thái sau xác nhận.
+#### `Order` — lớp mới
 
-## III. Nâng Cao — Bài Tự Chọn
+```java
+private String id;
+private Customer customer;
+private List<CartItem> items;
+private String status;
+```
 
-- Mô tả sự khác nhau giữa overloading và overriding.
-- Xác định quan hệ Book–Product là IS-A và Order–CartItem là HAS-A.
-- Viết hai overload: `findProducts(String keyword)` trả mọi sản phẩm có tên chứa từ khóa; `findProducts(String keyword, int limit)` trả tối đa `limit` kết quả đầu tiên.
-- Lọc các đối tượng `Book` trong `List<Product>` và lấy tên tác giả từ từng đối tượng `Book`.
+Mỗi đơn thuộc về một khách hàng và có thể chứa nhiều dòng hàng. Đơn mới có danh sách hàng rỗng và trạng thái `PENDING` (đang chờ). Hai trạng thái còn lại là `CONFIRMED` (đã xác nhận) và `CANCELLED` (đã hủy).
 
-## IV. Tổng Kết Bài Tập Về Nhà Buổi 04
+### B. Phương thức và phần xử lý cần bổ sung
 
-Sau bài tập buổi 4, `Book` kế thừa `Product`, danh sách sản phẩm hiển thị bằng đa hình và `Order` bảo vệ các bước chuyển trạng thái.
+Phần khởi tạo đối tượng và các phương thức đọc, cập nhật thông tin thông thường, các bạn tự viết theo kiến thức đã học. Dưới đây chỉ có **phương thức mới** hoặc **quy tắc xử lý mới**, được nhóm theo từng lớp.
 
-### 1. Các Test Case Phải Chạy Được
+#### 1. `Product`
 
-| Mã | Thao tác | Kết quả mong đợi |
+```java
+String getDescription()
+```
+
+Trả về tên sản phẩm. Đây là cách giới thiệu mặc định dành cho sản phẩm thông thường.
+
+```java
+double shippingFee(int quantity)
+```
+
+Tính phí vận chuyển bằng `10000 × quantity`. Nếu số lượng không lớn hơn `0`, hãy báo cho người dùng biết yêu cầu không hợp lệ thay vì trả về một kết quả sai.
+
+```java
+void decreaseStock(int quantity)
+```
+
+Giảm tồn kho khi số lượng giảm là số dương và không vượt quá lượng hàng đang có. Nếu không đủ hàng hoặc nhập số lượng sai, tồn kho phải giữ nguyên.
+
+```java
+void increaseStock(int quantity)
+```
+
+Tăng tồn kho khi số lượng nhập là số dương. Không cho phép nhập một giá trị khiến số lượng trong kho bị sai do vượt giới hạn của kiểu `int`; nếu xảy ra, lượng hàng cũ vẫn phải được giữ nguyên.
+
+**Logic cần bổ sung vào những phần đã có:** Mã và tên sản phẩm không được để trống; giá phải là số dương hợp lệ; tồn kho không được âm. Mã sản phẩm không được tùy ý thay đổi sau khi tạo. Giá bán có thể cập nhật, nhưng nếu người dùng thử nhập giá không hợp lệ thì phải giữ lại giá trước đó. Tồn kho chỉ được thay đổi thông qua các thao tác nhập thêm hoặc giảm hàng, không cho phép gán trực tiếp một con số bất kỳ.
+
+#### 2. `Book`
+
+```java
+String getDescription()
+```
+
+Giới thiệu sách theo mẫu `Tên sách — tác giả: Tên tác giả`. Ví dụ: `Java cơ bản — tác giả: An Nguyen`. Tên tác giả phải có nội dung, không được để trống.
+
+```java
+double shippingFee(int quantity)
+```
+
+Sách có phí vận chuyển `5000 × quantity`. Số lượng không hợp lệ vẫn phải được xử lý như ở `Product`.
+
+#### 3. `ElectronicProduct`
+
+```java
+String getDescription()
+```
+
+Giới thiệu theo mẫu `Tên sản phẩm — bảo hành: N tháng`. Ví dụ: `Bàn phím — bảo hành: 12 tháng`. Thời hạn bảo hành phải lớn hơn `0`.
+
+```java
+double shippingFee(int quantity)
+```
+
+Đồ điện tử có phí vận chuyển `30000 × quantity`. Không chấp nhận số lượng bằng `0` hoặc âm.
+
+**Điểm cần chú ý khi làm ba lớp sản phẩm:** Một danh sách `List<Product>` phải chứa được cả sản phẩm thông thường, sách và đồ điện tử. Khi duyệt danh sách, hãy gọi cùng tên phương thức `getDescription()` hoặc `shippingFee(...)` trên từng phần tử, nhưng kết quả phải đúng theo loại sản phẩm thật. Đừng viết một loạt câu lệnh kiểm tra “nếu là sách”, “nếu là đồ điện tử” trong phần hiển thị để tự quyết định cách xử lý.
+
+#### 4. `CartItem`
+
+```java
+double getShippingFee()
+```
+
+Tính phí vận chuyển của dòng hàng bằng cách sử dụng số lượng mua và cách tính phí của sản phẩm đang được chứa trong dòng hàng. Chẳng hạn, hai cuốn sách có tổng phí vận chuyển là `10000`.
+
+**Logic cần bổ sung:** Một dòng hàng chỉ hợp lệ khi có sản phẩm và số lượng mua lớn hơn `0`. Những phương thức tính tiền hàng từ buổi 03 vẫn phải giữ nguyên kết quả cũ.
+
+#### 5. `Order`
+
+```java
+void addItem(CartItem item)
+```
+
+Chỉ thêm hàng khi đơn còn `PENDING`. Không nhận dòng hàng bị thiếu thông tin, số lượng lớn hơn tồn kho hoặc sản phẩm có mã đã xuất hiện trong đơn. Nếu không thể thêm, các dòng hàng trước đó phải giữ nguyên.
+
+```java
+void removeItem(String productId)
+```
+
+Xóa dòng hàng có mã sản phẩm tương ứng khi đơn còn `PENDING`. Nếu không tìm thấy sản phẩm, hãy thông báo rõ và không làm thay đổi đơn.
+
+```java
+double getSubtotal()
+```
+
+Cộng tiền hàng của tất cả dòng trong đơn, **chưa tính vận chuyển**. Đơn chưa có sản phẩm thì kết quả là `0`.
+
+```java
+double getShippingFee()
+```
+
+Cộng phí vận chuyển của các dòng hàng. Mỗi dòng tự tính dựa trên loại sản phẩm của mình, nên `Order` không cần phân loại sách hay đồ điện tử. Đơn rỗng có phí vận chuyển bằng `0`.
+
+```java
+double getTotal()
+```
+
+Trả về số tiền khách phải thanh toán: `getSubtotal() + getShippingFee()`.
+
+```java
+void confirm()
+```
+
+Chỉ xác nhận khi đơn đang `PENDING` và có ít nhất một dòng hàng. Ngay lúc xác nhận, phải kiểm tra lại xem kho còn đủ cho **tất cả** các dòng hàng hay không, vì tồn kho có thể đã thay đổi sau khi thêm hàng vào đơn. Nếu có bất kỳ dòng nào không đủ hàng, đơn vẫn ở trạng thái `PENDING` và không bị mất dòng hàng nào. Nếu mọi thứ hợp lệ, chuyển sang `CONFIRMED`.
+
+```java
+void cancel()
+```
+
+Chỉ hủy đơn đang `PENDING`; đơn chưa có hàng vẫn có thể hủy. Một đơn đã `CONFIRMED` hoặc `CANCELLED` thì không được đổi sang trạng thái khác.
+
+**Logic cần bổ sung khi bảo vệ đơn hàng:** Sau khi đơn được xác nhận hoặc hủy, không cho thêm, xóa hay sửa các dòng hàng trong đơn nữa. Trạng thái đơn cũng không được thay đổi bằng cách gán trực tiếp từ bên ngoài. Hãy chú ý cả trường hợp người dùng lấy danh sách hoặc một dòng hàng ra ngoài rồi chỉnh sửa chúng: việc đó không được âm thầm làm thay đổi dữ liệu mà `Order` đang quản lý. Khi một thao tác bị từ chối, nội dung và trạng thái hợp lệ trước đó vẫn phải được giữ nguyên.
+
+Ở giai đoạn này, thêm hàng vào đơn và xác nhận đơn **chỉ kiểm tra tồn kho, chưa tự trừ số lượng trong kho**.
+
+### C. Dữ liệu mẫu
+
+| Mã | Loại | Tên sản phẩm | Giá | Tồn kho | Thông tin riêng |
+|---|---|---|---:|---:|---|
+| `P01` | `Product` | Áo thun | 150000 | 20 | — |
+| `P02` | `Product` | Bình nước | 50000 | 10 | — |
+| `P03` | `Book` | Java cơ bản | 120000 | 5 | Tác giả: An Nguyen |
+| `P04` | `ElectronicProduct` | Bàn phím | 400000 | 3 | Bảo hành: 12 tháng |
+
+Khách hàng mẫu: `C01 / Linh Nguyễn / 0900000001`.
+
+### D. Phần giao diện cần bổ sung
+
+Giữ lại menu và những chức năng đã có ở buổi 03. Chỉ cần bổ sung các thao tác sau vào chương trình console:
+
+- Khi xem sản phẩm, hiển thị được mô tả riêng của sách và đồ điện tử bên cạnh giá và số lượng còn trong kho.
+- Cho phép tạo đơn cho khách hàng, thêm sản phẩm vào đơn và xóa sản phẩm khỏi đơn khi còn chờ xác nhận.
+- Cho phép xem nội dung đơn, gồm tiền hàng, phí vận chuyển, tổng thanh toán và trạng thái.
+- Cho phép xác nhận hoặc hủy đơn; nếu thao tác không hợp lệ thì thông báo bằng lời dễ hiểu và giữ nguyên dữ liệu.
+
+Những trường hợp khó nhập từ menu có thể được thử bằng một đoạn mã ngắn trong `main`.
+
+## III. Năm tình huống kiểm tra
+
+Năm tình huống sau dùng để kiểm tra bài tập lớn. Hãy chạy từng tình huống với dữ liệu mẫu được tạo mới, để kết quả của bài thử này không ảnh hưởng đến bài thử khác.
+
+| STT | Tình huống | Kết quả mong đợi |
 |---|---|---|
-| `TC04-01` | Đưa P01, P02 và Book P03 vào `List<Product>`, gọi `getDescription()` | Lần lượt in `Áo thun`, `Bình nước`, `Java cơ bản — tác giả: An Nguyen` mà không rẽ nhánh theo class |
-| `TC04-02` | Tạo O01 với C01, thêm `P01 × 2`, `P02 × 1` | `getItems()` không null và `getTotal()` bằng `350000` |
-| `TC04-03` | Gọi `confirm()` trên O01 đang `PENDING` | Trạng thái chuyển thành `CONFIRMED` |
-| `TC04-04` | Gọi `cancel()` sau khi O01 đã `CONFIRMED` | Trạng thái vẫn là `CONFIRMED` |
-| `TC04-05` | Tạo Order mới, gọi `cancel()` hai lần | Lần đầu chuyển thành `CANCELLED`, lần sau không đổi |
-| `TC04-06` | Chạy lại menu giỏ hàng của buổi 3 | Các luồng thêm, xóa, xem giỏ và tính tổng vẫn hoạt động |
+| **1** | Đưa bốn sản phẩm mẫu vào `List<Product>`, sau đó lần lượt gọi mô tả và tính vận chuyển cho số lượng `2`. | Mô tả đúng từng sản phẩm; phí vận chuyển tương ứng là `20000`, `20000`, `10000`, `60000`. |
+| **2** | Đổi giá P01 thành `160000`, rồi thử đổi thành `0`. Giảm kho P01 đi `2`, sau đó thử giảm nhiều hơn lượng còn lại. | Giá cuối là `160000`, tồn kho cuối là `18`; thao tác sai không làm mất dữ liệu hợp lệ. |
+| **3** | Tạo đơn O01 cho C01, thêm `P01 × 2` và `P02 × 1`; sau đó thử thêm P01 lần nữa và thử thêm `P04 × 4`. | Đơn chỉ có hai dòng hợp lệ; tiền hàng `350000`, phí vận chuyển `30000`, tổng thanh toán `380000`. |
+| **4** | Tạo O02 với `P04 × 3`; sau đó giảm tồn kho P04 xuống `2` rồi mới xác nhận. | Không xác nhận được, trạng thái vẫn `PENDING`, nội dung đơn không thay đổi. |
+| **5** | Xác nhận một đơn hợp lệ rồi thử thêm hàng và hủy đơn. Với một đơn khác, hủy ngay từ đầu rồi thử xác nhận. | Đơn đầu vẫn `CONFIRMED`, đơn sau vẫn `CANCELLED`; thao tác bị từ chối không làm thay đổi dữ liệu. |
 
-### 2. Cây Thư Mục Sau Buổi 04
+## IV. Lưu ý khi làm bài
 
-Cấu trúc source tối thiểu cần đạt:
+Ở buổi học này, điều quan trọng không chỉ là chương trình chạy đúng khi người dùng nhập dữ liệu đẹp. Hãy thử suy nghĩ xem chuyện gì xảy ra nếu họ nhập sai số lượng, thêm cùng một sản phẩm hai lần, thay đổi kho sau khi tạo đơn, hoặc cố sửa một đơn đã xác nhận.
+
+Mỗi lớp nên chịu trách nhiệm với dữ liệu và công việc của chính nó. Sản phẩm tự biết cách giới thiệu và tính phí vận chuyển; đơn hàng tự biết khi nào được thêm, xóa, xác nhận hay hủy. Đừng dồn toàn bộ cách xử lý vào `main` hoặc viết lại những phần đã làm đúng ở buổi trước.
+
+Khi chương trình từ chối một thao tác, không chỉ cần có thông báo mà còn phải giữ được dữ liệu hợp lệ trước đó. Đây là điểm các bạn nên tự kiểm tra kỹ khi hoàn thiện bài.
+
+## V. Tổng kết buổi 04
+
+Sau bài tập, HitShop sẽ quản lý được nhiều loại sản phẩm trong cùng một danh sách. Những loại sản phẩm đó có thể dùng chung các thông tin cơ bản nhưng vẫn có cách mô tả và tính vận chuyển khác nhau. Chương trình cũng có thêm đơn hàng với các quy tắc rõ ràng để hạn chế việc thay đổi dữ liệu không đúng lúc.
+
+Qua quá trình làm bài, các bạn cần hiểu được **vì sao dữ liệu nên được bảo vệ**, **vì sao các lớp có điểm chung nên tận dụng kế thừa** và **vì sao cùng một lời gọi phương thức lại có thể dẫn đến cách xử lý khác nhau**. Đây là những ý tưởng sẽ tiếp tục được sử dụng khi HitShop mở rộng trong các buổi sau.
+
+**Cây thư mục sau khi hoàn thành:**
 
 ```text
 src/
@@ -99,7 +245,10 @@ src/
 └── model/
     ├── Product.java
     ├── Book.java
+    ├── ElectronicProduct.java
     ├── Customer.java
     ├── CartItem.java
     └── Order.java
 ```
+
+**Nộp bài:** Đẩy mã nguồn lên repository `HitShop` trên GitHub và bình luận đường dẫn bài làm dưới bài đăng giao bài.
