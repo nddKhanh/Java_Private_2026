@@ -3,6 +3,16 @@
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
+## 2026-11-14 — Sửa Update V2 phần 2
+
+- **Trạng thái:** `VERIFIED` bằng test tự động và production build.
+- **Đã đạt:** Atomic và Partial xử lý nhất quán lỗi chuyển đổi command lẫn lỗi luật chơi theo đúng thứ tự batch.
+- **Đã đạt:** Giới hạn hành động được tính độc lập cho unit và công trình sản xuất; spawn tính cho công trình nguồn.
+- **Đã đạt:** Projectile bỏ qua mọi đối tượng cùng phe, kể cả đội đồng minh khác, rồi tiếp tục đường Bresenham cố định đến va chạm địch.
+- **Đã đạt:** Console IntelliJ nhận lỗi có số lệnh, ID chủ thể, hành động và nguyên nhân; viewer phân biệt silhouette và hiển thị ID thực tế.
+- **Bằng chứng:** Toàn bộ Maven reactor test và `npm run build` trong `game-web` hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa thao tác bằng IntelliJ GUI thật và chưa kiểm tra trực quan bản đồ đông đối tượng trên trình duyệt.
+
 ## 2026-11-14 — Sửa hợp đồng Update V2
 
 - **Trạng thái:** `VERIFIED` bằng test tự động.
@@ -35,7 +45,7 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 ## 2026-11-14 — P0 batch và kiểm tra lệnh
 
 - **Trạng thái:** VERIFIED.
-- **Đã đạt:** Mỗi lần Run trên Desktop tạo một batch; mỗi bot có tối đa 10 hành động và thao tác chọn bot không tính hạn mức.
+- **Đã đạt:** Mỗi lần Run trên Desktop tạo một batch; mỗi unit hoặc công trình có tối đa 10 hành động và thao tác chọn không tính hạn mức.
 - **Đã đạt:** Desktop cho chọn Atomic hoặc Partial; server kiểm tra lại tuần tự trên state sau từng lệnh và trả lỗi tiếng Việt tại lệnh đầu tiên không hợp lệ.
 - **Đã đạt:** Đã bỏ rate limit theo giây; simulation tick tiếp tục chạy độc lập với batch của người chơi.
 - **Bằng chứng:** Toàn bộ Maven test pass, gồm test Game Core, coordinator, WebSocket schema 7, Java client, runner và Desktop.

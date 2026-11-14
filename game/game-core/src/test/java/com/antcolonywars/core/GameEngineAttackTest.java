@@ -203,12 +203,14 @@ class GameEngineAttackTest {
         );
         GameSession session = new GameSession(setup);
 
+        session.advanceTick();
+        session.advanceTick();
         MatchState tick = session.advanceTick().state();
 
-        assertEquals(4, tick.buildings().stream()
+        assertEquals(5, tick.buildings().stream()
                 .filter(building -> building.id().equals("wall-blue"))
                 .findFirst().orElseThrow().hp());
-        assertEquals(3, unit(tick, "worker-red").hp());
+        assertEquals(2, unit(tick, "worker-red").hp());
     }
 
     @Test
@@ -239,13 +241,13 @@ class GameEngineAttackTest {
     }
 
     @Test
-    void unitsAndHeadquartersBlockProjectilesOnTheirFixedPath() {
+    void enemyUnitsAndHeadquartersBlockProjectilesOnTheirFixedPath() {
         MatchSetup unitBlock = new MatchSetup(
                 "unit-block", "unit-block", 6, 6, RuleSet.mvp(),
                 List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
                 List.of(
-                        new Unit("worker-blue", "BLUE", "WORKER", new Position(1, 1), 3, Direction.RIGHT),
-                        new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)
+                        new Unit("blocker-red", "RED", "WORKER", new Position(1, 1), 3, Direction.RIGHT),
+                        new Unit("target-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)
                 ),
                 List.of(
                         new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
@@ -256,24 +258,76 @@ class GameEngineAttackTest {
         );
         GameSession unitSession = new GameSession(unitBlock);
         unitSession.advanceTick();
-        assertEquals(2, unit(unitSession.state(), "worker-blue").hp());
-        assertEquals(3, unit(unitSession.state(), "worker-red").hp());
+        assertEquals(2, unit(unitSession.state(), "blocker-red").hp());
+        assertEquals(3, unit(unitSession.state(), "target-red").hp());
 
         MatchSetup headquartersBlock = new MatchSetup(
                 "hq-block", "hq-block", 6, 6, RuleSet.mvp(),
                 List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
-                List.of(new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)),
+                List.of(new Unit("target-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)),
                 List.of(
-                        new Headquarters("hq-blue", "BLUE", new Position(1, 1), 3),
-                        new Headquarters("hq-red", "RED", new Position(5, 5), 3)
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-red", "RED", new Position(1, 1), 3)
                 ),
                 List.of(),
                 List.of(new Building("tower-blue", "BLUE", BuildingType.TOWER, new Position(0, 1), 5))
         );
         GameSession headquartersSession = new GameSession(headquartersBlock);
         headquartersSession.advanceTick();
-        assertEquals(2, headquarters(headquartersSession.state(), "hq-blue").hp());
-        assertEquals(3, unit(headquartersSession.state(), "worker-red").hp());
+        assertEquals(2, headquarters(headquartersSession.state(), "hq-red").hp());
+        assertEquals(3, unit(headquartersSession.state(), "target-red").hp());
+    }
+
+    @Test
+    void projectilesPassThroughEveryAlliedEntityAndHitTheEnemyBehindThem() {
+        MatchSetup setup = new MatchSetup(
+                "allied-pass", "allied-pass", 8, 4, new RuleSet("allied-pass", 1, 7),
+                List.of(
+                        new Team("BLUE", "Blue", "blue", "ALLIANCE"),
+                        new Team("CYAN", "Cyan", "cyan", "ALLIANCE"),
+                        new Team("RED", "Red", "red", "SWARM")
+                ),
+                List.of(
+                        new Unit("ranged-blue", "BLUE", "RANGED", new Position(0, 1), 3, Direction.RIGHT),
+                        new Unit("ally-blue", "BLUE", "WORKER", new Position(2, 1), 3, Direction.RIGHT),
+                        new Unit("ally-cyan", "CYAN", "WORKER", new Position(5, 1), 3, Direction.RIGHT),
+                        new Unit("enemy-red", "RED", "WORKER", new Position(7, 1), 3, Direction.LEFT)
+                ),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-cyan", "CYAN", new Position(4, 1), 3),
+                        new Headquarters("hq-red", "RED", new Position(7, 3), 3)
+                ),
+                List.of(),
+                List.of(
+                        new Building("wall-blue", "BLUE", BuildingType.WALL, new Position(1, 1), 5),
+                        new Building("tower-cyan", "CYAN", BuildingType.TOWER, new Position(3, 1), 5),
+                        new Building("wall-cyan", "CYAN", BuildingType.WALL, new Position(6, 1), 5)
+                )
+        );
+        MatchState base = MatchFactory.create(setup);
+        MatchState current = new MatchState(
+                base.matchId(), base.setupId(), base.rulesVersion(), base.status(), base.winnerTeamId(),
+                base.revision(), base.eventSequence(), base.simulationTick(), base.mapWidth(), base.mapHeight(),
+                base.teams(), base.units(), base.retiredUnitIds(), base.headquarters(), base.resourceNodes(),
+                base.buildings(), List.of(new Projectile(
+                        "allied-pass-shot", "BLUE", "ranged-blue", "enemy-red",
+                        new Position(0, 1), new Position(7, 1), 1
+                )), base.processedCommandIds()
+        );
+        GameEngine engine = new GameEngine();
+
+        for (int tick = 0; tick < 7; tick++) {
+            current = engine.apply(current, new TickCommand("allied-pass-tick-" + tick), setup.rules()).state();
+        }
+
+        assertEquals(3, unit(current, "ally-blue").hp());
+        assertEquals(3, unit(current, "ally-cyan").hp());
+        assertEquals(3, headquarters(current, "hq-cyan").hp());
+        assertTrue(current.buildings().stream()
+                .filter(building -> building.teamId().equals("BLUE") || building.teamId().equals("CYAN"))
+                .allMatch(building -> building.hp() == 5));
+        assertTrue(unit(current, "enemy-red").hp() < 3);
     }
 
     private MatchSetup combatSetup(Position blue, Position red) {

@@ -28,7 +28,7 @@ final class ErrorMessages {
             Map.entry("BUILDING_ID_TAKEN", "ID công trình đã được sử dụng."),
             Map.entry("INVALID_BUILD_POSITION", "Vị trí xây dựng không hợp lệ."),
             Map.entry("BUILDING_TYPE_UNSUPPORTED", "Loại công trình không được hỗ trợ."),
-            Map.entry("BATCH_LIMIT_EXCEEDED", "Một bot chỉ được gửi tối đa 10 hành động trong mỗi batch."),
+            Map.entry("BATCH_LIMIT_EXCEEDED", "Vượt giới hạn 10 hành động trên mỗi đối tượng trong một batch."),
             Map.entry("COMMAND_QUEUE_FULL", "Hàng đợi lệnh đang đầy."),
             Map.entry("INVALID_COMMAND", "Lệnh không hợp lệ."),
             Map.entry("INVALID_BATCH", "Batch không hợp lệ."),

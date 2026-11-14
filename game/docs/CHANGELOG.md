@@ -3,6 +3,19 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-14 — Sửa Update V2 phần 2
+
+### Changed
+
+- Lỗi chuyển đổi từng command được xử lý tuần tự trong cùng pipeline Atomic/Partial với `failedIndex` và `appliedCount` chính xác.
+- Projectile xuyên qua unit, HQ và building cùng phe mà không gây sát thương, nhưng vẫn dừng và gây sát thương khi gặp đối tượng địch.
+- Lỗi batch tại IntelliJ hiển thị số lệnh, ID chủ thể, hành động có hướng hoặc loại đối tượng và nguyên nhân tiếng Việt.
+- Viewer dùng silhouette riêng cho WORKER, MELEE, RANGED, SIEGE, HQ, BARRACKS, TOWER và WALL; mọi đối tượng luôn có nhãn ID.
+
+### Verified
+
+- Toàn bộ Maven test và frontend production build pass, gồm batch lỗi chuyển đổi, giới hạn theo công trình, va chạm đồng minh và pipeline IntelliJ/Desktop/server.
+
 ## 2026-11-14 — Sửa hợp đồng Update V2
 
 ### Changed

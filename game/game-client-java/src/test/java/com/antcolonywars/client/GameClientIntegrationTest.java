@@ -26,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Map;
+import java.util.List;
 import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -149,6 +150,53 @@ class GameClientIntegrationTest {
             assertEquals(4, unitX(bot.getLatestState(), "worker-blue-2"));
             assertEquals(2, unitX(bot.getLatestState(), "worker-blue"));
             assertEquals(7, bot.getLatestState().revision());
+        }
+    }
+
+    @Test
+    void batchErrorNamesCommandSubjectActionAndReason() {
+        try (GameClient client = GameClient.connect(serverUrl(), "blue-token")) {
+            GameClientException move = assertThrows(
+                    GameClientException.class,
+                    () -> client.submitBatch(
+                            List.of(BatchAction.move("worker-blue", Direction.UP)),
+                            BatchMode.ATOMIC
+                    )
+            );
+
+            assertEquals("OUT_OF_BOUNDS", move.code());
+            assertEquals(
+                    "Lệnh 1 — worker-blue — di chuyển lên: Vị trí nằm ngoài bản đồ.",
+                    move.getMessage()
+            );
+
+            GameClientException attack = assertThrows(GameClientException.class, () -> client.submitBatch(
+                    List.of(BatchAction.attack("worker-blue", Direction.UP)), BatchMode.ATOMIC
+            ));
+            assertTrue(attack.getMessage().contains("worker-blue — tấn công lên"));
+
+            GameClientException build = assertThrows(GameClientException.class, () -> client.submitBatch(
+                    List.of(BatchAction.build(
+                            "worker-blue", "barracks-blue", BuildingType.BARRACKS, Direction.RIGHT
+                    )), BatchMode.ATOMIC
+            ));
+            assertTrue(build.getMessage().contains("worker-blue — xây BARRACKS phải"));
+
+            GameClientException spawn = assertThrows(GameClientException.class, () -> client.submitBatch(
+                    List.of(BatchAction.spawn(
+                            "hq-blue", "melee-blue", "Melee", "MELEE", Direction.DOWN
+                    )), BatchMode.ATOMIC
+            ));
+            assertTrue(spawn.getMessage().contains("hq-blue — spawn MELEE xuống"));
+
+            List<BatchAction> tooMany = java.util.stream.IntStream.range(0, 11)
+                    .mapToObj(ignored -> BatchAction.waitTurn("worker-blue"))
+                    .toList();
+            GameClientException limit = assertThrows(GameClientException.class, () -> client.submitBatch(
+                    tooMany, BatchMode.ATOMIC
+            ));
+            assertTrue(limit.getMessage().contains("Lệnh 11 — worker-blue — đứng yên"));
+            assertTrue(limit.getMessage().contains("Vượt giới hạn 10 hành động"));
         }
     }
 

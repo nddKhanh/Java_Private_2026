@@ -179,7 +179,7 @@ Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy c
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
 Map, rules, match list, team, faction, màu, token demo, unit, HQ, resource node, building, giới hạn batch, tick interval, session lifetime và HP spawn đều có thể đổi mà không sửa Phaser renderer.
 
-Profile mặc định giới hạn 10 hành động cho mỗi bot trong một batch.
+Profile mặc định giới hạn 10 hành động cho mỗi unit hoặc công trình được điều khiển trong một batch.
 
 Token mặc định chỉ dùng cho demo local:
 
@@ -201,9 +201,11 @@ Không dùng các token này cho môi trường public hoặc production.
 - Server mặc định phục hồi state từ H2 sau khi restart; chế độ `-Fresh` mới chủ ý giữ state trong RAM.
 - Có 10 team trong 2 faction; mỗi team có một unit seed, một HQ và có thể spawn tối đa 50 unit theo profile mặc định.
 - Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server xử lý batch tuần tự theo chế độ Atomic hoặc Partial.
+- Lỗi chuyển đổi command và lỗi luật chơi cùng giữ đúng vị trí lỗi; log client nêu ID chủ thể và hành động tương ứng.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
 - Spawn tạo unit ở ô kề nguồn sản xuất; HQ chỉ tạo WORKER và BARRACKS chỉ tạo quân chiến đấu; chi phí spawn chưa được áp dụng.
 - Resource node, harvest và building đã có; công trình chặn/nhận damage, bị phá hủy ở HP 0 và mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
+- Projectile bỏ qua đối tượng cùng phe và viewer dùng silhouette riêng kèm ID thực tế cho mọi unit, HQ và building.
 - Account, lobby membership, session, snapshot và event history được lưu bằng H2/Flyway; file database mặc định nằm trong `game-server/data/`.
 - Hai match được route độc lập theo `matchId`; reconnect nhận snapshot authoritative mới nhất.
 - Chưa có danh sách phòng công khai, matchmaking tự động, email verification, quên mật khẩu, backup hoặc database production.

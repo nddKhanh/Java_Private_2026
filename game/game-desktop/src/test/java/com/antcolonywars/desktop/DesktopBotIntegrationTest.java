@@ -5,6 +5,7 @@ import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.client.GameClient;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.server.GameServerApplication;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -15,6 +16,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -185,7 +187,10 @@ class DesktopBotIntegrationTest {
     void intellijSubmissionReceivesVietnameseServerErrorLog() throws Exception {
         try (StudentSubmissionServer submissions = new StudentSubmissionServer(
                 ignored -> java.util.concurrent.CompletableFuture.completedFuture(
-                        new StudentSubmissionResult(false, "Lệnh 1, bot worker-blue: Ô đích đang bị chiếm.")
+                        new StudentSubmissionResult(
+                                false,
+                                "Lệnh 1 — worker-blue — di chuyển phải: Ô đích đang bị chiếm."
+                        )
                 ),
                 0
         )) {
@@ -202,8 +207,62 @@ class DesktopBotIntegrationTest {
             );
 
             assertEquals(422, response.statusCode());
-            assertTrue(response.body().contains("Lệnh 1, bot worker-blue"));
+            assertTrue(response.body().contains("Lệnh 1 — worker-blue — di chuyển phải"));
             assertTrue(response.body().contains("Ô đích đang bị chiếm"));
+        }
+    }
+
+    @Test
+    void oneIntellijSubmissionRunsThroughDesktopAndReturnsServerResult() throws Exception {
+        try (StudentSubmissionServer submissions = new StudentSubmissionServer(submission ->
+                java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                    BotCompiler compiler = new BotCompiler();
+                    try (BotCompilation compilation = compiler.compile(submission.className(), submission.source());
+                         BotProcessRunner runner = new BotProcessRunner()) {
+                        if (!compilation.successful()) {
+                            return new StudentSubmissionResult(false, "Biên dịch thất bại.");
+                        }
+                        BotRunResult result = runner.start(request(
+                                compilation, "blue-token", Duration.ofSeconds(10)
+                        )).completion().get(15, TimeUnit.SECONDS);
+                        String output = result.standardOutput() + result.standardError();
+                        return new StudentSubmissionResult(result.successful(), output);
+                    } catch (Exception exception) {
+                        return new StudentSubmissionResult(false, exception.getMessage());
+                    }
+                }), 0)) {
+            submissions.start();
+            String source = """
+                    import com.antcolonywars.sdk.Bot;
+                    public final class Main {
+                        public static void main(Bot bot) {
+                            bot.select("worker-blue");
+                            bot.go(2);
+                        }
+                    }
+                    """;
+            String body = new ObjectMapper().writeValueAsString(Map.of(
+                    "className", "Main",
+                    "source", source,
+                    "pairingKey", "123456",
+                    "batchMode", "ATOMIC"
+            ));
+
+            HttpResponse<String> response = HttpClient.newHttpClient().send(
+                    HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + submissions.port() + "/submit"))
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(body))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            assertEquals(200, response.statusCode());
+            assertTrue(response.body().contains("Batch đã được server chấp nhận"));
+            try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
+                assertEquals(2, observer.getLatestState().snapshot().units().stream()
+                        .filter(unit -> unit.id().equals("worker-blue"))
+                        .findFirst().orElseThrow().position().x());
+            }
         }
     }
 

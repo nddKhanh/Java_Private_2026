@@ -13,6 +13,7 @@ import com.antcolonywars.core.GetStateCommand;
 import com.antcolonywars.core.MatchState;
 import com.antcolonywars.core.MoveCommand;
 import com.antcolonywars.core.HarvestCommand;
+import com.antcolonywars.core.InvalidActionCommand;
 import com.antcolonywars.core.SpawnCommand;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
@@ -141,15 +142,21 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
 
         BatchMode mode;
-        List<ActionCommand> commands = new ArrayList<>();
         try {
             mode = BatchMode.valueOf(requireText(request.mode()));
-            for (BatchCommandMessage command : request.commands()) {
-                commands.add(toCommand(command, teamId, state));
-            }
         } catch (IllegalArgumentException exception) {
-            sendFailure(session, request.commandId(), "INVALID_COMMAND");
+            sendFailure(session, request.commandId(), "INVALID_BATCH");
             return;
+        }
+
+        List<ActionCommand> commands = new ArrayList<>();
+        for (int index = 0; index < request.commands().size(); index++) {
+            BatchCommandMessage command = request.commands().get(index);
+            try {
+                commands.add(toCommand(command, teamId, state));
+            } catch (IllegalArgumentException | NullPointerException exception) {
+                commands.add(invalidCommand(request.commandId(), index, command, teamId, state));
+            }
         }
 
         BatchApplyResult result = coordinator.applyBatch(commands, mode);
@@ -238,6 +245,32 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             );
             default -> throw new IllegalArgumentException("Unknown action");
         };
+    }
+
+    private InvalidActionCommand invalidCommand(
+            String batchId,
+            int index,
+            BatchCommandMessage request,
+            String teamId,
+            MatchState state
+    ) {
+        String commandId = request == null ? null : request.commandId();
+        if (commandId == null || commandId.isBlank()) {
+            commandId = (batchId == null || batchId.isBlank() ? "batch" : batchId) + ":invalid:" + index;
+        }
+        String subjectId = request == null ? null : request.unitId();
+        if (request != null && "SPAWN".equals(request.action())
+                && request.sourceId() != null && !request.sourceId().isBlank()) {
+            subjectId = request.sourceId();
+        }
+        if (subjectId == null || subjectId.isBlank()) {
+            try {
+                subjectId = controlledUnitId(state, teamId);
+            } catch (IllegalArgumentException exception) {
+                subjectId = "không-xác-định";
+            }
+        }
+        return new InvalidActionCommand(commandId, teamId, subjectId);
     }
 
     private String controlledUnitId(MatchState state, String teamId) {

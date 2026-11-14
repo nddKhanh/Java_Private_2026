@@ -188,11 +188,8 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
                 String prefix = "";
                 if (actionNumber > 0) {
                     BatchAction failed = actions.get(actionNumber - 1);
-                    String botId = failed.sourceId() != null && !failed.sourceId().isBlank()
-                            ? failed.sourceId()
-                            : failed.unitId();
-                    prefix = "Lệnh " + actionNumber + ", bot "
-                            + (botId == null || botId.isBlank() ? "mặc định" : botId) + ": ";
+                    prefix = "Lệnh " + actionNumber + " — " + subjectId(failed)
+                            + " — " + actionDescription(failed) + ": ";
                 }
                 String detail = result.errorMessage() == null ? "Lệnh không thể thực hiện." : result.errorMessage();
                 throw new GameClientException(result.error(), prefix + detail);
@@ -213,6 +210,41 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         } finally {
             pending.remove(batchId);
         }
+    }
+
+    private static String subjectId(BatchAction action) {
+        String id = "SPAWN".equals(action.action()) ? action.sourceId() : action.unitId();
+        return id == null || id.isBlank() ? "mặc định" : id;
+    }
+
+    private static String actionDescription(BatchAction action) {
+        String direction = directionLabel(action.direction());
+        return switch (action.action()) {
+            case "MOVE" -> "di chuyển" + direction;
+            case "WAIT" -> "đứng yên";
+            case "ATTACK" -> "tấn công" + direction;
+            case "HARVEST" -> "khai thác";
+            case "BUILD" -> "xây " + textOrDefault(action.buildingType(), "công trình") + direction;
+            case "SPAWN" -> "spawn " + textOrDefault(action.unitType(), "quân") + direction;
+            default -> textOrDefault(action.action(), "hành động").toLowerCase();
+        };
+    }
+
+    private static String directionLabel(String direction) {
+        if (direction == null || direction.isBlank()) {
+            return "";
+        }
+        return " " + switch (direction) {
+            case "UP" -> "lên";
+            case "RIGHT" -> "phải";
+            case "DOWN" -> "xuống";
+            case "LEFT" -> "trái";
+            default -> direction.toLowerCase();
+        };
+    }
+
+    private static String textOrDefault(String value, String fallback) {
+        return value == null || value.isBlank() ? fallback : value;
     }
 
     public GameState awaitSimulationIdle() {

@@ -4,6 +4,8 @@ import com.antcolonywars.core.ApplyResult;
 import com.antcolonywars.core.AttackCommand;
 import com.antcolonywars.core.BatchApplyResult;
 import com.antcolonywars.core.BatchMode;
+import com.antcolonywars.core.Building;
+import com.antcolonywars.core.BuildingType;
 import com.antcolonywars.core.DefaultMatchSetup;
 import com.antcolonywars.core.Direction;
 import com.antcolonywars.core.ErrorCode;
@@ -11,6 +13,7 @@ import com.antcolonywars.core.Headquarters;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.Position;
 import com.antcolonywars.core.RuleSet;
+import com.antcolonywars.core.SpawnCommand;
 import com.antcolonywars.core.Team;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
@@ -56,6 +59,51 @@ class MatchCoordinatorTest {
         assertTrue(coordinator.apply(new WaitCommand("next-3", "BLUE", "worker-blue")).accepted());
         assertEquals(5, coordinator.state().revision());
         assertEquals(4, coordinator.commandQueueCapacity());
+    }
+
+    @Test
+    void countsSpawnAgainstItsSelectedBuildingWithoutMixingOtherSubjects() {
+        MatchSetup setup = new MatchSetup(
+                "building-limit", "building-limit", 7, 5, RuleSet.mvp(),
+                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
+                List.of(new Unit("worker-blue", "BLUE", "WORKER", new Position(5, 4), 3, Direction.LEFT)),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-red", "RED", new Position(6, 4), 3)
+                ),
+                List.of(),
+                List.of(
+                        new Building("barracks-a", "BLUE", BuildingType.BARRACKS, new Position(1, 1), 5),
+                        new Building("barracks-b", "BLUE", BuildingType.BARRACKS, new Position(4, 1), 5)
+                )
+        );
+        GameProfileProperties.Limits limits = new GameProfileProperties.Limits(2, 16, 250);
+        MatchCoordinator limited = new MatchCoordinator(setup, limits, Clock.systemUTC());
+
+        BatchApplyResult partial = limited.applyBatch(List.of(
+                spawn("spawn-a-1", "barracks-a", "melee-a-1", Direction.RIGHT),
+                spawn("spawn-a-2", "barracks-a", "melee-a-2", Direction.DOWN),
+                spawn("spawn-a-3", "barracks-a", "melee-a-3", Direction.UP)
+        ), BatchMode.PARTIAL);
+
+        assertEquals(ErrorCode.BATCH_LIMIT_EXCEEDED, partial.error());
+        assertEquals(2, partial.failedIndex());
+        assertEquals(2, partial.appliedCount());
+
+        MatchCoordinator independent = new MatchCoordinator(setup, limits, Clock.systemUTC());
+        BatchApplyResult mixed = independent.applyBatch(List.of(
+                new WaitCommand("worker-1", "BLUE", "worker-blue"),
+                new WaitCommand("worker-2", "BLUE", "worker-blue"),
+                spawn("spawn-a", "barracks-a", "melee-a", Direction.RIGHT),
+                spawn("spawn-b", "barracks-b", "melee-b", Direction.LEFT)
+        ), BatchMode.ATOMIC);
+
+        assertTrue(mixed.accepted());
+        assertEquals(4, mixed.appliedCount());
+    }
+
+    private SpawnCommand spawn(String commandId, String sourceId, String unitId, Direction direction) {
+        return new SpawnCommand(commandId, "BLUE", sourceId, unitId, unitId, "MELEE", direction);
     }
 
     @Test

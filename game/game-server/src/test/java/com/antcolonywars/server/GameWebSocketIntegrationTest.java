@@ -122,6 +122,34 @@ class GameWebSocketIntegrationTest {
     }
 
     @Test
+    void appliesConversionFailuresAtTheirSequentialBatchPosition() throws Exception {
+        SocketClient blue = connect("blue-token");
+        blue.awaitType("STATE_UPDATED");
+        List<Map<String, Object>> commands = List.of(
+                action("first", "WAIT", Map.of("unitId", "worker-blue")),
+                action("second", "WAIT", Map.of("unitId", "worker-blue")),
+                action("bad-direction", "MOVE", Map.of("unitId", "worker-blue", "direction", "SIDEWAYS")),
+                action("never-runs", "WAIT", Map.of("unitId", "worker-blue"))
+        );
+
+        blue.send(batch("atomic-conversion", "ATOMIC", commands));
+        JsonNode atomic = blue.awaitType("COMMAND_RESULT");
+        assertEquals("INVALID_COMMAND", atomic.path("error").asText());
+        assertEquals(2, atomic.path("failedIndex").asInt());
+        assertEquals(0, atomic.path("appliedCount").asInt());
+        assertEquals(0, atomic.path("revision").asLong());
+
+        blue.send(batch("partial-conversion", "PARTIAL", commands));
+        JsonNode partial = blue.awaitType("COMMAND_RESULT");
+        assertEquals("INVALID_COMMAND", partial.path("error").asText());
+        assertEquals(2, partial.path("failedIndex").asInt());
+        assertEquals(2, partial.path("appliedCount").asInt());
+        assertEquals(2, partial.path("revision").asLong());
+        assertEquals(2, blue.awaitType("STATE_UPDATED").path("revision").asLong());
+        blue.close();
+    }
+
+    @Test
     void serializesNearConcurrentCommandsIntoUniqueOrderedSequences() throws Exception {
         SocketClient viewer = connect(null);
         SocketClient blue = connect("blue-token");

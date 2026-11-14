@@ -192,6 +192,7 @@ Không có giới hạn lệnh theo giây hoặc simulation tick.
 Các lời gọi đọc state trong lúc tạo batch dùng snapshot nhận tại đầu lần Run.
 Batch chỉ được gửi sau khi `main` hoặc `run` kết thúc bình thường.
 Exception hoặc thao tác Stop trước thời điểm đó sẽ bỏ toàn bộ batch chưa gửi.
+Lỗi batch trong console IntelliJ nêu số lệnh, ID unit hoặc công trình thực hiện, hành động và nguyên nhân tiếng Việt.
 
 Sau mỗi lần sửa, biên dịch lại trước khi chạy.
 Stop không hoàn tác batch đã được server chấp nhận.
@@ -241,6 +242,8 @@ Nếu không có mục tiêu trên đường bắn trong tầm, server trả `TA
 Đạn giữ tọa độ của mục tiêu tại lúc khai hỏa, đi theo đường Bresenham và không đổi hướng khi mục tiêu di chuyển.
 Công trình trên đường bay chặn đạn và nhận sát thương; công trình biến mất khi HP về 0.
 TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô và mỗi tháp khai hỏa tối đa một lần mỗi giây.
+Projectile xuyên qua unit, HQ và building cùng phe mà không gây sát thương hoặc dừng lại.
+Viewer dùng hình dạng riêng cho từng loại quân và công trình; nhãn cạnh biểu tượng là ID thực tế, ID dài hiển thị đầy đủ khi trỏ chuột.
 
 ### Cách khác — chạy kịch bản có sẵn
 
@@ -331,7 +334,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Mỗi đội có giới hạn 10 hành động trong một giây theo cấu hình mặc định.
 - [x] Hai chương trình cùng điều khiển một đội dùng chung giới hạn này.
 - [x] Chương trình Java tự chờ rồi gửi lại khi bị giới hạn tốc độ.
-- [x] Batch giới hạn 10 hành động cho mỗi bot và được server xử lý tuần tự.
+- [x] Batch giới hạn 10 hành động cho mỗi unit hoặc công trình và được server xử lý tuần tự.
 - [x] Desktop cho chọn Atomic hoặc Partial trước khi Run.
 
 ### Account, lobby và dữ liệu đã lưu

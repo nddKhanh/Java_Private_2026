@@ -16,6 +16,9 @@ public final class GameEngine {
         if (state.processedCommandIds().contains(action.commandId())) {
             return ApplyResult.failure(state, ErrorCode.DUPLICATE_COMMAND);
         }
+        if (action instanceof InvalidActionCommand) {
+            return ApplyResult.failure(state, ErrorCode.INVALID_COMMAND);
+        }
         if (action instanceof TickCommand tick) {
             return applyTick(state, tick, rules);
         }
@@ -239,7 +242,8 @@ public final class GameEngine {
         for (Projectile projectile : active) {
             Position next = projectile.nextPosition();
             Building blockingBuilding = findBuildingAt(buildings, next);
-            if (blockingBuilding != null) {
+            if (blockingBuilding != null
+                    && !sameFaction(state, projectile.teamId(), blockingBuilding.teamId())) {
                 Building damaged = blockingBuilding.takeDamage(projectile.damage());
                 buildings = damaged.hp() == 0
                         ? removeBuilding(buildings, damaged.id())
@@ -247,7 +251,8 @@ public final class GameEngine {
                 continue;
             }
             Headquarters blockingHeadquarters = findHeadquartersAt(headquarters, next);
-            if (blockingHeadquarters != null) {
+            if (blockingHeadquarters != null
+                    && !sameFaction(state, projectile.teamId(), blockingHeadquarters.teamId())) {
                 Headquarters damaged = blockingHeadquarters.takeDamage(projectile.damage());
                 headquarters = replaceHeadquarters(headquarters, damaged);
                 if (damaged.hp() == 0 && hasSingleActiveFaction(state.teams(), headquarters)) {
@@ -259,7 +264,7 @@ public final class GameEngine {
                 continue;
             }
             Unit blockingUnit = findUnitAt(units, next);
-            if (blockingUnit != null) {
+            if (blockingUnit != null && !sameFaction(state, projectile.teamId(), blockingUnit.teamId())) {
                 Unit damaged = blockingUnit.takeDamage(projectile.damage());
                 if (damaged.hp() == 0) {
                     units = removeUnit(units, damaged.id());

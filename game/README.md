@@ -8,7 +8,8 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - Chức năng hiện có gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE.
 - SPAWN hỗ trợ WORKER, MELEE, RANGED và SIEGE; ATTACK nhận mã quân cùng hướng và quét mục tiêu đầu tiên đến hết tầm đánh.
 - Server là nguồn sự thật duy nhất cho vị trí, HP, damage, resource, building, revision và winner.
-- P0 batch giới hạn 10 hành động cho mỗi bot/lần Run, hỗ trợ Atomic hoặc Partial và không giới hạn theo giây.
+- P0 batch giới hạn 10 hành động cho mỗi unit hoặc công trình trong một lần Run, hỗ trợ Atomic hoặc Partial và không giới hạn theo giây.
+- Lỗi chuyển đổi và lỗi luật chơi đều giữ đúng thứ tự Atomic/Partial; console nêu lệnh, ID chủ thể, hành động và nguyên nhân.
 - R4.1 thêm footprint 2×2 cho SIEGE, projectile và nhịp mô phỏng mặc định 250 ms.
 - R5 thêm account, đăng nhập, lobby team, session token và H2/Flyway để phục hồi state cùng lịch sử trận sau khi khởi động lại.
 - R6 hoàn thiện 10 đội/2 phe, hai match độc lập, tối đa 5 account cùng đội và reconnect theo snapshot mới nhất.
@@ -109,5 +110,6 @@ Sau khi cập nhật, chạy `git diff --check` và ghi commit bằng tiếng An
 - Có thể tạo nhiều trận riêng bằng mã; chưa có danh sách phòng công khai, matchmaking tự động hoặc production deployment.
 - Chưa có xác minh email, quên mật khẩu, thu hồi mọi session hoặc giới hạn số account mỗi team.
 - Chưa có load test quy mô lớn hoặc kiểm thử trực quan projectile trên nhiều trình duyệt.
-- HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE/RANGED/SIEGE; building chặn và nhận damage, còn mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
+- HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE/RANGED/SIEGE; đạn xuyên đồng minh nhưng va chạm đối tượng địch, còn mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
+- Viewer phân biệt từng loại unit và công trình bằng silhouette riêng, đồng thời hiển thị ID thực tế trên bản đồ.
 - Desktop Code Studio chỉ nên chạy source do người dùng tin cậy.

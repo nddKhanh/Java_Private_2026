@@ -431,8 +431,10 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 - SPAWN truyền nguồn sản xuất; HQ chỉ tạo WORKER, BARRACKS chỉ tạo MELEE, RANGED và SIEGE.
 - Projectile khóa tọa độ đích lúc khai hỏa và đi từng ô Bresenham mà không tìm đường vòng.
+- Projectile xuyên qua mọi unit, HQ và building cùng phe mà không gây sát thương hoặc dừng lại.
 - Công trình chặn đạn, nhận damage và bị loại khỏi state khi HP về 0.
 - TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô với cooldown một giây cho từng tháp.
+- Viewer dùng silhouette riêng và nhãn ID thực tế cho từng loại unit, HQ và building.
 
 **Bằng chứng:** Toàn bộ Maven test và frontend production build pass.
 
@@ -444,6 +446,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 - `Submit` chuyển source qua HTTP loopback tới Desktop; Desktop tự pair, compile, chạy trong JVM con và trả kết quả về console IntelliJ.
 - API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`; API đầy đủ vẫn tương thích.
 - Batch chỉ được gửi khi chương trình kết thúc bình thường; exception hoặc Stop loại bỏ batch chưa gửi.
+- Console IntelliJ nhận lỗi có số lệnh, ID chủ thể, hành động và nguyên nhân tiếng Việt.
 - Source và class Java không được gửi tới game server.
 
 **Bằng chứng:** Maven test của template, SDK, runner và Desktop pass.
@@ -503,17 +506,17 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R4 — Hàng đợi và quota
 
-- Mỗi lần Run tạo một batch với tối đa 10 hành động cho mỗi bot.
+- Mỗi lần Run tạo một batch với tối đa 10 hành động cho mỗi unit hoặc công trình được điều khiển.
 - Coordinator xử lý lệnh tuần tự theo state sau từng hành động và không giới hạn theo giây.
 - Atomic rollback toàn batch khi có lỗi; Partial giữ kết quả trước lỗi đầu tiên.
 - Kết quả trả mã lỗi, thông báo tiếng Việt, vị trí lỗi và số hành động đã áp dụng.
 
 **Nghiệm thu:**
 
-- [x] Tối đa 10 hành động cho mỗi bot trong một batch; chọn bot không tính hạn mức.
-- [x] Nhiều bot trong cùng batch có bộ đếm độc lập.
+- [x] Tối đa 10 hành động cho mỗi unit hoặc công trình trong một batch; thao tác chọn và đọc state không tính hạn mức.
+- [x] Nhiều unit và công trình trong cùng batch có bộ đếm độc lập; spawn tính cho công trình nguồn.
 - [x] Atomic không thay đổi state nếu bất kỳ hành động nào lỗi.
-- [x] Partial dừng tại lỗi đầu tiên và giữ đúng các hành động trước đó.
+- [x] Partial dừng tại lỗi đầu tiên và giữ đúng các hành động trước đó, kể cả lỗi chuyển đổi dữ liệu command.
 - [x] Simulation tick không tham gia hạn mức batch.
 
 **Bằng chứng:** Toàn bộ Maven test pass sau khi nâng giao thức batch lên schema 7.

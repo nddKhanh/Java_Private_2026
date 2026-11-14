@@ -1,7 +1,7 @@
 package com.antcolonywars.core;
 
 public sealed interface ActionCommand extends GameCommand permits MoveCommand, WaitCommand, AttackCommand, SpawnCommand,
-        HarvestCommand, BuildCommand, TickCommand {
+        HarvestCommand, BuildCommand, TickCommand, InvalidActionCommand {
     String actorTeamId();
 
     String unitId();
