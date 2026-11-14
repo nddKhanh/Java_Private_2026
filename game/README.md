@@ -16,6 +16,7 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - R8.4 thêm đăng ký/đăng nhập trên web, tạo trận từ JSON map script, tìm trận bằng mã + token đội và phòng chờ theo slot.
 - R8 LAN cho phép một máy phát server/viewer để nhiều máy cùng Wi-Fi truy cập trực tiếp, không qua dịch vụ trung gian.
 - Desktop pairing cho phép nhập một key sáu ký tự để tự tìm server trong LAN, điền match code và chọn token đội theo màu.
+- P1 cho phép viết `Main.main(Bot)` trong project IntelliJ mẫu rồi chạy `Submit` để Desktop tự pair, compile và chạy source local.
 
 ## Kiến trúc
 
@@ -27,6 +28,10 @@ Desktop Code Studio chạy source Java local trong JVM con và tái sử dụng 
 
 ```text
 JavaFX editor → compiler → child JVM → GameClient → server → Phaser
+```
+
+```text
+IntelliJ template → HTTP loopback → Desktop compiler → child JVM → GameClient → server
 ```
 
 ## Yêu cầu
@@ -60,6 +65,9 @@ Trong Desktop Code Studio, nhập pairing key từ phòng chờ rồi nhấn **P
 Các trường Server, Match code và Team token vẫn cho phép nhập thủ công khi cần.
 Nhấn `Compile` (`Ctrl+B`) rồi `Run` (`Ctrl+R`) để chạy chương trình mẫu; nhấn `Stop` (`Ctrl+K`) để dừng.
 Quan sát kết quả trên trang bản đồ.
+
+Để viết trong IntelliJ, mở `student-bot-template`, điền `MATCH_KEY` trong `.env`, sửa `Main.java` rồi chạy `Submit.main()` khi Desktop đang mở.
+API ngắn dùng `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; `idle` thay cho `wait` vì `Object.wait()` là `final` trong Java.
 
 Nếu chỉ muốn chạy kịch bản có sẵn, dùng lệnh sau thay cho Desktop Code Studio:
 

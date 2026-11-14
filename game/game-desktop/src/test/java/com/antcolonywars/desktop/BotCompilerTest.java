@@ -22,6 +22,26 @@ class BotCompilerTest {
     }
 
     @Test
+    void compilesStudentMainWithShortBotApi() {
+        String source = """
+                import com.antcolonywars.sdk.Bot;
+
+                public final class Main {
+                    public static void main(Bot bot) {
+                        bot.select("worker-blue");
+                        bot.go(2);
+                        bot.idle();
+                    }
+                }
+                """;
+
+        try (BotCompilation result = compiler.compile("Main", source)) {
+            assertTrue(result.successful(), result.messages().toString());
+            assertTrue(Files.isRegularFile(result.classesDirectory().resolve("Main.class")));
+        }
+    }
+
+    @Test
     void reportsLineAndColumnForInvalidSourceAndKeepsNoRunnableOutput() {
         BotCompilation result = compiler.compile("BrokenBot", "public final class BrokenBot { invalid }");
 

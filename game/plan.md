@@ -148,6 +148,10 @@ URL server, team token và unit ID do desktop truyền vào runner; người dù
 Với lobby động, server cấp một pairing key để Desktop tự tìm endpoint LAN, điền match code và nạp danh sách token màu.
 Source code và class file chỉ tồn tại local, không được upload lên game server.
 
+Project `student-bot-template` cho phép người học viết `public static void main(Bot bot)` trong IntelliJ.
+Lớp `Submit` đọc pairing key và chế độ batch từ `.env`, sau đó gửi source qua HTTP loopback tới Desktop để tự pair, compile và chạy.
+API nhập môn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; tên `idle` tránh xung đột với `Object.wait()` dạng `final`.
+
 JVM con phải có classpath giới hạn, working directory tạm, giới hạn heap, timeout, giới hạn output và thao tác dừng rõ ràng.
 Các giới hạn này bảo vệ độ ổn định của ứng dụng nhưng không phải sandbox an toàn cho code không tin cậy.
 Phiên bản đầu chỉ chạy source do chính người dùng tin cậy; nếu nhận code từ người khác thì phải bổ sung cô lập ở mức hệ điều hành hoặc container.

@@ -26,6 +26,10 @@ Desktop Code Studio dùng JavaFX để viết, biên dịch và chạy source Ja
 JavaFX editor → Java Compiler API → child JVM → GameBot/GameClient → WebSocket → server → Phaser
 ```
 
+Người học cũng có thể mở `student-bot-template` trong IntelliJ, viết `Main.main(Bot)` rồi chạy `Submit`.
+`Submit` đọc pairing key từ `.env` và gửi source qua HTTP loopback tới Desktop để tự pair, compile và chạy.
+Game server chỉ nhận batch command, không nhận source hoặc class Java.
+
 Mỗi lần Run gom các hành động thành một batch; người dùng chọn Atomic để từ chối toàn bộ khi có lỗi hoặc Partial để giữ phần hợp lệ trước lỗi đầu tiên.
 Mỗi bot được gửi tối đa 10 hành động trong một batch và không có giới hạn theo giây hoặc simulation tick.
 
@@ -94,6 +98,16 @@ Trong ứng dụng:
 8. Quan sát Phaser cập nhật theo các hành động server đã chấp nhận.
 
 Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để Stop.
+
+Để dùng IntelliJ thay cho editor tích hợp:
+
+1. Mở `student-bot-template` bằng IntelliJ với JDK 21.
+2. Điền `MATCH_KEY` và `BATCH_MODE` trong `.env`.
+3. Sửa `src/main/java/Main.java`.
+4. Chạy `Submit.main()` trong khi Desktop đang mở.
+
+API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`.
+Tên `idle` được dùng thay cho `wait` vì Java không cho override phương thức `Object.wait()` dạng `final`.
 
 Nếu sửa source sau khi compile, ứng dụng bắt buộc compile lại trước khi Run.
 Nút Stop kết thúc ngay JVM con đang chạy.
@@ -201,6 +215,7 @@ Không dùng các token này cho môi trường public hoặc production.
 - `game-core`: state, rules, snapshot và replay thuần Java.
 - `game-server`: Spring Boot WebSocket, profile và xử lý command tuần tự.
 - `game-client-java`: SDK Java 21 có timeout và error code.
+- `student-bot-template`: project IntelliJ tối thiểu có `.env`, `Main.main(Bot)` và lớp gửi source tới Desktop.
 - `game-demo-bots`: BlueBot, RedBot và WinningScenario.
 - `game-runner`: entry point tối thiểu chạy `BotProgram` trong JVM con.
 - `game-desktop`: JavaFX editor, compiler diagnostics và process control.

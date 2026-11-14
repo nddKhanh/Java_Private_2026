@@ -54,6 +54,36 @@ class DesktopBotIntegrationTest {
     }
 
     @Test
+    void studentMainUsesShortApiAndSubmitsOneBatch() throws Exception {
+        String source = """
+                import com.antcolonywars.sdk.Bot;
+
+                public final class Main {
+                    public static void main(Bot bot) {
+                        bot.select("worker-blue");
+                        bot.go(2);
+                        bot.idle();
+                    }
+                }
+                """;
+        BotCompiler compiler = new BotCompiler();
+        try (BotCompilation compilation = compiler.compile("Main", source);
+             BotProcessRunner runner = new BotProcessRunner()) {
+            BotRunResult result = runner.start(request(compilation, "blue-token", Duration.ofSeconds(10)))
+                    .completion()
+                    .get(15, TimeUnit.SECONDS);
+
+            assertTrue(result.successful(), result.standardError());
+            try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
+                assertEquals(2, observer.getLatestState().revision());
+                assertEquals(2, observer.getLatestState().snapshot().units().stream()
+                        .filter(unit -> unit.id().equals("worker-blue"))
+                        .findFirst().orElseThrow().position().x());
+            }
+        }
+    }
+
+    @Test
     void timeoutTerminatesInfiniteLoopWithoutStoppingDesktopProcess() throws Exception {
         BotCompiler compiler = new BotCompiler();
         try (BotCompilation compilation = compiler.compile("EndlessBot", endlessSource("EndlessBot"));

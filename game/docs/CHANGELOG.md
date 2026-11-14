@@ -3,6 +3,23 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-14 — P1 IntelliJ và API bot rút gọn
+
+### Added
+
+- Thêm project mẫu `student-bot-template` để mở trực tiếp bằng IntelliJ, nhập pairing key trong `.env` và chạy lớp `Submit`.
+- Thêm API `Bot` rút gọn với `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`.
+- Desktop nhận source qua HTTP loopback, tự pair, biên dịch và chạy trong JVM con; source Java không được gửi tới game server.
+
+### Changed
+
+- Runner chấp nhận cả hợp đồng `BotProgram` cũ và entry point `public static void main(Bot bot)` mới.
+- Mẫu source mặc định trong Desktop dùng API rút gọn.
+
+### Verified
+
+- Maven test của template, SDK, runner và Desktop pass, gồm compile `Main.main(Bot)` và một batch API rút gọn gửi tới server.
+
 ## 2026-11-14 — P0 batch Atomic và Partial
 
 ### Changed

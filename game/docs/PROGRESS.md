@@ -3,6 +3,17 @@
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
+## 2026-11-14 — P1 IntelliJ và API bot rút gọn
+
+- **Trạng thái:** `VERIFIED` bằng test tự động.
+- **Đã đạt:** Thêm project mẫu IntelliJ với `.env`, `Main.main(Bot)` và lớp `Submit` gửi source tới Desktop qua loopback.
+- **Đã đạt:** Desktop tự điền pairing key, chọn Atomic/Partial, biên dịch và chạy source; game server không nhận source hoặc class Java.
+- **Đã đạt:** API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; API đầy đủ cũ vẫn hoạt động.
+- **Bằng chứng:** `mvnw -q -pl student-bot-template,game-desktop -am test` hoàn tất với exit code 0.
+- **Giới hạn:** Java không cho override `Object.wait()` vì phương thức này là `final`, nên thao tác chờ của API ngắn mang tên `idle()`.
+- **Chưa kiểm chứng:** Chưa kiểm thử trực quan thao tác Run `Submit` trong IntelliJ với app-image Desktop đã đóng gói.
+- **Tiếp theo:** P2 luật sản xuất theo công trình, building combat, tower tự bắn và projectile theo đường cố định.
+
 ## 2026-11-14 — P0 batch và kiểm tra lệnh
 
 - **Trạng thái:** VERIFIED.

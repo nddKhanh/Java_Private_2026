@@ -5,8 +5,13 @@ import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.bot.GameBots;
 import com.antcolonywars.client.GameClientException;
 import com.antcolonywars.core.BatchMode;
+import com.antcolonywars.sdk.Bot;
+import com.antcolonywars.sdk.BotAdapter;
 
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.time.Duration;
 import java.util.Map;
 
@@ -40,16 +45,21 @@ public final class BotRunnerMain {
             return 2;
         }
 
-        BotProgram program;
+        ProgramEntry program;
         try {
             Class<?> candidate = Class.forName(args[0]);
-            if (!BotProgram.class.isAssignableFrom(candidate)) {
-                err.printf("Class %s does not implement %s.%n", args[0], BotProgram.class.getName());
-                return 3;
+            if (BotProgram.class.isAssignableFrom(candidate)) {
+                BotProgram legacy = (BotProgram) candidate.getConstructor().newInstance();
+                program = legacy::run;
+            } else {
+                Method main = candidate.getMethod("main", Bot.class);
+                if (!Modifier.isStatic(main.getModifiers()) || main.getReturnType() != void.class) {
+                    throw new NoSuchMethodException("main(Bot) must be public static void");
+                }
+                program = gameBot -> invokeStudentMain(main, new BotAdapter(gameBot));
             }
-            program = (BotProgram) candidate.getConstructor().newInstance();
         } catch (ReflectiveOperationException | LinkageError exception) {
-            err.printf("Cannot load bot class %s: %s%n", args[0], messageOf(exception));
+            err.printf("Không thể nạp lớp %s: %s%n", args[0], messageOf(exception));
             return 3;
         }
 
@@ -67,6 +77,19 @@ public final class BotRunnerMain {
             err.printf("Lỗi bot [%s]: %s%n", code, messageOf(exception));
             return 4;
         }
+    }
+
+    private static void invokeStudentMain(Method method, Bot bot) throws Throwable {
+        try {
+            method.invoke(null, bot);
+        } catch (InvocationTargetException exception) {
+            throw exception.getCause();
+        }
+    }
+
+    @FunctionalInterface
+    private interface ProgramEntry {
+        void run(GameBot bot) throws Throwable;
     }
 
     private static BatchMode batchMode(Map<String, String> environment) {

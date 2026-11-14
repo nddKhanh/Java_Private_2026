@@ -425,6 +425,17 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 # D. CÁC HƯỚNG MỞ RỘNG SAU DESKTOP
 
+## P1 — IntelliJ và API bot rút gọn
+
+**Trạng thái:** `VERIFIED` bằng test tự động.
+
+- Project `student-bot-template` dùng JDK 21, `.env` và entry point `Main.main(Bot)`.
+- `Submit` chuyển source qua HTTP loopback tới Desktop; Desktop tự pair, compile và chạy trong JVM con.
+- API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; API đầy đủ vẫn tương thích.
+- Source và class Java không được gửi tới game server.
+
+**Bằng chứng:** Maven test của template, SDK, runner và Desktop pass.
+
 ## R1 — Nhiều đơn vị và spawn
 
 **Trạng thái:** `VERIFIED`.

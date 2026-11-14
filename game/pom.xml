@@ -19,6 +19,7 @@
         <module>game-demo-bots</module>
         <module>game-runner</module>
         <module>game-desktop</module>
+        <module>student-bot-template</module>
     </modules>
 
     <properties>

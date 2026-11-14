@@ -58,7 +58,7 @@ try {
         "--name", "AntColonyCodeStudio",
         "--main-jar", "game-desktop-0.1.0-SNAPSHOT.jar",
         "--main-class", "com.antcolonywars.desktop.CodeStudioLauncher",
-        "--add-modules", "jdk.compiler",
+        "--add-modules", "jdk.compiler,jdk.httpserver",
         "--jlink-options", "--strip-debug --no-man-pages --no-header-files",
         "--description", "Local Java bot editor for Ant Colony Wars",
         "--vendor", "Ant Colony Wars"

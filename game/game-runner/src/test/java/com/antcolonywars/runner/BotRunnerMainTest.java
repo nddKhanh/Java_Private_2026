@@ -41,6 +41,6 @@ class BotRunnerMainTest {
         );
 
         assertEquals(3, exitCode);
-        assertTrue(errors.toString(StandardCharsets.UTF_8).contains("does not implement"));
+        assertTrue(errors.toString(StandardCharsets.UTF_8).contains("Không thể nạp lớp"));
     }
 }

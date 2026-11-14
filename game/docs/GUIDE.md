@@ -84,6 +84,17 @@ Trong Desktop Code Studio, nhập pairing key đang hiển thị tại phòng ch
 Ứng dụng quét các subnet IPv4 local trên cổng `8080`, tự điền Server và Match code, rồi nạp danh sách Team token để chọn.
 Nếu Windows Firewall chặn kết nối, mở TCP `8080` trên máy chủ.
 
+### Viết bot trong IntelliJ
+
+1. Mở thư mục `student-bot-template` bằng IntelliJ và chọn JDK 21.
+2. Điền pairing key sáu ký tự vào `MATCH_KEY` trong file `.env`.
+3. Viết chương trình trong `src/main/java/Main.java` với entry point `public static void main(Bot bot)`.
+4. Chạy `Submit.main()` trong IntelliJ khi Desktop Code Studio đang mở.
+5. Desktop nhận source qua `127.0.0.1:17321`, tự pair, compile và chạy bot.
+
+Source chỉ đi từ IntelliJ tới Desktop trên chính máy đang chạy và không được upload lên game server.
+Có thể đặt `BATCH_MODE=ATOMIC` hoặc `BATCH_MODE=PARTIAL` trong `.env`.
+
 ### Tùy chọn — đăng nhập và join team thay cho demo token
 
 Sau khi server đã chạy, mở thêm PowerShell và đăng ký account:
@@ -118,6 +129,25 @@ Có thể tạo tối đa năm account và join cùng BLUE; tất cả account d
 Account thứ sáu bị từ chối với mã `TEAM_FULL`.
 
 ## 4. Viết và chạy chương trình điều khiển
+
+API IntelliJ được khuyến nghị cho người học mới:
+
+```java
+import com.antcolonywars.sdk.Bot;
+
+public final class Main {
+    public static void main(Bot bot) {
+        bot.select("worker-blue");
+        bot.go(2);
+        bot.idle();
+    }
+}
+```
+
+Các hướng của `go` là `1` lên, `2` phải, `3` xuống và `4` trái.
+API ngắn còn có `hit`, `mine`, `build`, `spawn` và `state`.
+Java không cho định nghĩa `bot.wait()` vì `Object.wait()` là phương thức `final`, do đó thao tác chờ dùng tên `bot.idle()`.
+API `BotProgram`/`GameBot` đầy đủ bên dưới vẫn được giữ để tương thích.
 
 ### Bước 1 — chọn đội và nhập chương trình
 

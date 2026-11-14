@@ -35,6 +35,7 @@ public final class CodeStudioApplication extends Application {
     private final BotCompiler compiler = new BotCompiler();
     private final BotProcessRunner processRunner = new BotProcessRunner();
     private final LanPairingClient pairingClient = new LanPairingClient();
+    private final StudentSubmissionServer submissionServer = new StudentSubmissionServer(this::acceptSubmission);
     private final ExecutorService background = Executors.newVirtualThreadPerTaskExecutor();
     private final TextField pairingKey = new TextField();
     private final TextField serverUrl = new TextField("ws://localhost:8080/game");
@@ -52,6 +53,8 @@ public final class CodeStudioApplication extends Application {
     private final Button stopButton = new Button("Stop");
     private BotCompilation activeCompilation;
     private RunningBot activeProcess;
+    private boolean compileAfterPairing;
+    private boolean runAfterCompilation;
 
     @Override
     public void start(Stage stage) {
@@ -102,6 +105,13 @@ public final class CodeStudioApplication extends Application {
         stage.setMinHeight(560);
         stage.setOnCloseRequest(event -> shutdown());
         stage.show();
+        try {
+            submissionServer.start();
+            appendConsole("Sẵn sàng nhận source từ IntelliJ tại 127.0.0.1:" + StudentSubmissionServer.PORT + ".");
+        } catch (IOException exception) {
+            status.setText("Không mở được cổng IntelliJ");
+            appendConsole("Lỗi cổng IntelliJ: " + messageOf(exception));
+        }
     }
 
     @Override
@@ -149,6 +159,8 @@ public final class CodeStudioApplication extends Application {
     private void finishPairing(PairingConfiguration result, Throwable error) {
         pairButton.setDisable(false);
         if (error != null) {
+            compileAfterPairing = false;
+            runAfterCompilation = false;
             status.setText("Pairing failed");
             appendConsole("Pairing error: " + messageOf(error));
             return;
@@ -161,6 +173,32 @@ public final class CodeStudioApplication extends Application {
         }
         status.setText("Paired");
         appendConsole("Paired with " + result.matchCode() + ". Select a team token, then compile and run.");
+        if (compileAfterPairing) {
+            compileAfterPairing = false;
+            runAfterCompilation = true;
+            compileSource();
+        }
+    }
+
+    private void acceptSubmission(StudentSubmission submission) {
+        Platform.runLater(() -> {
+            if (activeProcess != null) {
+                activeProcess.stop();
+                activeProcess = null;
+            }
+            className.setText(submission.className().trim());
+            editor.setText(submission.source());
+            pairingKey.setText(submission.pairingKey().trim());
+            try {
+                batchMode.getSelectionModel().select(BatchMode.valueOf(submission.batchMode().trim().toUpperCase()));
+            } catch (RuntimeException exception) {
+                batchMode.getSelectionModel().select(BatchMode.ATOMIC);
+            }
+            compileAfterPairing = true;
+            runAfterCompilation = false;
+            appendConsole("Đã nhận " + submission.className() + " từ IntelliJ. Đang pair trận đấu...");
+            pairWithServer();
+        });
     }
 
     private VBox bottomPanel() {
@@ -180,6 +218,7 @@ public final class CodeStudioApplication extends Application {
     private void finishCompilation(BotCompilation result, Throwable error) {
         compileButton.setDisable(false);
         if (error != null) {
+            runAfterCompilation = false;
             status.setText("Compile failed");
             appendConsole("Compiler error: " + messageOf(error));
             return;
@@ -196,8 +235,13 @@ public final class CodeStudioApplication extends Application {
                 appendConsole("Compilation successful.");
             }
         } else {
+            runAfterCompilation = false;
             status.setText("Compile failed");
             runButton.setDisable(true);
+        }
+        if (result.successful() && runAfterCompilation) {
+            runAfterCompilation = false;
+            runBot();
         }
     }
 
@@ -345,6 +389,7 @@ public final class CodeStudioApplication extends Application {
             activeProcess = null;
         }
         closeCompilation();
+        submissionServer.close();
         processRunner.close();
         background.close();
     }

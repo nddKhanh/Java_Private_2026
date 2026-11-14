@@ -1,27 +1,19 @@
 package com.antcolonywars.desktop;
 
 final class DefaultBotSource {
-    static final String CLASS_NAME = "MyBot";
+    static final String CLASS_NAME = "Main";
     static final String SOURCE = """
-            import com.antcolonywars.bot.BotProgram;
-            import com.antcolonywars.bot.GameBot;
-            import com.antcolonywars.client.Direction;
-            import com.antcolonywars.core.UnitType;
+            import com.antcolonywars.sdk.Bot;
 
-            public final class MyBot implements BotProgram {
-                @Override
-                public void run(GameBot bot) {
-                    var state = bot.getLatestState().snapshot();
+            public final class Main {
+                public static void main(Bot bot) {
+                    var state = bot.state().snapshot();
                     System.out.printf("Match %s: %d units, %d resources.%n",
                             state.matchId(), state.units().size(), state.resourceNodes().size());
 
-                    // Spawn any supported type next to your headquarters:
-                    // bot.spawn("ranged-1", "Ranged 1", UnitType.RANGED, Direction.DOWN);
-                    // Attack from a selected unit in one direction up to its maximum range:
-                    // bot.attack("ranged-1", Direction.RIGHT);
-
-                    bot.waitTurn();
-                    System.out.println("Bot command accepted.");
+                    bot.select("worker-blue");
+                    bot.go(2);
+                    bot.idle();
                 }
             }
             """;

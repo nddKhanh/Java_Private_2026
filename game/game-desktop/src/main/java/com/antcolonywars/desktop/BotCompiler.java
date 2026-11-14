@@ -5,6 +5,7 @@ import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.client.Direction;
 import com.antcolonywars.client.GameState;
 import com.antcolonywars.core.MatchState;
+import com.antcolonywars.sdk.Bot;
 
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
@@ -84,6 +85,7 @@ public final class BotCompiler {
                 GameBot.class,
                 Direction.class,
                 GameState.class,
+                Bot.class,
                 MatchState.class
         );
     }
