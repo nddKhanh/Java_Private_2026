@@ -1,23 +1,19 @@
 # Bài Tập Về Nhà — Buổi 04
 
-## I. Tổng Kết Bài Tập Về Nhà Buổi 03
+## I. Điểm Bắt Đầu Từ Buổi 03
 
-Sau bài tập buổi 3, `HitShop` đã thay ba danh sách song song bằng các object `Product`, `Customer`, `CartItem` và một `List<CartItem>`.
+Tiếp tục repository `HitShop` bằng JDK 17.
+Giữ `Product`, `Customer`, `CartItem`, `List<CartItem>` và các chức năng thêm, xóa, xem giỏ, tính tổng.
 
-### 1. Các Test Case Phải Chạy Được
+### 1. Các Ca Cũ Phải Còn Đạt
 
-| Mã | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| `TC03-01` | Xem giỏ rỗng rồi xem tổng | In khách hàng hiện tại, báo `Giỏ hàng đang trống.`, tổng bằng `0` |
-| `TC03-02` | Thêm mã khác `P01`, `P02` | Báo `Không tìm thấy sản phẩm.` và giỏ không đổi |
-| `TC03-03` | Thêm `P01` với quantity không dương | Báo `Số lượng phải lớn hơn 0.` và giỏ không đổi |
-| `TC03-04` | Thêm `P01 × 2`, `P02 × 1` | Giỏ có hai dòng, tổng bằng `350000` |
-| `TC03-05` | Thêm cùng một Product hai lần | Tạo hai `CartItem` riêng, không gộp dòng |
-| `TC03-06` | Xóa số thứ tự không tồn tại | Báo `Không tìm thấy mặt hàng.` và giỏ không đổi |
+| Ca | Kết quả cần giữ |
+|---|---|
+| Giỏ rỗng | Báo giỏ trống, tổng bằng `0` |
+| Thêm `P01 × 2`, `P02 × 1` | Có hai CartItem, tổng bằng `350000` |
+| Xóa số thứ tự không tồn tại | Báo không tìm thấy, giỏ không đổi |
 
-### 2. Cây Thư Mục Sau Buổi 03
-
-Cấu trúc source tối thiểu cần đạt:
+### 2. Cây Thư Mục Đầu Buổi
 
 ```text
 src/
@@ -28,70 +24,107 @@ src/
     └── CartItem.java
 ```
 
-## II. Bài Bắt Buộc — Kế Thừa, Đa Hình Và Trạng Thái Đơn
+## II. Ba Bài Bắt Buộc
 
-### 1. Kế Thừa Từ Buổi 03
+Ba bài dùng chung dữ liệu và source.
+Hoàn thành theo thứ tự; không tạo ba project riêng.
 
-Tiếp tục repository `HitShop` bằng JDK 17 và các class `Product`, `Customer`, `CartItem`. Giữ sản phẩm P01/P02, khách C01, giỏ P01 × 2 và P02 × 1. `HitShop` tiếp tục cung cấp các chức năng `addItem`, `removeItem`, `printItems`, `calculateTotal`, đồng thời bổ sung `Book` và `Order`.
+### Bài 1 — Encapsulation Và Trạng Thái Hợp Lệ
 
-### 2. Bài Toán
+Cập nhật `Product`:
 
-Mở rộng mô hình `Product`, `Customer`, `CartItem` từ buổi 3 để biểu diễn một loại sản phẩm chuyên biệt và một đơn hàng. Ví dụ dùng sách; mọi dữ liệu hiển thị phải đến từ method của object phù hợp, không rẽ nhánh theo tên loại sản phẩm.
+- Field private: `String id`, `String name`, `double price`, `int stock`.
+- Constructor nhận đủ bốn giá trị; từ chối `id`/`name` rỗng, `price <= 0`, `stock < 0` bằng `IllegalArgumentException`.
+- Không có `setId()` và `setStock()`.
+- `void setPrice(double price)` chỉ nhận giá dương; lỗi không được làm đổi giá cũ.
+- `void decreaseStock(int quantity)` chỉ nhận `0 < quantity <= stock`; lỗi không được làm đổi stock.
+- Getter chỉ đọc trạng thái hiện tại.
 
-### 3. Class, Field Và Quan Hệ
+Dữ liệu chuẩn: `P01 / Áo thun / 150000 / 20` và `P02 / Bình nước / 50000 / 10`.
 
-- `Product` giữ `id`, `name`, `price`, `stock` và có method `getDescription()` trả về tên sản phẩm. Các field tiếp tục private; không truy cập trực tiếp từ lớp con.
-- `Book extends Product`, có field private `author` và `getAuthor()`. Constructor nhận `id`, `name`, `price`, `stock`, `author`; khởi tạo phần Product cùng dữ liệu đó. Override `getDescription()` trả về đúng mẫu `Tên sách — tác giả: Tên tác giả`.
-- Một `List<Product>` chứa cả object Product thường và Book. Phần hiển thị danh sách gọi cùng `getDescription()` cho mọi phần tử.
-- `Order` có các field private: `id`, `customer` kiểu `Customer`, `items` kiểu `List<CartItem>` và `status` kiểu `String`. Constructor nhận `id` và `customer`; trạng thái ban đầu là `PENDING`. Order HAS-A Customer và HAS-A nhiều CartItem; mỗi CartItem vẫn HAS-A một Product.
-- `Order.addItem(CartItem item)` thêm một dòng và `getTotal()` trả tổng các giá trị `CartItem.getTotal()`. `confirm()` chuyển `PENDING` thành `CONFIRMED`; `cancel()` chuyển `PENDING` thành `CANCELLED`. Khi trạng thái không còn là `PENDING`, `confirm()` và `cancel()` không thay đổi trạng thái.
-- Các chữ ký là `void addItem(CartItem item)`, `double getTotal()`, `void confirm()`, `void cancel()`, `String getStatus()`, `String getId()`, `Customer getCustomer()` và `List<CartItem> getItems()`. `getItems()` không được trả null.
-- Tên class chạy chương trình vẫn là `HitShop`; giữ menu console và các luồng giỏ hàng đã có ở buổi 2–3, đồng thời bổ sung hiển thị danh sách đa hình và thao tác với Order.
+### Bài 2 — Kế Thừa Và Đa Hình
 
-### 4. Sơ Đồ Lớp Và Quan Hệ
+Cập nhật `Product` và tạo `Book`:
+
+- `Product.getDescription(): String` trả tên sản phẩm.
+- `Book extends Product`, thêm field private `String author`.
+- Constructor `Book(String id, String name, double price, int stock, String author)` gọi `super(...)`.
+- `Book.getAuthor(): String` trả tác giả.
+- `Book` override `getDescription()` theo mẫu `Tên sách — tác giả: Tác giả`.
+- Tạo `List<Product>` chứa P01, P02 và Book P03; một vòng lặp gọi `getDescription()` cho mọi phần tử.
+
+Dữ liệu Book: `P03 / Java cơ bản / 120000 / 5 / An Nguyen`.
+
+Không dùng `instanceof`, chuỗi loại sản phẩm hoặc `if/else` để chọn cách mô tả.
+
+### Bài 3 — HAS-A Và Trạng Thái Order
+
+Tạo `Order`:
+
+- Field private: `String id`, `Customer customer`, `List<CartItem> items`, `String status`.
+- Constructor `Order(String id, Customer customer)` tạo list rỗng và status `PENDING`.
+- Getter: `getId()`, `getCustomer()`, `getItems()`, `getStatus()`; `getItems()` không trả `null`.
+- `void addItem(CartItem item)` thêm một dòng hợp lệ.
+- `double getTotal()` cộng `CartItem.getTotal()`.
+- `void confirm()` chỉ chuyển `PENDING → CONFIRMED`.
+- `void cancel()` chỉ chuyển `PENDING → CANCELLED`.
+- Không có `setStatus(String)`.
+
+Customer chuẩn: `C01 / Linh Nguyễn / 0900000001`.
+Order chuẩn: `O01` gồm `P01 × 2`, `P02 × 1`, tổng `350000`.
 
 ![Sơ đồ lớp BTVN buổi 04](assets/buoi-04-class-diagram.svg)
 
-Mũi tên tam giác biểu diễn `Book extends Product`; hình thoi tại `Order` biểu diễn một đơn chứa nhiều `CartItem`.
+## III. Ranh Giới Bài Làm
 
-### 5. Dữ Liệu Chuẩn Và Kết Quả
+- Không dùng abstract class, interface, enum, `equals()`/`hashCode()`; các nội dung này thuộc buổi sau.
+- Không tự động trừ stock khi thêm CartItem vào Order.
+- Không viết thêm Cart, OrderService, repository hoặc database.
+- Không dùng downcasting để hoàn thành phần bắt buộc.
 
-- Product thường tiếp tục từ buổi 3: `P01 / Áo thun / 150000 / stock 20`; `P02 / Bình nước / 50000 / stock 10`.
-- Book mới: `P03 / Java cơ bản / 120000 / stock 5 / An Nguyen`.
-- List hiển thị ba mô tả: `Áo thun`, `Bình nước` và `Java cơ bản — tác giả: An Nguyen`.
-- Customer `C01 / Linh Nguyễn / 0900000001`; Order `O01` tiếp nhận giỏ đã xây dựng ở buổi trước, gồm `P01 × 2` và `P02 × 1`; tổng đơn là `350000`.
-- Trước xác nhận, status là `PENDING`; sau `confirm()`, status là `CONFIRMED`. Lời gọi `cancel()` tiếp theo không đổi status.
-- Một Order khác ở trạng thái `PENDING`, khi gọi `cancel()`, chuyển thành `CANCELLED`; gọi lại `cancel()` không đổi trạng thái.
+## IV. Nộp Bài
 
-### 6. Nộp Bài
+Nộp source lên github và commend dưới bài viết
+Giữ nguyên menu giỏ hàng của buổi 3.
 
-Nộp source các model và `HitShop`; kèm output danh sách mô tả, menu/giỏ hàng đang có, tổng đơn và trạng thái sau xác nhận.
+## V. Nghiệm Thu Buổi 04
 
-## III. Nâng Cao — Bài Tự Chọn
+### 1. Đúng 18 Test Case
 
-- Mô tả sự khác nhau giữa overloading và overriding.
-- Xác định quan hệ Book–Product là IS-A và Order–CartItem là HAS-A.
-- Viết hai overload: `findProducts(String keyword)` trả mọi sản phẩm có tên chứa từ khóa; `findProducts(String keyword, int limit)` trả tối đa `limit` kết quả đầu tiên.
-- Lọc các đối tượng `Book` trong `List<Product>` và lấy tên tác giả từ từng đối tượng `Book`.
-
-## IV. Tổng Kết Bài Tập Về Nhà Buổi 04
-
-Sau bài tập buổi 4, `Book` kế thừa `Product`, danh sách sản phẩm hiển thị bằng đa hình và `Order` bảo vệ các bước chuyển trạng thái.
-
-### 1. Các Test Case Phải Chạy Được
+#### Encapsulation
 
 | Mã | Thao tác | Kết quả mong đợi |
 |---|---|---|
-| `TC04-01` | Đưa P01, P02 và Book P03 vào `List<Product>`, gọi `getDescription()` | Lần lượt in `Áo thun`, `Bình nước`, `Java cơ bản — tác giả: An Nguyen` mà không rẽ nhánh theo class |
-| `TC04-02` | Tạo O01 với C01, thêm `P01 × 2`, `P02 × 1` | `getItems()` không null và `getTotal()` bằng `350000` |
-| `TC04-03` | Gọi `confirm()` trên O01 đang `PENDING` | Trạng thái chuyển thành `CONFIRMED` |
-| `TC04-04` | Gọi `cancel()` sau khi O01 đã `CONFIRMED` | Trạng thái vẫn là `CONFIRMED` |
-| `TC04-05` | Tạo Order mới, gọi `cancel()` hai lần | Lần đầu chuyển thành `CANCELLED`, lần sau không đổi |
-| `TC04-06` | Chạy lại menu giỏ hàng của buổi 3 | Các luồng thêm, xóa, xem giỏ và tính tổng vẫn hoạt động |
+| `TC04-01` | Tạo P01 hợp lệ | Đủ id, name, price, stock |
+| `TC04-02` | Tạo Product có id/name rỗng | Bị từ chối |
+| `TC04-03` | Tạo Product có price `0` hoặc âm | Bị từ chối |
+| `TC04-04` | Tạo Product có stock âm | Bị từ chối |
+| `TC04-05` | Đổi giá P01 thành `160000`, sau đó thử giá `0` | Giá cuối là `160000` |
+| `TC04-06` | Giảm stock P01 đi `2`, sau đó thử `0`, số âm và vượt tồn | Stock cuối là `18` |
 
-### 2. Cây Thư Mục Sau Buổi 04
+#### Kế Thừa Và Đa Hình
 
-Cấu trúc source tối thiểu cần đạt:
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC04-07` | Gọi mô tả P01 | `Áo thun` |
+| `TC04-08` | Tạo Book P03 | Đọc được dữ liệu Product và author |
+| `TC04-09` | Gọi mô tả P03 | `Java cơ bản — tác giả: An Nguyen` |
+| `TC04-10` | Gán Book P03 vào biến `Product` rồi gọi mô tả | Vẫn gọi mô tả của Book |
+| `TC04-11` | Duyệt P01, P02, P03 trong `List<Product>` | In đúng ba mô tả |
+| `TC04-12` | Kiểm tra code hiển thị | Không có `instanceof`/`if` phân loại |
+
+#### HAS-A Và Trạng Thái
+
+| Mã | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| `TC04-13` | Tạo O01 | Items rỗng, total `0`, status `PENDING` |
+| `TC04-14` | Thêm P01 × 2 và P02 × 1 | Hai item, total `350000` |
+| `TC04-15` | `confirm()` O01 | Status `CONFIRMED` |
+| `TC04-16` | `cancel()` O01 sau confirm | Vẫn `CONFIRMED` |
+| `TC04-17` | Hủy một Order mới | `PENDING → CANCELLED` |
+| `TC04-18` | Confirm/hủy lại Order đã `CANCELLED` | Vẫn `CANCELLED` |
+
+### 2. Cây Thư Mục Cuối Buổi
 
 ```text
 src/

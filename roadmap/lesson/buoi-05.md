@@ -64,6 +64,10 @@ static void checkout(PaymentMethod paymentMethod, double amount) {
 
 Gọi `checkout` lần lượt với hai object. Chữ ký và thân của `checkout` không thay đổi khi implementation được thay thế.
 
+### Kiểm tra nhanh
+
+Khi thêm `QrPayment`, hãy chỉ ra chính xác class nào phải tạo mới và method nào không được sửa. Nếu `checkout` phải thêm một nhánh `if`, thiết kế chưa đạt mục tiêu của interface.
+
 ## II. Áp Dụng Lần Hai Với DeliveryMethod
 
 Nếu học viên chỉ làm một ví dụ, interface dễ bị hiểu như “một cú pháp riêng cho payment”. Áp dụng lại cùng ý tưởng cho giao hàng:
@@ -100,7 +104,7 @@ PaymentMethod và DeliveryMethod khác miền hành vi nhưng cùng nguyên tắ
 
 Interface phù hợp khi cần định nghĩa khả năng mà nhiều class khác nhau cùng thực hiện. Abstract class phù hợp khi các lớp con thực sự cùng một họ và cần dùng chung trạng thái hoặc một phần implementation.
 
-Ví dụ mở rộng cho delivery:
+Ví dụ sau thay phiên bản `StandardDelivery` ở mục II để bổ sung trạng thái dùng chung bằng abstract class:
 
 ```java
 public abstract class BaseDeliveryMethod implements DeliveryMethod {
@@ -116,10 +120,25 @@ public abstract class BaseDeliveryMethod implements DeliveryMethod {
     public double getFee() {
         return fee;
     }
+
+    // deliver(Order) vẫn do lớp con triển khai.
+}
+
+public class StandardDelivery extends BaseDeliveryMethod {
+    public StandardDelivery(double fee) {
+        super(fee);
+    }
+
+    @Override
+    public String deliver(Order order) {
+        return "Giao tiêu chuẩn cho đơn " + order.getId();
+    }
 }
 ```
 
-Class trừu tượng có thể giữ `fee` và constructor dùng chung; interface chỉ nêu hành vi `deliver`. Một class chỉ kế thừa một class nhưng có thể implements nhiều interface.
+Class trừu tượng có thể giữ `fee` và constructor dùng chung; interface chỉ nêu hành vi `deliver`. `BaseDeliveryMethod` không triển khai `deliver`, nên lớp concrete phải override method này. Không thể gọi `new BaseDeliveryMethod(...)` vì class abstract chỉ là nền dùng chung, không phải một cách giao hàng hoàn chỉnh.
+
+Một class chỉ kế thừa một class nhưng có thể implements nhiều interface. Không chọn abstract class chỉ vì muốn tái sử dụng vài dòng; các lớp con phải thật sự thuộc cùng một họ.
 
 Product là class concrete khi chương trình cần tạo trực tiếp các đối tượng Product. Một class chỉ nên được khai báo `abstract` khi không cần khởi tạo trực tiếp và các lớp con phải cung cấp hành vi chuyên biệt.
 
@@ -185,6 +204,17 @@ products.remove(searchKey);
 
 Xác định phần thay đổi khi thêm `QrPayment`: bổ sung implementation mới và cập nhật điểm khởi tạo hoặc lựa chọn; không sửa `checkout`.
 
+## VII. Kiểm Tra OOP Cuối Phần
+
+Dành 60 phút cuối để kiểm tra cá nhân các nội dung bắt buộc từ buổi 3–5:
+
+- Đọc một mô hình và xác định IS-A/HAS-A.
+- Viết một lớp con có `super(...)` và `@Override`.
+- Dùng interface để thay một nhánh chọn theo loại.
+- Giải thích và kiểm tra hợp đồng `equals()`/`hashCode()`.
+
+Bài kiểm tra dùng miền bài toán khác HitShop. Phần generics, Optional và lambda không nằm trong phạm vi bắt buộc của bài kiểm tra này.
+
 ## Lỗi thường gặp
 
 | Lỗi | Hậu quả | Cách sửa |
@@ -199,16 +229,26 @@ Xác định phần thay đổi khi thêm `QrPayment`: bổ sung implementation 
 
 Interface tách “có thể làm gì” khỏi “làm bằng cách nào”. Abstract class chia sẻ trạng thái/implementation cho một họ lớp. Equality biến định danh nghiệp vụ thành quy tắc mà collection hiểu được.
 
+### Câu hỏi chốt buổi
+
+1. Khi nào một hành vi nên được biểu diễn bằng interface thay vì chuỗi loại và `if/else`?
+2. Abstract class khác interface ở khả năng giữ trạng thái và constructor như thế nào?
+3. Vì sao class abstract không thể được khởi tạo trực tiếp?
+4. Tại sao override `equals()` mà không override `hashCode()` là một hợp đồng chưa hoàn chỉnh?
+5. Vì sao `id` phù hợp với equality của Product hơn `price` hoặc `stock`?
+
 ## Bài tập nhỏ trên lớp — Gửi thông báo
 
-Tạo interface `NotificationSender` có method `String send(String recipient, String message)`:
+Tạo mô hình:
 
-- `EmailSender` và `SmsSender` triển khai hai nội dung trả về khác nhau.
-- Viết method `notifyUser(NotificationSender sender, String recipient, String message)` chỉ phụ thuộc interface.
-- Gọi method với cả hai implementation.
-- Tạo thêm class `NotificationTemplate` có `code`, `title`; override `equals()` và `hashCode()` theo `code`, rồi kiểm tra `contains()` bằng object khác instance.
+- Interface `NotificationSender` có `String send(String recipient, String message)`.
+- `EmailSender` và `SmsSender` triển khai interface; mỗi class trả một chuỗi có tên kênh, người nhận và nội dung.
+- Method `static void notifyUser(NotificationSender sender, String recipient, String message)` chỉ gọi `sender.send(...)` rồi in kết quả.
+- `NotificationTemplate`: `String code`, `String title`; field private, constructor, getter; override `equals()` và `hashCode()` chỉ theo `code`.
 
-**Nghiệm thu:** thêm một implementation mới không làm thay đổi `notifyUser`; hai template cùng code được xem là bằng nhau. Thời gian làm khoảng 20 phút.
+Dùng input `an@example.com / Lịch học lúc 19:00` cho email và `0900000000 / Lịch học lúc 19:00` cho SMS. Tạo hai template khác instance cùng code `REMINDER` để kiểm tra `contains()`.
+
+**Nghiệm thu:** thêm một implementation mới không làm thay đổi `notifyUser`; output thể hiện đúng hai kênh; hai template cùng code được xem là bằng nhau và có cùng hash code. Thời gian làm khoảng 20 phút.
 
 ## Bài tập về nhà
 

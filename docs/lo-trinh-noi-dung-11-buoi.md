@@ -1,6 +1,8 @@
 # Lộ Trình Nội Dung Khóa Java Private HIT 2026
 
-> Nguồn: `Lộ trình lớp JAVA PRIVATE HIT 2026.xlsx` — trang tính `Trang tính1`. Bản gốc gồm 12 buổi. Bản Markdown này đã gộp nội dung và BTVN buổi 10 vào buổi 8; giữ số cũ để đối chiếu, còn 11 buổi nội dung. Không bổ sung buổi kiểm tra. File Excel là nguồn lịch sử, chưa phản ánh điều chỉnh này.
+> Nguồn: `Lộ trình lớp JAVA PRIVATE HIT 2026.xlsx` — trang tính `Trang tính1`.
+> Bản gốc gồm 12 buổi; bản Markdown này gộp Buổi 10 cũ vào Buổi 8 và đánh lại số các buổi phía sau thành lộ trình 11 buổi.
+> File Excel là nguồn lịch sử, chưa phản ánh điều chỉnh này.
 
 ## Mục Tiêu Khóa Học
 
@@ -399,7 +401,7 @@ BTVN áp dụng vào Product/Customer: View → Controller → Service → Repos
 #### Ghi Chú Và Bài Tập Theo Lộ Trình
 
 - BTVN gộp: CRUD Product, Customer, Optional, enum, View/Controller, SRP/DIP, composition root, memory repository và nghiệm thu trước/sau refactor.
-- Không làm lại một BTVN refactor riêng ở buổi 10.
+- Không làm lại một BTVN refactor riêng; nội dung Buổi 10 cũ đã nằm trong BTVN Buổi 8.
 - Chưa yêu cầu OrderItem hoặc OrderItemInput trước khi học dữ liệu nhiều bảng; phần áp dụng đó nằm ở buổi 9.
 
 ### Buổi 09
@@ -448,7 +450,7 @@ Hoàn thiện OrderRepository và OrderService; tạo đơn hàng gồm orders v
 
 #### Vấn Đề Để Lại Cho Buổi Sau
 
-Tiếp tục kiến trúc buổi 8 cho đơn nhiều bảng; sau đó chuẩn bị Git làm việc nhóm và giao diện ở buổi 11.
+Tiếp tục kiến trúc buổi 8 cho đơn nhiều bảng; sau đó chuẩn bị Git làm việc nhóm và giao diện ở buổi 10.
 
 #### Ghi Chú Và Bài Tập Theo Lộ Trình
 
@@ -456,14 +458,10 @@ Tiếp tục kiến trúc buổi 8 cho đơn nhiều bảng; sau đó chuẩn b�
 - Bài nâng cao: phân trang bằng LIMIT/OFFSET; dùng transaction để rollback khi một bước lỗi; batch insert; RowMapper.
 - Ghi chú: trọng tâm là JDBC nhiều bảng. Transaction và LIMIT/OFFSET không bắt buộc.
 
-### Buổi 10 — Đã Gộp Vào Buổi 08
+### Buổi 10
 
-Không tổ chức một buổi nội dung hoặc BTVN riêng. MVC, SRP/DIP, composition root và refactor nằm trong buổi 8; áp dụng cho tạo/xem đơn nhiều bảng nằm ở buổi 9. Giữ số các buổi 9, 11, 12 để không làm đứt liên kết và tài liệu cũ; không thêm buổi kiểm tra.
-
-### Buổi 11
-
-> Giáo án: [lesson/buoi-11.md](../roadmap/lesson/buoi-11.md)
-> Bài tập: [BTVN/buoi-11-btvn.md](../roadmap/BTVN/buoi-11-btvn.md)
+> Giáo án: [lesson/buoi-10.md](../roadmap/lesson/buoi-10.md)
+> Bài tập: [BTVN/buoi-10-btvn.md](../roadmap/BTVN/buoi-10-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -507,10 +505,10 @@ Học viên cần chọn đề tài đủ phạm vi, chia việc, tạo repo và
 - Bài mở rộng: bắt sự kiện nút Thêm/Xóa và hiển thị dữ liệu từ ProductService.
 - Ghi chú: trọng tâm là Git làm việc nhóm; giao diện giới hạn ở một form và một bảng. Dùng Swing vì có sẵn trong JDK.
 
-### Buổi 12
+### Buổi 11
 
-> Giáo án: [lesson/buoi-12.md](../roadmap/lesson/buoi-12.md)
-> Bài tập: [BTVN/buoi-12-btvn.md](../roadmap/BTVN/buoi-12-btvn.md)
+> Giáo án: [lesson/buoi-11.md](../roadmap/lesson/buoi-11.md)
+> Bài tập: [BTVN/buoi-11-btvn.md](../roadmap/BTVN/buoi-11-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 

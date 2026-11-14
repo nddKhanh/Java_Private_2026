@@ -1,130 +1,153 @@
-# Bài Tập Về Nhà — Buổi 11
+# Bài Tập Sau Buổi 11 — Capstone
 
-## I. Tổng Kết Bài Tập Về Nhà Buổi 09
+## I. Điểm Bắt Đầu Từ Buổi 10
 
-Sau buổi 8 đã gộp nội dung MVC và buổi 9 bổ sung Order nhiều bảng, project được tổ chức theo luồng View → Controller → Service → Repository interface → JDBC implementation và giữ nguyên hành vi nghiệp vụ.
+Nhóm đã có kiến thức OOP, JDBC, nhiều bảng, phân tầng, Git/PR và một View console hoặc Swing.
+HitShop là đề tài tham khảo, không bắt buộc.
 
-### 1. Các Test Case Phải Chạy Được
+### 1. Các Ca Cũ Phải Còn Đạt
 
-| Mã | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| `TC08-10` | Chạy ProductService với memory repository | Tìm/liệt kê Product mà không sửa Service |
-| `TC08-11` | Kiểm tra main | Composition root tạo và nối dependency |
-| `TC09-03` | Xem Order id 1 | Customer, items, giá lịch sử và tổng 350000 đúng |
-| `TC09-06` | Chạy báo cáo ngày 2026-01-15 | Doanh thu 500000 |
-| `TC09-09` | Nhập dữ liệu tạo đơn | View chỉ nhận productId/quantity, Service chốt giá |
-| `TC09-10` | Kiểm tra kiến trúc | View không gọi JDBC; Controller không chứa nghiệp vụ; Service không chứa SQL |
+| Ca | Kết quả cần giữ |
+|---|---|
+| Console/Swing | Dùng chung Service |
+| Dependency | View không chứa SQL |
+| Git | Có branch, PR, review và commit có nghĩa |
 
-### 2. Cây Thư Mục Sau Buổi 09
+### 2. Cây Thư Mục Đầu Buổi
 
-Cấu trúc source tối thiểu của phần bắt buộc; các package cũ vẫn được giữ nếu còn được sử dụng:
+Dùng cây cuối [BTVN Buổi 10](buoi-10-btvn.md) hoặc cấu trúc tương đương của đề tài nhóm.
+
+## II. Bài Capstone Bắt Buộc
+
+### 1. Đăng Ký Phạm Vi
+
+Nộp một trang trước khi code:
+
+- Tên đề tài, người dùng chính, ba chức năng chính.
+- Ít nhất ba entity và ERD dự kiến.
+- Một luồng nghiệp vụ ghi ít nhất hai bảng.
+- Giao diện chọn console hoặc Swing.
+- Thành viên, feature branch và người review chéo.
+
+Không mở rộng phạm vi khi luồng lõi chưa đạt.
+
+### 2. OOP Và Dữ Liệu
+
+- Ít nhất ba entity, field đóng gói, quan hệ object rõ.
+- Ít nhất ba bảng và một quan hệ một-nhiều bằng foreign key.
+- Service kiểm tra quy tắc nghiệp vụ.
+- Giá trị lịch sử cần giữ phải được snapshot, ví dụ `unit_price`.
+
+### 3. JDBC
+
+- CRUD đầy đủ cho một entity chính.
+- Tạo và xem chi tiết một giao dịch nhiều bảng.
+- Ít nhất một JOIN.
+- Ít nhất một báo cáo GROUP BY hoặc phép tổng hợp tương đương.
+- Input SQL dùng PreparedStatement.
+- Tài nguyên đóng bằng try-with-resources.
+- Dữ liệu còn sau khi khởi động lại.
+
+### 4. Transaction
+
+Luồng ghi nhiều bảng phải dùng cùng Connection và cùng transaction.
+
+- Tất cả bước cùng commit hoặc cùng rollback.
+- Có một ca cố ý lỗi ở bước giữa.
+- Có query chứng minh không còn dữ liệu/trạng thái dở dang.
+
+### 5. Kiến Trúc
 
 ```text
-src/main/java/
-├── app/HitShop.java
-├── controller/ShopController.java
-├── view/ConsoleView.java
-├── dto/OrderItemInput.java
-├── service/
-│   ├── ProductService.java
-│   ├── CustomerService.java
-│   └── OrderService.java
-├── repository/
-│   ├── ProductRepository.java
-│   ├── CustomerRepository.java
-│   ├── OrderRepository.java
-│   ├── OrderItemRepository.java
-│   ├── MemoryProductRepository.java
-│   └── jdbc/
-└── model/
-    ├── Product.java
-    ├── Customer.java
-    ├── Order.java
-    ├── OrderItem.java
-    └── OrderStatus.java
+View → Controller → Service → Repository interface → JDBC implementation → MySQL
 ```
 
-## II. Bài Bắt Buộc — Form Và Bảng Product Bằng Swing
+- View không chứa SQL/nghiệp vụ.
+- Controller chỉ điều phối.
+- Service phụ thuộc repository interface.
+- JDBC implementation chứa SQL/mapping.
+- Composition root nối dependency.
 
-### 1. Kế Thừa Từ Buổi 09
+### 6. Git Và Tài Liệu
 
-Tiếp tục repository `HitShop` bằng JDK 17, class `HitShop` và `ProductService`/repository đã có. Thêm cửa sổ Swing làm View thay cho màn hình console; lấy Product từ cùng `ProductService`, không tạo danh sách sản phẩm hoặc repository riêng cho giao diện.
+- Nhánh `main`, `develop`, `feature/<ten-chuc-nang>`.
+- Mỗi thành viên có commit và review phần của người khác.
+- README ghi JDK 17, MySQL, cấu hình, schema/seed, cách chạy và kịch bản demo.
+- Không commit credential, build output hoặc cấu hình IDE cá nhân không cần thiết.
 
-### 2. Bài Toán
+## III. Kịch Bản Demo Bắt Buộc
 
-Tạo một cửa sổ desktop để xem danh sách sản phẩm trong cửa hàng.
+1. Reset schema/seed.
+2. Khởi động ứng dụng và xem dữ liệu seed.
+3. Chạy CRUD, gồm một input sai.
+4. Tạo giao dịch nhiều bảng hợp lệ.
+5. Xem chi tiết và báo cáo.
+6. Chạy ca rollback.
+7. Khởi động lại để chứng minh dữ liệu còn.
+8. Trình bày một PR, một review và một lỗi đã sửa.
 
-### 3. Cấu Trúc Giao Diện
+Input và output mong đợi phải được ghi trước trong README.
+Không dùng dữ liệu ngẫu nhiên làm kết quả không thể lặp lại.
 
-- Một `JFrame` tiêu đề `Quản lý sản phẩm`, kích thước tối thiểu 700×450 px, đóng cửa sổ thì ứng dụng kết thúc.
-- Một `JPanel` ở phía trên chứa nhãn `Tên sản phẩm`, một `JTextField` để trống khi mở ứng dụng, nhãn `Giá`, một `JTextField` để trống và một `JButton` chữ `Thêm`. Nút bị vô hiệu hóa bằng `setEnabled(false)`.
-- Một `JTable` phía dưới nằm trong `JScrollPane`; có đúng các cột theo thứ tự `Mã`, `Tên sản phẩm`, `Đơn giá`, `Tồn kho`.
-- Khi mở cửa sổ, bảng hiển thị các Product do `ProductService.findAllProducts()` trả về.
-- Dữ liệu chuẩn gồm `P01 | Áo thun | 160000 | 20`, `P02 | Bình nước | 50000 | 10`, `P03 | Java cơ bản | 120000 | 5`.
-- Catalog hiện tại lưu giá P01 là 160000; Order lịch sử vẫn giữ unit price 150000. Không tự tạo dữ liệu thay thế cho repository.
-- Cửa sổ phải hiển thị đồng thời form và bảng; nhãn/cột không bị cắt ở kích thước quy định.
-- Bắt buộc có JFrame, JPanel, JTextField, JButton, JTable. Kết nối dữ liệu vẫn dùng repository/service đã có.
+## IV. Nộp Bài
 
-### 4. Sơ Đồ Lớp Và Quan Hệ
+- URL repository và danh sách PR.
+- Source, `schema.sql`, `seed.sql`, README.
+- ERD và sơ đồ kiến trúc.
+- Bảng test case: input, mong đợi, thực tế.
+- Tài liệu demo tối đa 8 trang nếu có.
 
-![Sơ đồ lớp BTVN buổi 11](assets/buoi-11-class-diagram.svg)
+## V. Nghiệm Thu Capstone
 
-`ProductWindow extends JFrame` và nhận `ProductService`; cửa sổ không tự tạo repository hoặc danh sách Product riêng.
+### 1. Rubric 100 Điểm
 
-### 5. Nộp Bài Theo Git
+| Nhóm tiêu chí | Điểm |
+|---|---:|
+| Chức năng và dữ liệu | 30 |
+| OOP và kiến trúc | 20 |
+| JDBC và transaction | 20 |
+| Kiểm thử và xử lý lỗi | 10 |
+| Git collaboration | 10 |
+| README và demo | 10 |
 
-- Repository nhóm có các nhánh `main`, `develop` và `feature/product-window`.
-- Commit có message bắt đầu bằng `feat:`.
-- Tạo pull request vào `develop` với tiêu đề `Add product management window`, mô tả chức năng và ảnh cửa sổ đang chạy.
-- Xử lý mọi comment review trước khi merge theo quy ước nhóm.
+Chức năng phụ hoặc giao diện đẹp không bù cho dữ liệu sai, transaction sai hoặc project không dựng lại được.
 
-## III. Mở Rộng — Bài Tự Chọn Event Handling
-
-Kích hoạt nút `Thêm`. Nút nhận tên và giá, gọi `ProductService.addProduct` để tạo mã mới tiếp sau mã lớn nhất hiện có (với dữ liệu chuẩn, mã đầu tiên là P04); tồn kho mặc định là 0. Tên rỗng hoặc giá không phải số dương thì bảng không đổi và giao diện báo lỗi.
-
-## IV. Tổng Kết Bài Tập Về Nhà Buổi 11
-
-Sau bài tập buổi 11, project có thêm một Swing View dùng lại `ProductService` và thay đổi được bàn giao qua feature branch, pull request cùng code review.
-
-### 1. Các Test Case Phải Chạy Được
+### 2. Test Case Chung
 
 | Mã | Thao tác | Kết quả mong đợi |
 |---|---|---|
-| `TC11-01` | Mở `ProductWindow` ở kích thước 700×450 | Form phía trên và bảng phía dưới hiển thị đồng thời, nhãn/cột không bị cắt |
-| `TC11-02` | Kiểm tra form khi vừa mở | Hai text field rỗng; nút `Thêm` bị vô hiệu hóa |
-| `TC11-03` | Kiểm tra bảng Product | Có đúng bốn cột theo thứ tự `Mã`, `Tên sản phẩm`, `Đơn giá`, `Tồn kho` |
-| `TC11-04` | Nạp dữ liệu qua `ProductService.findAllProducts()` | Bảng có P01, P02, P03 đúng dữ liệu chuẩn |
-| `TC11-05` | Đổi dữ liệu repository rồi mở lại/nạp lại cửa sổ | Bảng phản ánh dữ liệu Service, không dùng list hard-code riêng |
-| `TC11-06` | Tìm source của Swing View | Không có SQL và không tự tạo repository trong View |
-| `TC11-07` | Kiểm tra Git | Có `feature/product-window`, commit `feat:...` và PR `Add product management window` vào `develop` |
-| `TC11-08` | Chạy lại giao diện console | Các chức năng cũ vẫn hoạt động sau khi thêm Swing View |
+| `TC11-01` | Reset/seed rồi chạy | Trạng thái chuẩn, chạy trên JDK 17 |
+| `TC11-02` | Liệt kê seed | Khớp seed.sql |
+| `TC11-03` | CRUD entity chính | Đủ bốn thao tác; input sai bị từ chối |
+| `TC11-04` | Giao dịch nhiều bảng hợp lệ | Các bảng cùng cập nhật |
+| `TC11-05` | Xem chi tiết | Quan hệ và giá trị lịch sử đúng |
+| `TC11-06` | JOIN/báo cáo | Khớp phép tính tay |
+| `TC11-07` | Lỗi giữa transaction | Rollback toàn bộ |
+| `TC11-08` | Khởi động lại | Dữ liệu đã commit vẫn còn |
+| `TC11-09` | Dựng trên máy khác theo README | Không cần sửa source/credential |
+| `TC11-10` | Kiểm tra Git | Đủ branch, PR, review, commit từng thành viên |
 
-### 2. Cây Thư Mục Sau Buổi 11
-
-Cấu trúc source tối thiểu của phần bắt buộc; các package cũ vẫn được giữ nếu còn được sử dụng:
+### 3. Cây Thư Mục Tối Thiểu
 
 ```text
-src/main/java/
-├── app/HitShop.java
-├── controller/ShopController.java
-├── view/
-│   ├── ConsoleView.java
-│   └── ProductWindow.java
-├── dto/OrderItemInput.java
-├── service/
-│   ├── ProductService.java
-│   ├── CustomerService.java
-│   └── OrderService.java
-├── repository/
-│   ├── ProductRepository.java
-│   ├── CustomerRepository.java
-│   ├── OrderRepository.java
-│   ├── OrderItemRepository.java
-│   └── jdbc/
-└── model/
-    ├── Product.java
-    ├── Customer.java
-    ├── Order.java
-    ├── OrderItem.java
-    └── OrderStatus.java
+project-name/
+├── pom.xml
+├── README.md
+├── .gitignore
+├── sql/
+│   ├── schema.sql
+│   └── seed.sql
+├── docs/
+│   ├── erd.png
+│   ├── architecture.md
+│   └── test-cases.md
+└── src/main/java/<base-package>/
+    ├── app/
+    ├── controller/
+    ├── dto/
+    ├── model/
+    ├── repository/
+    │   └── jdbc/
+    ├── service/
+    └── view/
 ```

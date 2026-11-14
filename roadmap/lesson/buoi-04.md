@@ -97,6 +97,10 @@ Biến trong vòng lặp có kiểu Product, nhưng JVM gọi implementation the
 
 Đa hình hữu ích khi các object chia sẻ cùng hợp đồng nhưng có cách thực hiện khác nhau. Không nên tạo kế thừa chỉ để tái sử dụng vài dòng code nếu quan hệ “là một” không đúng.
 
+### Kiểm tra nhanh
+
+Không chạy chương trình, hãy dự đoán method nào được gọi ở từng phần tử của `catalog` và giải thích vì sao kiểu biến `Product` không làm mất hành vi của object `Book`.
+
 ## IV. Order Dùng HAS-A
 
 Order không phải Customer và cũng không phải CartItem. Order **có một** Customer và **có nhiều** CartItem.
@@ -198,16 +202,26 @@ Mỗi nhóm giải thích bằng lời một quan hệ IS-A và hai quan hệ HA
 
 Encapsulation bảo vệ quy tắc của object. Kế thừa diễn đạt quan hệ IS-A và đa hình cho phép code gọi hành vi chung mà không phụ thuộc loại cụ thể. Composition/HAS-A ghép Customer, Order, CartItem và Product thành mô hình đúng với bài toán cửa hàng.
 
+### Câu hỏi chốt buổi
+
+1. Vì sao field `private` kèm một setter không điều kiện chưa đủ để bảo vệ trạng thái object?
+2. `super(...)` trong constructor của `Book` chịu trách nhiệm khởi tạo phần nào của object?
+3. Vì sao `List<Product>` vẫn gọi được implementation `getDescription()` của `Book`?
+4. Quan hệ `Book`–`Product` và `Order`–`Customer` khác nhau như thế nào?
+5. Vì sao không nên cung cấp `setStatus(String)` tự do cho Order?
+
 ## Bài tập nhỏ trên lớp — Danh sách nhân viên đa hình
 
-Tạo mô hình:
+Tạo mô hình độc lập với HitShop:
 
-- `Employee` có `id`, `name`, `baseSalary`; các field private và `getMonthlyIncome()` trả `baseSalary`.
-- `Developer extends Employee`, bổ sung `overtimeHours`; override thu nhập bằng `baseSalary + overtimeHours * 200000`.
-- `SalesEmployee extends Employee`, bổ sung `sales`; override thu nhập bằng `baseSalary + sales * 0.05`.
-- Đưa ba object khác loại vào `List<Employee>` và gọi cùng `getMonthlyIncome()` trong một vòng lặp.
+- `Employee`: `String id`, `String name`, `double baseSalary`; field private, constructor, getter và `public double getMonthlyIncome()` trả `baseSalary`.
+- `Developer extends Employee`: thêm `int overtimeHours`; constructor gọi `super(...)`; override `public double getMonthlyIncome()` bằng `baseSalary + overtimeHours * 200000`.
+- `SalesEmployee extends Employee`: thêm `double sales`; constructor gọi `super(...)`; override `public double getMonthlyIncome()` bằng `baseSalary + sales * 0.05`.
+- Class demo tạo `Employee("E01", "An", 8000000)`, `Developer("E02", "Bình", 10000000, 5)` và `SalesEmployee("E03", "Chi", 9000000, 40000000)` rồi đưa vào `List<Employee>`.
 
-**Nghiệm thu:** code hiển thị thu nhập mà không dùng `instanceof` hoặc `if` để phân loại nhân viên. Thời gian làm khoảng 20 phút.
+**Kết quả mong đợi:** thu nhập lần lượt là `8000000`, `11000000`, `11000000`.
+
+**Nghiệm thu:** một vòng lặp gọi duy nhất `getMonthlyIncome()`; không dùng `instanceof`, `if` hoặc chuỗi loại nhân viên để chọn công thức. Thời gian làm khoảng 20 phút.
 
 ## Bài tập về nhà
 

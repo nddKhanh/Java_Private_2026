@@ -12,6 +12,8 @@ Sau buổi học, học viên có thể:
 - Giải thích SRP và DIP bằng một thay đổi cụ thể.
 - Lắp dependency tại composition root và refactor mà giữ nguyên hành vi.
 
+> **Kết quả cuối buổi:** ví dụ Contact chạy theo luồng View → Controller → Service → Repository và có thể đổi giữa bộ nhớ với JDBC mà không sửa Service.
+
 > **Môi trường:** JDK 17; đã học interface, exception và JDBC một bảng ở buổi 7.
 > **Phạm vi:** gộp lý thuyết buổi 8 và buổi 10 cũ. Ví dụ dưới đây dùng danh bạ nhỏ để giải thích khái niệm; áp dụng vào HitShop nằm trong BTVN. Đơn hàng nhiều bảng học ở buổi 9.
 
@@ -39,6 +41,10 @@ Mũi tên từ Service đến Repository là lời gọi qua interface; object t
 | JDBC implementation | SQL và ánh xạ row thành object | PreparedStatement, ResultSet |
 
 MVC là Model–View–Controller. Service và Repository là các phần hỗ trợ nghiệp vụ/lưu trữ trong kiến trúc này, không phải hai chữ bổ sung của MVC. Model không đồng nghĩa với database.
+
+### Kiểm tra nhanh
+
+Đặt bốn việc “đọc mã”, “kiểm tra mã rỗng”, “chạy SELECT” và “in thông báo” vào đúng View, Service, Repository hoặc Controller; giải thích vì sao mỗi việc nằm ở đó.
 
 ## II. Repository: Interface Và Implementation
 
@@ -248,6 +254,8 @@ Refactor là đổi cấu trúc bên trong mà giữ nguyên hành vi cần bả
 
 Đặt tên theo vai trò, viết method tập trung vào một việc và giảm lặp bằng method dùng chung. Không đánh giá clean code bằng số lượng package.
 
+## Lỗi thường gặp
+
 | Lỗi | Cách sửa |
 |---|---|
 | View gọi JDBC hoặc Repository | Chuyển lời gọi qua Controller và Service |
@@ -256,13 +264,35 @@ Refactor là đổi cấu trúc bên trong mà giữ nguyên hành vi cần bả
 | Repository in thông báo giao diện | Trả kết quả hoặc báo lỗi để tầng trên xử lý |
 | Bắt lỗi database rồi trả Optional.empty() | Phân biệt lỗi truy cập với không tìm thấy |
 
-## X. Đọc Thêm — Singleton Và Factory
+## X. Thực Hành Có Hướng Dẫn
+
+1. Chạy `MemoryContactRepository` với C01 và C02, kiểm tra C01/C99.
+2. Thêm validation mã rỗng trong Service rồi chạy lại ba ca C01, C99 và chuỗi rỗng.
+3. Nối View, Controller và Application theo đúng hướng phụ thuộc.
+4. Đổi sang một `JdbcContactRepository` có cùng interface; không sửa ContactService.
+5. So sánh output trước và sau refactor, rồi chỉ ra nơi duy nhất chứa SQL.
+
+Mỗi bước phải chạy được trước khi chuyển sang bước tiếp theo để lỗi cấu trúc không bị trộn với lỗi JDBC.
+
+## XI. Đọc Thêm — Singleton Và Factory
 
 - Factory gom việc chọn/tạo implementation vào một nơi; ví dụ chọn repository memory hoặc JDBC bằng cấu hình.
 - Singleton giới hạn một instance theo thiết kế. Có thể dùng cho cấu hình bất biến, nhưng không mặc định dùng một JDBC Connection toàn cục cho mọi thao tác.
 - Không bắt buộc triển khai pattern trong bài chính; ưu tiên hiểu interface và constructor injection.
 
 Checked exception như IOException/SQLException phải được bắt hoặc khai báo `throws`; unchecked exception như IllegalArgumentException không bắt buộc khai báo. Repository có thể bọc SQLException trong lỗi truy cập dữ liệu unchecked và giữ cause; không nuốt lỗi rồi báo thành công. Đây là phần đọc thêm nối với buổi 6–7.
+
+## Tổng kết buổi 8
+
+MVC tổ chức tương tác; Service giữ nghiệp vụ; Repository che cách lưu trữ. Optional diễn đạt kết quả có thể vắng mặt, enum giới hạn trạng thái, còn SRP/DIP giúp đặt trách nhiệm và hướng phụ thuộc rõ ràng.
+
+### Câu hỏi chốt buổi
+
+1. Interface Repository giúp Service độc lập với JDBC như thế nào?
+2. Vì sao lỗi kết nối database không được biến thành `Optional.empty()`?
+3. Constructor injection khác việc Service tự tạo repository ở điểm nào?
+4. Controller được phép điều phối những gì và không được chứa những gì?
+5. Điều kiện nào chứng minh một lần refactor đã giữ nguyên hành vi?
 
 ## Bài tập nhỏ trên lớp — Tách Chức Năng Tìm Liên Hệ
 
@@ -278,8 +308,6 @@ Dùng bảy kiểu của ví dụ trên, hoàn thiện chức năng tìm kiếm 
 
 **Nghiệm thu:** C01 trả đúng dữ liệu; C99 báo không tìm thấy; mã rỗng báo lỗi; View không gọi repository và Service không tự tạo repository. Khoảng 20 phút.
 
-## Tổng kết và bài tập về nhà
-
-MVC tổ chức tương tác, Service giữ nghiệp vụ, Repository che cách lưu trữ. Optional diễn đạt kết quả có thể vắng mặt; enum giới hạn trạng thái; SRP/DIP giúp đặt trách nhiệm và phụ thuộc rõ ràng.
+## Bài tập về nhà
 
 Hoàn thành [BTVN buổi 08](../BTVN/buoi-08-btvn.md), gồm tách tầng, Customer, enum, refactor và chạy cùng ProductService với JDBC/memory repository. Buổi 9 áp dụng kiến trúc này cho đơn hàng nhiều bảng.

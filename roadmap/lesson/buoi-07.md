@@ -9,16 +9,23 @@ Sau buổi học, học viên có thể:
 - Cấu hình Maven cho JDK 17 và thêm MySQL Connector/J.
 - Thiết kế bảng `products` tương ứng model Product.
 - Mở kết nối JDBC và thực hiện Create, Read, Update, Delete.
-- Dùng `PreparedStatement`, `ResultSet` và try-with-resources.
+- Phân biệt `Statement` với `PreparedStatement` và giải thích cách câu SQL có tham số ngăn SQL Injection.
+- Dùng `PreparedStatement`, `ResultSet` và try-with-resources đúng vòng đời.
 - Tách cấu hình kết nối khỏi source được commit.
 
 > **Kết quả cuối buổi:** chương trình mẫu thực hiện được CRUD Product trong MySQL qua JDBC.
+
+> **Môi trường:** JDK 17, Maven, MySQL và một database cục bộ có thể reset bằng script.
 
 ## I. Từ File Text Sang Dữ Liệu Có Cấu Trúc
 
 File buổi 6 phù hợp để học I/O, nhưng tìm Product theo id hoặc cập nhật đúng một dòng sẽ ngày càng khó. Database cung cấp bảng, khóa, ràng buộc và ngôn ngữ truy vấn.
 
 Catalog Product được lưu trong MySQL. Các thao tác trong bài làm việc với bảng `products`.
+
+### Kiểm tra nhanh
+
+So sánh việc tìm một Product trong file text với câu `SELECT ... WHERE id = ?`. Hãy chỉ ra phần việc database làm thay chương trình Java và dữ liệu nào vẫn phải được Java ánh xạ thành object.
 
 ## II. Maven Quản Lý Build Và Dependency
 
@@ -107,7 +114,46 @@ Không commit mật khẩu thật. README chỉ ghi tên biến môi trường v
 
 Trong mỗi thao tác JDBC, Connection, PreparedStatement và ResultSet đều là tài nguyên cần đóng. Try-with-resources cho phép thể hiện vòng đời này ngay trong cấu trúc code.
 
-## V. CRUD Theo Một Mẫu Chung
+## V. `Statement`, `PreparedStatement` Và SQL Injection
+
+`Statement` phù hợp với câu SQL cố định, không chứa input người dùng:
+
+```java
+String sql = "SELECT id, name, price, stock FROM products ORDER BY id";
+try (Statement statement = connection.createStatement();
+     ResultSet result = statement.executeQuery(sql)) {
+    // đọc từng row
+}
+```
+
+Không ghép input vào SQL:
+
+```java
+String sql = "SELECT id, name, price, stock FROM products WHERE id = '"
+        + inputId + "'";
+```
+
+Nếu input chứa cú pháp SQL, cấu trúc câu lệnh có thể bị thay đổi. Đây là SQL Injection: dữ liệu được đối xử như một phần câu lệnh.
+
+Dùng `PreparedStatement` để giữ cấu trúc SQL cố định và bind dữ liệu riêng:
+
+```java
+String sql = "SELECT id, name, price, stock FROM products WHERE id = ?";
+try (PreparedStatement statement = connection.prepareStatement(sql)) {
+    statement.setString(1, inputId);
+    try (ResultSet result = statement.executeQuery()) {
+        // đọc tối đa một row
+    }
+}
+```
+
+Không tự thêm dấu nháy quanh dấu `?`. Driver chịu trách nhiệm truyền giá trị đúng kiểu; không dùng thao tác xóa dữ liệu để “demo tấn công”.
+
+### Kiểm tra nhanh
+
+Với ba câu lệnh: liệt kê toàn bộ Product, tìm theo id nhập từ bàn phím và cập nhật giá nhập từ bàn phím, hãy chọn `Statement` hoặc `PreparedStatement` và giải thích lựa chọn.
+
+## VI. CRUD Theo Một Mẫu Chung
 
 ### Create
 
@@ -164,7 +210,7 @@ DELETE FROM products WHERE id = ?;
 
 `executeUpdate()` trả số row bị ảnh hưởng. `0` nghĩa là không tìm thấy id; không được in “thành công” trong trường hợp đó.
 
-## VI. Demo Theo Nhịp Nhìn Thấy Dữ Liệu
+## VII. Demo Theo Nhịp Nhìn Thấy Dữ Liệu
 
 1. Chạy SELECT trong MySQL client để thấy ba Product seed.
 2. Chạy Java listAll và đối chiếu cùng ba row.
@@ -175,7 +221,7 @@ DELETE FROM products WHERE id = ?;
 
 Sau mỗi thao tác Java, chạy một SELECT độc lập trong MySQL. Cách đối chiếu này giúp phân biệt lỗi mapping, lỗi SQL và lỗi hiển thị.
 
-## VII. Thực Hành Có Hướng Dẫn
+## VIII. Thực Hành Có Hướng Dẫn
 
 Hoàn thiện năm method trong class `ProductJdbcDao`: insert, findAll, findById, update, deleteById.
 
@@ -199,6 +245,14 @@ Kiểm tra hai ca lỗi:
 
 Maven cung cấp driver, MySQL giữ Product bền vững và JDBC là cầu nối. Mọi thao tác CRUD có cùng nhịp: chuẩn bị SQL, bind tham số, thực thi, đọc kết quả, đóng tài nguyên và diễn giải số row bị ảnh hưởng.
 
+### Câu hỏi chốt buổi
+
+1. Maven giải quyết phần nào của việc dùng MySQL Connector/J?
+2. Primary key bảo vệ quy tắc nào của Product?
+3. Vì sao nối trực tiếp input vào chuỗi SQL tạo ra rủi ro SQL Injection?
+4. `executeUpdate()` trả `0` khác một `SQLException` như thế nào?
+5. Những tài nguyên JDBC nào phải được đóng và ai là người tạo chúng?
+
 ## Bài tập nhỏ trên lớp — JDBC CRUD công việc
 
 Tạo bảng độc lập:
@@ -211,7 +265,14 @@ CREATE TABLE tasks (
 );
 ```
 
-Viết class `TaskJdbcDao` có bốn thao tác: thêm task, liệt kê theo id, đánh dấu hoàn thành và xóa theo id. Mọi input phải truyền qua `PreparedStatement`; Connection, Statement và ResultSet nằm trong try-with-resources.
+Tạo record `Task(long id, String title, boolean done)` và class `TaskJdbcDao` có các method:
+
+- `long insert(String title)` trả generated id.
+- `List<Task> findAll()` sắp xếp theo `id` tăng dần.
+- `boolean markDone(long id)` đổi `done` thành `true`.
+- `boolean deleteById(long id)` xóa theo khóa.
+
+Mọi input phải truyền qua `PreparedStatement`; Connection, Statement và ResultSet nằm trong try-with-resources.
 
 **Nghiệm thu:** thêm hai task, đánh dấu task đầu hoàn thành, xóa task thứ hai và SELECT còn đúng một dòng `done=true`. Thời gian làm khoảng 20 phút.
 
