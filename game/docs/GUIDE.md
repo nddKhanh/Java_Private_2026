@@ -9,7 +9,7 @@ Tài liệu này mô tả những gì người chơi có thể nhìn thấy và 
 
 ## 1. Trạng thái hiện tại
 
-- Ngày cập nhật: 2026-11-11.
+- Ngày cập nhật: 2026-11-14.
 - Kịch bản đã hoàn thành: R1, R2, R3, R4, R4.1, R5, R6 và R8.1–R8.4.
 - Người chơi điều khiển quân của mình bằng chương trình Java hoặc Desktop Code Studio.
 - Phaser là màn hình quan sát bản đồ và trạng thái trận đấu.
@@ -57,7 +57,7 @@ Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 
 1. Chọn **Tạo trận**, giữ hoặc sửa JSON mẫu rồi bấm **Tạo phòng chờ**.
 2. Map script dùng `map: "nxn"`, `teams`, `accountsPerTeam` và các mảng `resources`, `headquarters`, `units`.
-3. Gửi mã trận và token của đội mong muốn cho người chơi khác.
+3. Gửi pairing key sáu ký tự cho người dùng Desktop; gửi mã trận và token màu cho người tham gia bằng web nếu cần.
 4. Người chơi khác chọn **Tìm trận**, nhập đúng hai mã; nếu đội đầy, giao diện báo lỗi.
 5. Chủ phòng bấm **Bắt đầu trận đấu**. Sau khi bắt đầu, dùng token đội trong Desktop Code Studio và thêm `?matchId=MA_TRAN` vào URL server.
 
@@ -79,6 +79,10 @@ LAN nhanh hơn đường Internet vì dữ liệu đi thẳng trong mạng nội
 
 Chờ cửa sổ Desktop Code Studio xuất hiện.
 Giữ cả ba cửa sổ PowerShell hoạt động trong khi chơi; mỗi cửa sổ chạy một lệnh ở trên.
+
+Trong Desktop Code Studio, nhập pairing key đang hiển thị tại phòng chờ rồi nhấn **Pair**.
+Ứng dụng quét các subnet IPv4 local trên cổng `8080`, tự điền Server và Match code, rồi nạp danh sách Team token để chọn.
+Nếu Windows Firewall chặn kết nối, mở TCP `8080` trên máy chủ.
 
 ### Tùy chọn — đăng nhập và join team thay cho demo token
 
@@ -117,9 +121,11 @@ Account thứ sáu bị từ chối với mã `TEAM_FULL`.
 
 ### Bước 1 — chọn đội và nhập chương trình
 
-Trong Desktop Code Studio cùng máy với server, nhập `Server` là `ws://localhost:8080/game`. Với trận tạo từ web, nhập thêm mã phòng vào ô `Match code` và token đội vào ô `Team token`; chỉ để trống `Match code` khi chạy `match-default`.
-Nếu Desktop Code Studio chạy ở máy khác cùng Wi-Fi, thay `localhost` bằng IPv4 của máy chủ, ví dụ `ws://192.168.1.23:8080/game`.
-Nhập `Token` là `blue-token` và tên lớp là `MyBot`.
+Với trận tạo từ web, ưu tiên nhập pairing key và nhấn **Pair**.
+Chọn một token màu trong ô `Team token`; Server và Match code đã được điền tự động.
+Luồng thủ công vẫn hỗ trợ `ws://192.168.1.23:8080/game`, mã trận và token đội khi không thể quét LAN.
+Với `match-default`, để trống Match code và dùng demo token `blue-token` hoặc `red-token`.
+Giữ tên lớp là `MyBot`.
 Thay nội dung ô soạn thảo bằng chương trình sau để thử trên trận mới:
 
 ```java

@@ -132,6 +132,7 @@ export interface LobbyTeam {
 
 export interface LobbyView {
   matchCode: string;
+  pairingKey: string;
   status: 'WAITING' | 'RUNNING';
   currentAccountId: string;
   owner: boolean;

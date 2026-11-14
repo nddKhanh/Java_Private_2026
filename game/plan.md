@@ -17,7 +17,7 @@
 | Giao tiếp online | WebSocket + JSON | Java client gửi lệnh; server phát kết quả và state |
 | Lưu trữ | H2 + Flyway | Account, session, lobby membership, match snapshot và event history |
 | Xác thực | BCrypt + session token | REST đăng ký/đăng nhập/join team; demo token giữ cho local flow |
-| Desktop Code Studio | Java 21 + JavaFX + Java Compiler API | Đã triển khai; editor, biên dịch local và child JVM runner |
+| Desktop Code Studio | Java 21 + JavaFX + Java Compiler API | Editor, biên dịch local, child JVM runner và pairing LAN bằng key |
 
 MVP không nhận source code Java rồi biên dịch trên server.
 Người chơi viết và chạy chương trình Java trên máy local bằng một thư viện client được cung cấp sẵn.
@@ -145,6 +145,7 @@ public final class MyBot implements BotProgram {
 `game-desktop` chịu trách nhiệm UI, cấu hình kết nối, biên dịch và điều phối process.
 `game-runner` là entry point tối thiểu chạy class đã biên dịch trong một JVM con và kết nối bằng `game-client-java`.
 URL server, team token và unit ID do desktop truyền vào runner; người dùng không cần ghi credential trong source.
+Với lobby động, server cấp một pairing key để Desktop tự tìm endpoint LAN, điền match code và nạp danh sách token màu.
 Source code và class file chỉ tồn tại local, không được upload lên game server.
 
 JVM con phải có classpath giới hạn, working directory tạm, giới hạn heap, timeout, giới hạn output và thao tác dừng rõ ràng.
@@ -347,7 +348,7 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 
 - Người chơi đăng ký/đăng nhập bằng username/password trước khi tạo hoặc tìm trận.
 - Trận tùy chỉnh được mô tả bằng JSON map script với kích thước vuông, tài nguyên, HQ, lính, số đội và capacity tài khoản/đội.
-- Server sinh mã trận và token đội, giữ phòng chờ trong H2 và chỉ đăng ký match vào simulation khi chủ phòng bắt đầu.
+- Server sinh mã trận, pairing key và token màu cho từng đội, giữ phòng chờ trong H2 và chỉ đăng ký match vào simulation khi chủ phòng bắt đầu.
 - Tham gia trận dùng mã trận + token đội; kiểm tra capacity được thực hiện transactionally trên server.
 
 1. R1 đã bổ sung spawn WORKER cạnh HQ, ID toàn trận, tên hiển thị, chọn đơn vị và giới hạn theo đội.

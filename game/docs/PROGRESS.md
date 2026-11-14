@@ -3,6 +3,14 @@
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
+## 2026-11-14 — Desktop pairing trong LAN
+
+- **Trạng thái:** `IMPLEMENTED`.
+- **Đã đạt:** Mỗi lobby động có pairing key riêng; endpoint pairing trả LAN WebSocket URL, match code và token đội theo màu.
+- **Đã đạt:** Desktop quét LAN từ một key, tự điền cấu hình và cho chọn team token; nhập thủ công vẫn được giữ.
+- **Bằng chứng:** Maven reactor test qua `game-desktop` pass; frontend production build pass; Flyway V4 chạy trên H2 test database.
+- **Chưa kiểm chứng:** Chưa kiểm thử pairing giữa hai máy vật lý hoặc qua Windows Firewall; quét tự động dùng cổng server mặc định `8080` và subnet IPv4 `/24` hiện hoạt.
+
 ## Template cập nhật
 
 ```markdown

@@ -71,6 +71,10 @@ footer { padding-top: 18px; color: #475569; font-size: 12px; text-align: center;
 .team-token { display: flex; align-items: center; justify-content: space-between; margin: 16px 0; border: 1px dashed color-mix(in srgb,var(--team-color) 55%,#334155); border-radius: 10px; padding: 10px 12px; }
 .team-token small { color: #64748b; font-size: 10px; font-weight: 850; letter-spacing: .12em; }
 .team-token code { color: #f8fafc; font-size: 15px; font-weight: 850; letter-spacing: .12em; }
+.pairing-key { display: inline-grid; grid-template-columns: auto auto; align-items: center; gap: 4px 14px; margin-top: 18px; border: 1px solid #334155; border-radius: 12px; padding: 11px 14px; background: #0b1221; }
+.pairing-key span { color: #64748b; font-size: 10px; font-weight: 850; letter-spacing: .12em; }
+.pairing-key strong { color: #fbbf24; font-family: "Cascadia Code",Consolas,monospace; font-size: 22px; letter-spacing: .16em; }
+.pairing-key small { grid-column: 1 / -1; color: #94a3b8; }
 .slot-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
 .player-slot { min-height: 42px; display: grid; place-items: center; border: 1px solid #334155; border-radius: 9px; color: #cbd5e1; background: rgba(15,23,42,.75); font-size: 12px; font-weight: 700; }
 .player-slot span { color: #475569; font-weight: 500; }

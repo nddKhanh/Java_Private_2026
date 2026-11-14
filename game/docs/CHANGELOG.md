@@ -3,6 +3,21 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-14 — Desktop pairing trong LAN
+
+### Added
+
+- Thêm pairing key sáu ký tự riêng cho mỗi lobby động và Flyway V4 để lưu key.
+- Thêm `GET /api/desktop/pairing/{key}` trả về WebSocket URL, match code và danh sách token đội.
+- Thêm LAN discovery trong Desktop Code Studio để tự điền cấu hình kết nối từ một pairing key.
+- Đổi token lobby mới sang các từ màu và cho phép chọn token bằng combobox vẫn hỗ trợ nhập tay.
+- Hiển thị pairing key trong phòng chờ web.
+
+### Verified
+
+- Maven test cho reactor `game-server` đến `game-desktop` pass, gồm migration V4 và lobby flow hiện có.
+- Frontend TypeScript/Vite production build pass.
+
 ## 2026-11-11 — spawn đa loại và tấn công theo hướng
 
 ### Changed

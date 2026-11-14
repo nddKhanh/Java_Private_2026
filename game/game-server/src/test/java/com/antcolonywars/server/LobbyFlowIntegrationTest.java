@@ -65,10 +65,23 @@ class LobbyFlowIntegrationTest {
         assertEquals(HttpStatus.CREATED, created.getStatusCode());
         JsonNode lobby = objectMapper.readTree(created.getBody());
         String matchCode = lobby.path("matchCode").asText();
+        String pairingKey = lobby.path("pairingKey").asText();
         String teamOneToken = lobby.path("teams").get(0).path("token").asText();
         String teamTwoToken = lobby.path("teams").get(1).path("token").asText();
         assertEquals(6, matchCode.length());
+        assertEquals(6, pairingKey.length());
+        assertEquals("BLUE", teamOneToken);
+        assertEquals("RED", teamTwoToken);
         assertEquals(1, lobby.path("teams").get(0).path("members").size());
+
+        ResponseEntity<String> paired = restTemplate.getForEntity(
+                "/api/desktop/pairing/" + pairingKey, String.class
+        );
+        assertEquals(HttpStatus.OK, paired.getStatusCode());
+        JsonNode pairing = objectMapper.readTree(paired.getBody());
+        assertEquals(matchCode, pairing.path("matchCode").asText());
+        assertTrue(pairing.path("serverUrl").asText().endsWith("/game"));
+        assertEquals("BLUE", pairing.path("teams").get(0).path("token").asText());
 
         ResponseEntity<String> joined = exchange(
                 "/api/lobbies/join", HttpMethod.POST, secondToken,

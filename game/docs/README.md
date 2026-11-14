@@ -55,7 +55,9 @@ Terminal thứ hai chạy Phaser viewer:
 Máy chủ mở `http://127.0.0.1:5173/`; các máy cùng Wi-Fi mở `http://IP_MAY_CHU:5173/` và chờ trạng thái `Đang trực tuyến`.
 Ví dụ: `http://192.168.1.23:5173/`.
 
-Đăng ký bằng username/password trên web. Sau khi đăng nhập, chọn **Tạo trận** để nhập JSON map script hoặc **Tìm trận** để nhập mã trận cùng token đội. Phòng chờ hiển thị mã trận, token từng đội, slot tài khoản và nút bắt đầu dành cho chủ phòng.
+Đăng ký bằng username/password trên web.
+Sau khi đăng nhập, chọn **Tạo trận** để nhập JSON map script hoặc **Tìm trận** để nhập mã trận cùng token đội.
+Phòng chờ hiển thị mã trận, pairing key, token màu từng đội, slot tài khoản và nút bắt đầu dành cho chủ phòng.
 
 Terminal thứ ba chạy một bot mẫu:
 
@@ -79,12 +81,13 @@ Sau đó mở terminal thứ ba:
 
 Trong ứng dụng:
 
-1. Trên cùng máy chạy server, giữ Server là `ws://localhost:8080/game`; nếu Desktop Code Studio chạy trên máy khác, dùng `ws://IP_MAY_CHU:8080/game`. Với phòng tạo từ web, điền mã phòng vào `Match code` và token đội vào `Team token`.
-2. Nhập Token là `blue-token`.
-3. Giữ Bot class là `MyBot` và source mẫu mặc định.
-4. Nhấn **Compile**; trạng thái phải chuyển thành `Compiled`.
-5. Nhấn **Run**; console phải hiện thông báo spawn, harvest và build thành công.
-6. Quan sát Phaser: `worker-blue-2` xuất hiện, đi tới resource node, stockpile đổi và barracks mới được hiển thị.
+1. Với phòng tạo từ web, nhập pairing key sáu ký tự đang hiển thị trong phòng chờ rồi nhấn **Pair**.
+2. Chờ ứng dụng tự điền Server, Match code và danh sách Team token; chọn token màu của đội muốn điều khiển.
+3. Nếu không dùng pairing, vẫn có thể nhập thủ công `ws://IP_MAY_CHU:8080/game`, mã phòng và token đội.
+4. Giữ Bot class là `MyBot` và source mẫu mặc định.
+5. Nhấn **Compile**; trạng thái phải chuyển thành `Compiled`.
+6. Nhấn **Run**; console phải hiện thông báo spawn, harvest và build thành công.
+7. Quan sát Phaser: `worker-blue-2` xuất hiện, đi tới resource node, stockpile đổi và barracks mới được hiển thị.
 
 Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để Stop.
 
@@ -97,6 +100,7 @@ Các hành động đã thực hiện trong trận vẫn được giữ sau khi 
 REST API hỗ trợ đăng ký qua `POST /api/accounts`, đăng nhập qua `POST /api/sessions`, xem account qua `GET /api/lobby/me` và join team qua `PUT /api/lobby/membership`.
 Web viewer gọi trực tiếp các API này; display name mặc định bằng username nên form đăng ký chỉ cần username/password.
 Lobby động dùng `POST /api/lobbies`, `POST /api/lobbies/join`, `GET /api/lobbies/{matchCode}` và `POST /api/lobbies/{matchCode}/start`.
+Desktop pairing dùng `GET /api/desktop/pairing/{key}` và trả về WebSocket URL, match code, trạng thái cùng danh sách team token.
 Mật khẩu được lưu bằng BCrypt; session token trả về cho client chỉ được lưu dưới dạng SHA-256 trong database.
 Sau khi join team, dùng session token ở trường Token của Desktop Code Studio hoặc tham số thứ hai của `GameClient.connect`/`GameBots.connect`.
 Tối đa 5 account có thể join cùng team và dùng chung unit, quota cùng state server-authoritative; account thứ 6 nhận lỗi `TEAM_FULL`.

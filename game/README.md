@@ -15,6 +15,7 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - R8.1–R8.3 thêm màn hình chọn trận, mã truy cập, bảng trạng thái trận và phản hồi thắng/thua cho Phaser viewer.
 - R8.4 thêm đăng ký/đăng nhập trên web, tạo trận từ JSON map script, tìm trận bằng mã + token đội và phòng chờ theo slot.
 - R8 LAN cho phép một máy phát server/viewer để nhiều máy cùng Wi-Fi truy cập trực tiếp, không qua dịch vụ trung gian.
+- Desktop pairing cho phép nhập một key sáu ký tự để tự tìm server trong LAN, điền match code và chọn token đội theo màu.
 
 ## Kiến trúc
 
@@ -50,10 +51,13 @@ Token demo mặc định là `blue-token` và `red-token`.
 Profile mặc định có 10 đội thuộc 2 phe, tối đa 50 đơn vị mỗi đội và tối đa 5 account cùng điều khiển một đội.
 Hai match `match-default` và `match-training` được tạo từ cùng profile; Java client chọn match bằng overload `GameClient.connect(url, token, matchId)`.
 
-Trên web, đăng ký bằng username/password hoặc đăng nhập tài khoản đã có. Sau đó chọn **Tạo trận** để dùng map script JSON, hoặc **Tìm trận** để nhập mã trận và token đội. Chủ phòng bắt đầu trận từ phòng chờ; token của đội dùng trong Desktop Code Studio.
+Trên web, đăng ký bằng username/password hoặc đăng nhập tài khoản đã có.
+Sau đó chọn **Tạo trận** để dùng map script JSON, hoặc **Tìm trận** để nhập mã trận và token đội.
+Phòng chờ hiển thị pairing key riêng của trận cùng token màu của từng đội.
 
-Trong Desktop Code Studio cùng máy với server, giữ lớp `MyBot`, nhập máy chủ `ws://localhost:8080/game` và mã truy cập `blue-token`.
-Nếu chạy Desktop Code Studio trên máy khác cùng Wi-Fi, thay `localhost` bằng IPv4 của máy chủ.
+Trong Desktop Code Studio, nhập pairing key từ phòng chờ rồi nhấn **Pair**.
+Ứng dụng tự tìm server cổng `8080` trong LAN, điền Server và Match code, sau đó cho chọn Team token từ danh sách màu.
+Các trường Server, Match code và Team token vẫn cho phép nhập thủ công khi cần.
 Nhấn `Compile` (`Ctrl+B`) rồi `Run` (`Ctrl+R`) để chạy chương trình mẫu; nhấn `Stop` (`Ctrl+K`) để dừng.
 Quan sát kết quả trên trang bản đồ.
 

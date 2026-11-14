@@ -564,11 +564,12 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 ## R8 — Trải nghiệm và phát hành
 
 - **Đã triển khai R8.1–R8.4 và LAN:** viewer responsive, đăng ký/đăng nhập, tạo trận từ JSON map script, tìm bằng mã + token đội, phòng chờ theo slot và nối WebSocket theo match động.
+- **Đã triển khai Desktop pairing:** mỗi lobby có key riêng; Desktop tự tìm server LAN, điền match và cho chọn token màu.
 - Pixel art, animation, tutorial trong trận, replay và log chi tiết vẫn còn phía sau.
 - Cân bằng HP, damage, chi phí, map và thời lượng trận.
 - Danh sách phòng công khai, matchmaking tự động, xếp hạng và vận hành production nếu sản phẩm cần.
 
-**Bằng chứng R8.1–R8.4:** `npm run build` pass; integration test lobby động pass; copy lint gaming không có finding.
+**Bằng chứng R8.1–R8.4:** `npm run build` pass; integration test lobby động và migration pairing pass; copy lint gaming không có finding.
 **Giới hạn kiểm tra:** consistency/layout browser chưa chạy được vì môi trường hiện tại dùng Node 20 còn bộ kiểm tra yêu cầu Node 22 với WebSocket dựng sẵn.
 
 ## R9 — Phương án client simulation, chỉ khi được phê duyệt

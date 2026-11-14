@@ -6,8 +6,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextArea;
@@ -32,16 +32,19 @@ public final class CodeStudioApplication extends Application {
 
     private final BotCompiler compiler = new BotCompiler();
     private final BotProcessRunner processRunner = new BotProcessRunner();
+    private final LanPairingClient pairingClient = new LanPairingClient();
     private final ExecutorService background = Executors.newVirtualThreadPerTaskExecutor();
+    private final TextField pairingKey = new TextField();
     private final TextField serverUrl = new TextField("ws://localhost:8080/game");
     private final TextField matchId = new TextField();
-    private final PasswordField teamToken = new PasswordField();
+    private final ComboBox<String> teamToken = new ComboBox<>();
     private final TextField className = new TextField(DefaultBotSource.CLASS_NAME);
     private final Spinner<Integer> timeoutSeconds = new Spinner<>(1, 300, 15);
     private final TextArea editor = new TextArea(DefaultBotSource.SOURCE);
     private final TextArea console = new TextArea();
     private final Label status = new Label("Ready");
     private final Button compileButton = new Button("Compile");
+    private final Button pairButton = new Button("Pair");
     private final Button runButton = new Button("Run");
     private final Button stopButton = new Button("Stop");
     private BotCompilation activeCompilation;
@@ -49,7 +52,9 @@ public final class CodeStudioApplication extends Application {
 
     @Override
     public void start(Stage stage) {
+        pairingKey.setPromptText("6-character pairing key");
         teamToken.setPromptText("Team token");
+        teamToken.setEditable(true);
         matchId.setPromptText("Match code (blank = match-default)");
         editor.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px;");
         console.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
@@ -62,6 +67,7 @@ public final class CodeStudioApplication extends Application {
         editor.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
         className.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
         compileButton.setOnAction(event -> compileSource());
+        pairButton.setOnAction(event -> pairWithServer());
         runButton.setOnAction(event -> runBot());
         stopButton.setOnAction(event -> stopBot());
 
@@ -99,6 +105,12 @@ public final class CodeStudioApplication extends Application {
     }
 
     private VBox connectionPanel() {
+        HBox pairing = new HBox(
+                8,
+                new Label("Pairing key"), pairingKey, pairButton
+        );
+        HBox.setHgrow(pairingKey, Priority.ALWAYS);
+
         HBox connection = new HBox(
                 8,
                 new Label("Server"), serverUrl,
@@ -117,7 +129,32 @@ public final class CodeStudioApplication extends Application {
 
         HBox source = new HBox(8, new Label("Bot class"), className);
         HBox.setHgrow(className, Priority.ALWAYS);
-        return new VBox(8, connection, match, source);
+        return new VBox(8, pairing, connection, match, source);
+    }
+
+    private void pairWithServer() {
+        String key = pairingKey.getText().trim();
+        pairButton.setDisable(true);
+        status.setText("Searching LAN...");
+        CompletableFuture.supplyAsync(() -> pairingClient.find(key), background)
+                .whenComplete((result, error) -> Platform.runLater(() -> finishPairing(result, error)));
+    }
+
+    private void finishPairing(PairingConfiguration result, Throwable error) {
+        pairButton.setDisable(false);
+        if (error != null) {
+            status.setText("Pairing failed");
+            appendConsole("Pairing error: " + messageOf(error));
+            return;
+        }
+        serverUrl.setText(result.serverUrl());
+        matchId.setText(result.matchCode());
+        teamToken.getItems().setAll(result.teams().stream().map(PairingConfiguration.PairingTeam::token).toList());
+        if (!teamToken.getItems().isEmpty()) {
+            teamToken.getSelectionModel().selectFirst();
+        }
+        status.setText("Paired");
+        appendConsole("Paired with " + result.matchCode() + ". Select a team token, then compile and run.");
     }
 
     private VBox bottomPanel() {
@@ -163,7 +200,8 @@ public final class CodeStudioApplication extends Application {
             appendConsole("Compile the source before running it.");
             return;
         }
-        if (serverUrl.getText().isBlank() || teamToken.getText().isBlank()) {
+        String selectedTeamToken = teamToken.getEditor().getText().trim();
+        if (serverUrl.getText().isBlank() || selectedTeamToken.isBlank()) {
             appendConsole("Server URL and team token are required.");
             return;
         }
@@ -173,7 +211,7 @@ public final class CodeStudioApplication extends Application {
                 activeCompilation.classesDirectory(),
                 serverUrl.getText().trim(),
                 matchId.getText().trim(),
-                teamToken.getText(),
+                selectedTeamToken,
                 Duration.ofSeconds(timeoutSeconds.getValue()),
                 64,
                 MAX_OUTPUT_BYTES

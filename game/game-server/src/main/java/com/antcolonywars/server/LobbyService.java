@@ -20,6 +20,11 @@ import java.util.Optional;
 @Service
 public class LobbyService {
     private static final char[] CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".toCharArray();
+    private static final char[] PAIRING_KEY_ALPHABET = "23456789".toCharArray();
+    private static final List<String> TEAM_TOKENS = List.of(
+            "BLUE", "RED", "GREEN", "YELLOW", "MAGENTA",
+            "CYAN", "ORANGE", "TEAL", "MAROON", "NAVY"
+    );
 
     private final JdbcTemplate jdbcTemplate;
     private final AccountService accountService;
@@ -57,17 +62,20 @@ public class LobbyService {
     public LobbyView create(String sessionToken, String mapScript) {
         AccountService.Account account = accountService.requireAccount(sessionToken);
         String matchCode = createUniqueCode();
+        String pairingKey = createUniquePairingKey();
         MapScriptParser.ParsedMap parsed = mapScriptParser.parse(matchCode, mapScript);
         MatchSetup setup = parsed.setup();
         jdbcTemplate.update(
-                "INSERT INTO game_lobby(match_code, owner_account_id, setup_json, map_script, status, accounts_per_team, created_at_ms) "
-                        + "VALUES (?, ?, ?, ?, 'WAITING', ?, ?)",
-                matchCode, account.id(), writeSetup(setup), mapScript, parsed.accountsPerTeam(), clock.millis()
+                "INSERT INTO game_lobby(match_code, pairing_key, owner_account_id, setup_json, map_script, status, accounts_per_team, created_at_ms) "
+                        + "VALUES (?, ?, ?, ?, ?, 'WAITING', ?, ?)",
+                matchCode, pairingKey, account.id(), writeSetup(setup), mapScript,
+                parsed.accountsPerTeam(), clock.millis()
         );
-        for (Team team : setup.teams()) {
+        for (int index = 0; index < setup.teams().size(); index++) {
+            Team team = setup.teams().get(index);
             jdbcTemplate.update(
                     "INSERT INTO game_lobby_team(match_code, team_id, display_name, color, team_token) VALUES (?, ?, ?, ?, ?)",
-                    matchCode, team.id(), team.displayName(), team.color(), createCode(8)
+                    matchCode, team.id(), team.displayName(), team.color(), TEAM_TOKENS.get(index)
             );
         }
         jdbcTemplate.update(
@@ -169,6 +177,31 @@ public class LobbyService {
         ).stream().findFirst()).orElse(null);
     }
 
+    public PairingView pair(String pairingKey, String serverHost, int serverPort) {
+        String key = pairingKey == null ? "" : pairingKey.trim().toUpperCase(Locale.ROOT);
+        if (!key.matches("[A-Z2-9]{6}")) {
+            throw pairingNotFound();
+        }
+        LobbyRow lobby = jdbcTemplate.query(
+                "SELECT match_code, pairing_key, owner_account_id, setup_json, status, accounts_per_team "
+                        + "FROM game_lobby WHERE pairing_key = ?",
+                (resultSet, rowNumber) -> lobbyRow(resultSet), key
+        ).stream().findFirst().orElseThrow(this::pairingNotFound);
+        List<PairingTeam> teams = jdbcTemplate.query(
+                "SELECT team_id, display_name, team_token FROM game_lobby_team WHERE match_code = ? ORDER BY team_id",
+                (resultSet, rowNumber) -> new PairingTeam(
+                        resultSet.getString("team_id"), resultSet.getString("display_name"),
+                        resultSet.getString("team_token")
+                ),
+                lobby.matchCode()
+        );
+        String host = serverHost.contains(":") ? "[" + serverHost + "]" : serverHost;
+        return new PairingView(
+                "ws://" + host + ":" + serverPort + "/game",
+                lobby.matchCode(), lobby.status(), teams
+        );
+    }
+
     private LobbyView viewFor(AccountService.Account account, String matchCode) {
         LobbyRow lobby = requireLobby(matchCode);
         boolean member = jdbcTemplate.queryForObject(
@@ -198,13 +231,14 @@ public class LobbyService {
                 matchCode
         );
         return new LobbyView(
-                lobby.matchCode(), lobby.status(), account.id(), lobby.ownerAccountId().equals(account.id()), teams
+                lobby.matchCode(), lobby.pairingKey(), lobby.status(), account.id(),
+                lobby.ownerAccountId().equals(account.id()), teams
         );
     }
 
     private LobbyRow lockLobby(String matchCode) {
         return jdbcTemplate.query(
-                "SELECT match_code, owner_account_id, setup_json, status, accounts_per_team FROM game_lobby "
+                "SELECT match_code, pairing_key, owner_account_id, setup_json, status, accounts_per_team FROM game_lobby "
                         + "WHERE match_code = ? FOR UPDATE",
                 (resultSet, rowNumber) -> lobbyRow(resultSet), matchCode
         ).stream().findFirst().orElseThrow(() -> notFound());
@@ -212,14 +246,16 @@ public class LobbyService {
 
     private LobbyRow requireLobby(String matchCode) {
         return jdbcTemplate.query(
-                "SELECT match_code, owner_account_id, setup_json, status, accounts_per_team FROM game_lobby WHERE match_code = ?",
+                "SELECT match_code, pairing_key, owner_account_id, setup_json, status, accounts_per_team "
+                        + "FROM game_lobby WHERE match_code = ?",
                 (resultSet, rowNumber) -> lobbyRow(resultSet), matchCode
         ).stream().findFirst().orElseThrow(() -> notFound());
     }
 
     private LobbyRow lobbyRow(java.sql.ResultSet resultSet) throws java.sql.SQLException {
         return new LobbyRow(
-                resultSet.getString("match_code"), resultSet.getString("owner_account_id"),
+                resultSet.getString("match_code"), resultSet.getString("pairing_key"),
+                resultSet.getString("owner_account_id"),
                 resultSet.getString("setup_json"), resultSet.getString("status"),
                 resultSet.getInt("accounts_per_team")
         );
@@ -227,6 +263,10 @@ public class LobbyService {
 
     private ApiException notFound() {
         return new ApiException(HttpStatus.NOT_FOUND, "MATCH_NOT_FOUND", "Match code was not found");
+    }
+
+    private ApiException pairingNotFound() {
+        return new ApiException(HttpStatus.NOT_FOUND, "PAIRING_KEY_NOT_FOUND", "Pairing key was not found");
     }
 
     private String normalizeCode(String matchCode) {
@@ -250,10 +290,27 @@ public class LobbyService {
         throw new IllegalStateException("Could not allocate a unique match code");
     }
 
+    private String createUniquePairingKey() {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String key = createCode(6, PAIRING_KEY_ALPHABET);
+            Integer count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM game_lobby WHERE pairing_key = ?", Integer.class, key
+            );
+            if (count != null && count == 0) {
+                return key;
+            }
+        }
+        throw new IllegalStateException("Could not allocate a unique pairing key");
+    }
+
     private String createCode(int length) {
+        return createCode(length, CODE_ALPHABET);
+    }
+
+    private String createCode(int length, char[] alphabet) {
         StringBuilder result = new StringBuilder(length);
         for (int index = 0; index < length; index++) {
-            result.append(CODE_ALPHABET[secureRandom.nextInt(CODE_ALPHABET.length)]);
+            result.append(alphabet[secureRandom.nextInt(alphabet.length)]);
         }
         return result.toString();
     }
@@ -275,7 +332,8 @@ public class LobbyService {
     }
 
     private record LobbyRow(
-            String matchCode, String ownerAccountId, String setupJson, String status, int accountsPerTeam
+            String matchCode, String pairingKey, String ownerAccountId, String setupJson,
+            String status, int accountsPerTeam
     ) {
     }
 
@@ -291,7 +349,16 @@ public class LobbyService {
     }
 
     public record LobbyView(
-            String matchCode, String status, String currentAccountId, boolean owner, List<TeamView> teams
+            String matchCode, String pairingKey, String status, String currentAccountId,
+            boolean owner, List<TeamView> teams
+    ) {
+    }
+
+    public record PairingTeam(String teamId, String displayName, String token) {
+    }
+
+    public record PairingView(
+            String serverUrl, String matchCode, String status, List<PairingTeam> teams
     ) {
     }
 }
