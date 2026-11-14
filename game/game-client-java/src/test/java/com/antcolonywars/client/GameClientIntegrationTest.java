@@ -153,6 +153,26 @@ class GameClientIntegrationTest {
         }
     }
 
+    @SuppressWarnings("removal")
+    @Test
+    void deprecatedSpawnWithoutSourceFailsBeforeSendingACommand() {
+        try (GameClient client = GameClient.connect(serverUrl(), "blue-token")) {
+            GameClientException direct = assertThrows(
+                    GameClientException.class,
+                    () -> client.spawn("worker-blue-2", "Builder", Direction.DOWN)
+            );
+            GameClientException batch = assertThrows(
+                    GameClientException.class,
+                    () -> BatchAction.spawn("worker-blue-2", "Builder", "WORKER", Direction.DOWN)
+            );
+
+            assertEquals("PRODUCTION_SOURCE_REQUIRED", direct.code());
+            assertTrue(direct.getMessage().contains("ID công trình sản xuất"));
+            assertEquals("PRODUCTION_SOURCE_REQUIRED", batch.code());
+            assertEquals(0, client.getLatestState().revision());
+        }
+    }
+
     @Test
     void batchErrorNamesCommandSubjectActionAndReason() {
         try (GameClient client = GameClient.connect(serverUrl(), "blue-token")) {

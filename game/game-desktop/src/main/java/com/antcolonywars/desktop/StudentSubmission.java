@@ -4,6 +4,7 @@ public record StudentSubmission(
         String className,
         String source,
         String pairingKey,
+        String teamId,
         String batchMode
 ) {
 }

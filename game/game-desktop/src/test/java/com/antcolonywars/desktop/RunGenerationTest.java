@@ -4,12 +4,40 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RunGenerationTest {
+    @Test
+    void resolvesEachIntellijSubmissionToItsRequestedTeamToken() {
+        PairingConfiguration configuration = new PairingConfiguration(
+                "ws://localhost:8080/game",
+                "MATCH-1",
+                "OPEN",
+                List.of(
+                        new PairingConfiguration.PairingTeam("BLUE", "Blue", "blue-token"),
+                        new PairingConfiguration.PairingTeam("RED", "Red", "red-token")
+                )
+        );
+
+        assertEquals("blue-token", CodeStudioApplication.teamTokenFor(configuration, "BLUE"));
+        assertEquals("red-token", CodeStudioApplication.teamTokenFor(configuration, "RED"));
+        IllegalArgumentException missing = assertThrows(
+                IllegalArgumentException.class,
+                () -> CodeStudioApplication.teamTokenFor(configuration, "")
+        );
+        IllegalArgumentException unknown = assertThrows(
+                IllegalArgumentException.class,
+                () -> CodeStudioApplication.teamTokenFor(configuration, "GREEN")
+        );
+        assertTrue(missing.getMessage().contains("Thiếu TEAM_ID"));
+        assertTrue(unknown.getMessage().contains("Không tìm thấy TEAM_ID 'GREEN'"));
+    }
+
     @Test
     void ignoresLatePairingAndCompilationCallbacksFromTheReplacedRun() {
         RunGeneration generation = new RunGeneration();

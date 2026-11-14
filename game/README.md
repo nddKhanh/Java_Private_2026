@@ -68,7 +68,7 @@ Các trường Server, Match code và Team token vẫn cho phép nhập thủ c�
 Nhấn `Compile` (`Ctrl+B`) rồi `Run` (`Ctrl+R`) để chạy chương trình mẫu; nhấn `Stop` (`Ctrl+K`) để dừng.
 Quan sát kết quả trên trang bản đồ.
 
-Để viết trong IntelliJ, mở `student-bot-template`, điền `MATCH_KEY` trong `.env`, sửa `Main.java` rồi chạy `Submit.main()` khi Desktop đang mở.
+Để viết trong IntelliJ, mở `student-bot-template`, điền `MATCH_KEY` và `TEAM_ID` trong `.env`, sửa `Main.java` rồi chạy `Submit.main()` khi Desktop đang mở.
 API ngắn dùng `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 
 Nếu chỉ muốn chạy kịch bản có sẵn, dùng lệnh sau thay cho Desktop Code Studio:

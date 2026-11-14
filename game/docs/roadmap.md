@@ -434,7 +434,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 - Projectile xuyên qua mọi unit, HQ và building cùng phe mà không gây sát thương hoặc dừng lại.
 - Công trình chặn đạn, nhận damage và bị loại khỏi state khi HP về 0.
 - TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô với cooldown một giây cho từng tháp.
-- Viewer dùng silhouette riêng và nhãn ID thực tế cho từng loại unit, HQ và building.
+- Viewer dùng silhouette riêng và badge ID thực tế phủ trên biểu tượng từng loại unit, HQ và building.
 
 **Bằng chứng:** Toàn bộ Maven test và frontend production build pass.
 
@@ -443,8 +443,8 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 **Trạng thái:** `VERIFIED` bằng test tự động.
 
 - Project `student-bot-template` dùng JDK 21, `.env` và entry point `Main.main(Bot)`.
-- `Submit` chuyển source qua HTTP loopback tới Desktop; Desktop tự pair, compile, chạy trong JVM con và trả kết quả về console IntelliJ.
-- API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`; API đầy đủ vẫn tương thích.
+- `Submit` chuyển source, pairing key và `TEAM_ID` qua HTTP loopback; Desktop tự pair đúng token đội, compile, chạy trong JVM con và trả kết quả về console IntelliJ.
+- API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`; API đầy đủ yêu cầu `sourceId`, còn overload thiếu nguồn đã deprecated và báo lỗi sớm.
 - Batch chỉ được gửi khi chương trình kết thúc bình thường; exception hoặc Stop loại bỏ batch chưa gửi.
 - Console IntelliJ nhận lỗi có số lệnh, ID chủ thể, hành động và nguyên nhân tiếng Việt.
 - Source và class Java không được gửi tới game server.

@@ -30,7 +30,7 @@ JavaFX editor → Java Compiler API → child JVM → GameBot/GameClient → Web
 ```
 
 Người học cũng có thể mở `student-bot-template` trong IntelliJ, viết `Main.main(Bot)` rồi chạy `Submit`.
-`Submit` đọc pairing key từ `.env` và gửi source qua HTTP loopback tới Desktop để tự pair, compile và chạy.
+`Submit` đọc pairing key cùng ID đội từ `.env` và gửi source qua HTTP loopback tới Desktop để tự pair đúng token đội, compile và chạy.
 Game server chỉ nhận batch command, không nhận source hoặc class Java.
 
 Mỗi lần Run gom các hành động thành một batch; người dùng chọn Atomic để từ chối toàn bộ khi có lỗi hoặc Partial để giữ phần hợp lệ trước lỗi đầu tiên.
@@ -105,12 +105,13 @@ Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để St
 Để dùng IntelliJ thay cho editor tích hợp:
 
 1. Mở `student-bot-template` bằng IntelliJ với JDK 21.
-2. Điền `MATCH_KEY` và `BATCH_MODE` trong `.env`.
+2. Điền `MATCH_KEY`, `TEAM_ID` và `BATCH_MODE` trong `.env`.
 3. Sửa `src/main/java/Main.java`.
 4. Chạy `Submit.main()` trong khi Desktop đang mở và xem toàn bộ kết quả trong console IntelliJ.
 
 API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 `spawn(id, type, dir)` dùng HQ hoặc BARRACKS đã chọn làm nguồn sản xuất.
+API đầy đủ phải truyền `sourceId`; overload cũ không có nguồn sẽ báo lỗi tại client trước khi gửi request.
 Desktop chỉ gửi batch sau khi chương trình kết thúc bình thường và trả log biên dịch, Java hoặc server về console IntelliJ.
 
 Nếu sửa source sau khi compile, ứng dụng bắt buộc compile lại trước khi Run.

@@ -10,8 +10,10 @@ public interface GameBot extends AutoCloseable {
 
     String selectedUnitId();
 
+    @Deprecated(forRemoval = true)
     GameState spawn(String unitId, String displayName, Direction direction);
 
+    @Deprecated(forRemoval = true)
     GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction);
 
     GameState spawn(String sourceId, String unitId, String displayName, UnitType unitType, Direction direction);

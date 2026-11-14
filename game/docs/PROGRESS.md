@@ -3,6 +3,15 @@
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
+## 2026-11-14 — Sửa Update V2 phần 4
+
+- **Trạng thái:** `VERIFIED` bằng test tự động và production build.
+- **Đã đạt:** IntelliJ truyền `TEAM_ID`; Desktop ánh xạ đúng token đội và từ chối ID thiếu hoặc không tồn tại trước khi chạy bot.
+- **Đã đạt:** API spawn cũ không có nguồn báo lỗi tại client mà không gửi command; API có `sourceId` tiếp tục hoạt động.
+- **Đã đạt:** ID unit, HQ và building nằm trong badge phủ biểu tượng, có rút gọn và hover hiện đầy đủ.
+- **Bằng chứng:** Maven reactor test, `npm test` và `npm run build` hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa chạy E2E bằng GUI IntelliJ/Desktop thật và chưa kiểm tra trực quan bản đồ đông đối tượng ở nhiều kích thước.
+
 ## 2026-11-14 — Sửa Update V2 phần 2
 
 - **Trạng thái:** `VERIFIED` bằng test tự động và production build.

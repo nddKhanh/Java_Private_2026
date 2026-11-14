@@ -46,16 +46,27 @@ public record BatchAction(
             String unitType,
             Direction direction
     ) {
+        if (sourceId == null || sourceId.isBlank()) {
+            throw missingProductionSource();
+        }
         return action("SPAWN", unitId, displayName, unitType, direction.name(), null, null, sourceId);
     }
 
+    @Deprecated(forRemoval = true)
     public static BatchAction spawn(
             String unitId,
             String displayName,
             String unitType,
             Direction direction
     ) {
-        return spawn(null, unitId, displayName, unitType, direction);
+        throw missingProductionSource();
+    }
+
+    private static GameClientException missingProductionSource() {
+        return new GameClientException(
+                "PRODUCTION_SOURCE_REQUIRED",
+                "Thiếu ID công trình sản xuất. Hãy truyền sourceId của HQ hoặc BARRACKS."
+        );
     }
 
     private static BatchAction action(

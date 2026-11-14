@@ -29,6 +29,7 @@ public final class Submit {
     private static void submit() throws Exception {
         Map<String, String> environment = readEnvironment(Path.of(".env"));
         String key = required(environment, "MATCH_KEY");
+        String teamId = required(environment, "TEAM_ID");
         String mode = environment.getOrDefault("BATCH_MODE", "ATOMIC").trim().toUpperCase();
         String source = Files.readString(Path.of("src", "main", "java", "Main.java"));
 
@@ -36,6 +37,7 @@ public final class Submit {
                 "className", "Main",
                 "source", source,
                 "pairingKey", key,
+                "teamId", teamId,
                 "batchMode", mode
         ));
         HttpRequest request = HttpRequest.newBuilder(DESKTOP_ENDPOINT)

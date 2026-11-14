@@ -72,14 +72,14 @@ export class BattleScene extends Phaser.Scene {
         0, size * 0.52, -size * 0.46, size * 0.26, -size * 0.46, -size * 0.26,
       ], this.teamColor(team), headquarters.hp > 0 ? 0.82 : 0.22);
       shape.setStrokeStyle(Math.max(2, cellSize * 0.04), 0xf8fafc, headquarters.hp > 0 ? 0.8 : 0.25);
-      this.add.text(center.x, center.y, `HQ\n${headquarters.hp}`, {
+      this.add.text(center.x, center.y + size * 0.08, `HQ\n${headquarters.hp}`, {
         align: 'center',
         color: '#ffffff',
         fontFamily: 'Inter, system-ui, sans-serif',
         fontSize: `${Math.max(10, Math.min(16, cellSize * 0.2))}px`,
         fontStyle: '700',
       }).setOrigin(0.5);
-      this.addIdLabel(center.x, center.y + size * 0.62, headquarters.id, cellSize);
+      this.addIdLabel(center.x, center.y - size * 0.32, headquarters.id, size * 0.8);
     }
 
     for (const resource of state.resourceNodes) {
@@ -102,10 +102,10 @@ export class BattleScene extends Phaser.Scene {
       if (building.type === 'BARRACKS') shape.setAngle(45);
       shape.setStrokeStyle(2, 0xfbbf24, 1);
       const glyph = building.type === 'BARRACKS' ? 'B' : building.type === 'TOWER' ? 'T' : '▰';
-      this.add.text(center.x, center.y, glyph, {
+      this.add.text(center.x, center.y + size * 0.1, glyph, {
         color: '#ffffff', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14px', fontStyle: '700',
       }).setOrigin(0.5);
-      this.addIdLabel(center.x, center.y + size * 0.62, building.id, cellSize);
+      this.addIdLabel(center.x, center.y - size * 0.3, building.id, size * 0.82);
     }
 
     for (const projectile of state.projectiles) {
@@ -141,7 +141,7 @@ export class BattleScene extends Phaser.Scene {
         );
       shape.setStrokeStyle(Math.max(2, cellSize * 0.04), 0xf8fafc, 0.9);
       const glyph = unit.type === 'WORKER' ? 'W' : unit.type === 'MELEE' ? 'M' : unit.type === 'RANGED' ? 'R' : 'S';
-      this.add.text(center.x, center.y, `${glyph}\n${unit.hp}`, {
+      this.add.text(center.x, center.y + radius * 0.16, `${glyph}\n${unit.hp}`, {
         align: 'center',
         color: '#ffffff',
         fontFamily: 'Inter, system-ui, sans-serif',
@@ -150,9 +150,9 @@ export class BattleScene extends Phaser.Scene {
       }).setOrigin(0.5);
       this.addIdLabel(
         center.x,
-        center.y + cellSize * unit.height * 0.42,
+        center.y - cellSize * unit.height * 0.3,
         unit.id,
-        cellSize * unit.width,
+        cellSize * unit.width * 0.78,
       );
     }
   }
@@ -166,6 +166,7 @@ export class BattleScene extends Phaser.Scene {
       color: '#f8fafc',
       fontFamily: 'Inter, system-ui, sans-serif',
       fontSize: `${Math.max(8, Math.min(11, availableWidth * 0.16))}px`,
+      fontStyle: '700',
       padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(20).setInteractive();
     if (compactId !== id) {

@@ -87,12 +87,13 @@ Nếu Windows Firewall chặn kết nối, mở TCP `8080` trên máy chủ.
 ### Viết bot trong IntelliJ
 
 1. Mở thư mục `student-bot-template` bằng IntelliJ và chọn JDK 21.
-2. Điền pairing key sáu ký tự vào `MATCH_KEY` trong file `.env`.
+2. Điền pairing key sáu ký tự vào `MATCH_KEY` và ID đội được cấp vào `TEAM_ID` trong file `.env`.
 3. Viết chương trình trong `src/main/java/Main.java` với entry point `public static void main(Bot bot)`.
 4. Chạy `Submit.main()` trong IntelliJ khi Desktop Code Studio đang mở.
 5. Theo dõi trạng thái gửi, biên dịch, chạy và kết quả server ngay trong console IntelliJ.
 
 Desktop nhận source qua `127.0.0.1:17321`, tự pair, compile, chạy bot và trả kết quả về lần Run đang chờ.
+Desktop chỉ dùng token khớp chính xác `TEAM_ID`; thiếu hoặc sai ID đội sẽ dừng Run và trả lỗi về console IntelliJ.
 Không cần nhấn thêm Compile hoặc Run trong Desktop.
 
 Source chỉ đi từ IntelliJ tới Desktop trên chính máy đang chạy và không được upload lên game server.
@@ -152,6 +153,7 @@ API ngắn còn có `hit`, `mine`, `build`, `spawn` và `state`.
 Để tạo quân, chọn HQ hoặc BARRACKS trước rồi gọi `bot.spawn(id, type, dir)`.
 HQ chỉ tạo WORKER; BARRACKS chỉ tạo MELEE, RANGED hoặc SIEGE; TOWER và WALL không thể tạo quân.
 API `BotProgram`/`GameBot` đầy đủ bên dưới vẫn được giữ để tương thích.
+Hai overload `spawn` cũ không có `sourceId` đã deprecated và báo lỗi ngay tại client; dùng overload đầy đủ có ID HQ/BARRACKS.
 
 ### Bước 1 — chọn đội và nhập chương trình
 

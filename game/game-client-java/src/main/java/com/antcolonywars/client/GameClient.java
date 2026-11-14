@@ -91,12 +91,14 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         return sendUnitAction("ATTACK", unitId, Map.of("direction", direction.name()));
     }
 
+    @Deprecated(forRemoval = true)
     public GameState spawn(String unitId, String displayName, Direction direction) {
-        return spawn(unitId, displayName, UnitType.WORKER, direction);
+        throw missingProductionSource();
     }
 
+    @Deprecated(forRemoval = true)
     public GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction) {
-        return spawn(null, unitId, displayName, unitType, direction);
+        throw missingProductionSource();
     }
 
     public GameState spawn(
@@ -110,15 +112,23 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         Objects.requireNonNull(displayName, "displayName");
         Objects.requireNonNull(unitType, "unitType");
         Objects.requireNonNull(direction, "direction");
+        if (sourceId == null || sourceId.isBlank()) {
+            throw missingProductionSource();
+        }
         Map<String, Object> payload = new HashMap<>();
         payload.put("unitId", unitId);
         payload.put("displayName", displayName);
         payload.put("unitType", unitType.name());
         payload.put("direction", direction.name());
-        if (sourceId != null && !sourceId.isBlank()) {
-            payload.put("sourceId", sourceId);
-        }
+        payload.put("sourceId", sourceId);
         return sendAction("SPAWN", payload);
+    }
+
+    private static GameClientException missingProductionSource() {
+        return new GameClientException(
+                "PRODUCTION_SOURCE_REQUIRED",
+                "Thiếu ID công trình sản xuất. Hãy truyền sourceId của HQ hoặc BARRACKS."
+        );
     }
 
     public GameState harvest() {

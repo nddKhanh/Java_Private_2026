@@ -3,6 +3,19 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-14 — Sửa Update V2 phần 4
+
+### Changed
+
+- IntelliJ submission bắt buộc `TEAM_ID` và Desktop chỉ dùng token của đúng đội thay vì tự chọn đội đầu tiên.
+- Overload spawn không có `sourceId` đã deprecated và báo `PRODUCTION_SOURCE_REQUIRED` tại client trước khi gửi mạng.
+- Viewer đặt badge ID tương phản trên biểu tượng unit, HQ và building mà vẫn giữ ký hiệu loại cùng HP.
+
+### Verified
+
+- Maven reactor test, test nhãn viewer và frontend production build đều pass.
+- Chưa xác minh thao tác IntelliJ/Desktop và độ rõ nhãn bằng GUI thật.
+
 ## 2026-11-14 — Sửa Update V2 phần 2
 
 ### Changed

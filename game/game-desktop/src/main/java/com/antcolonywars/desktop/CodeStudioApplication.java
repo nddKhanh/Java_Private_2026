@@ -76,7 +76,7 @@ public final class CodeStudioApplication extends Application {
         editor.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
         className.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
         compileButton.setOnAction(event -> compileSource(runGeneration.current()));
-        pairButton.setOnAction(event -> pairWithServer(runGeneration.current()));
+        pairButton.setOnAction(event -> pairWithServer(runGeneration.current(), null));
         runButton.setOnAction(event -> runBot(runGeneration.current()));
         stopButton.setOnAction(event -> stopBot());
 
@@ -149,17 +149,22 @@ public final class CodeStudioApplication extends Application {
         return new VBox(8, pairing, connection, match, source);
     }
 
-    private void pairWithServer(long generation) {
+    private void pairWithServer(long generation, String requestedTeamId) {
         String key = pairingKey.getText().trim();
         pairButton.setDisable(true);
         status.setText("Searching LAN...");
         CompletableFuture.supplyAsync(() -> pairingClient.find(key), background)
                 .whenComplete((result, error) -> Platform.runLater(
-                        () -> finishPairing(generation, result, error)
+                        () -> finishPairing(generation, requestedTeamId, result, error)
                 ));
     }
 
-    private void finishPairing(long generation, PairingConfiguration result, Throwable error) {
+    private void finishPairing(
+            long generation,
+            String requestedTeamId,
+            PairingConfiguration result,
+            Throwable error
+    ) {
         if (!runGeneration.isCurrent(generation)) {
             return;
         }
@@ -175,11 +180,26 @@ public final class CodeStudioApplication extends Application {
         serverUrl.setText(result.serverUrl());
         matchId.setText(result.matchCode());
         teamToken.getItems().setAll(result.teams().stream().map(PairingConfiguration.PairingTeam::token).toList());
-        if (!teamToken.getItems().isEmpty()) {
+        teamToken.getSelectionModel().clearSelection();
+        teamToken.getEditor().clear();
+        if (requestedTeamId == null) {
             teamToken.getSelectionModel().selectFirst();
+        } else {
+            try {
+                teamToken.setValue(teamTokenFor(result, requestedTeamId));
+            } catch (IllegalArgumentException exception) {
+                compileAfterPairing = false;
+                runAfterCompilation = false;
+                status.setText("Pairing failed");
+                appendConsole(exception.getMessage());
+                completeSubmission(generation, false, exception.getMessage());
+                return;
+            }
         }
         status.setText("Paired");
-        appendConsole("Paired with " + result.matchCode() + ". Select a team token, then compile and run.");
+        appendConsole(requestedTeamId == null
+                ? "Paired with " + result.matchCode() + ". Select a team token, then compile and run."
+                : "Đã pair trận " + result.matchCode() + " với đội " + requestedTeamId.trim() + ".");
         if (compileAfterPairing) {
             compileAfterPairing = false;
             runAfterCompilation = true;
@@ -206,9 +226,22 @@ public final class CodeStudioApplication extends Application {
             compileAfterPairing = true;
             runAfterCompilation = false;
             appendConsole("Đã nhận " + submission.className() + " từ IntelliJ. Đang pair trận đấu...");
-            pairWithServer(generation);
+            pairWithServer(generation, submission.teamId().trim());
         });
         return result;
+    }
+
+    static String teamTokenFor(PairingConfiguration configuration, String teamId) {
+        if (teamId == null || teamId.isBlank()) {
+            throw new IllegalArgumentException("Thiếu TEAM_ID trong .env.");
+        }
+        return configuration.teams().stream()
+                .filter(team -> team.teamId().equals(teamId.trim()))
+                .map(PairingConfiguration.PairingTeam::token)
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Không tìm thấy TEAM_ID '" + teamId.trim() + "' trong trận đấu."
+                ));
     }
 
     private VBox bottomPanel() {
