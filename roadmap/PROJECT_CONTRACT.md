@@ -1,6 +1,8 @@
 # Hợp Đồng Xuyên Suốt Dự Án Thực Hành
 
-Dự án bài tập mang tên `HitShop`; mỗi BTVN từ buổi 1 đến buổi 11 mở rộng kết quả của bài trước.
+Dự án bài tập mang tên `HitShop`; mỗi BTVN từ buổi 1 đến buổi 11 kế thừa kết quả hoặc năng lực của bài trước.
+
+Lộ trình hiện có 11 buổi: nội dung Buổi 10 cũ đã gộp vào Buổi 8, còn Git/Swing và capstone được đánh lại thành Buổi 10 và Buổi 11.
 
 ## Nền tảng dùng chung
 
@@ -21,11 +23,10 @@ Dự án bài tập mang tên `HitShop`; mỗi BTVN từ buổi 1 đến buổi 
 | 5 | `PaymentMethod`, `DeliveryMethod`, equality của Product | Nơi sử dụng phụ thuộc interface; Product bằng nhau theo id |
 | 6 | Xử lý lỗi và lưu đơn ra `orders.txt` | File chỉ là bước học I/O; model Order không bị thay thế |
 | 7 | Maven, MySQL, JDBC CRUD Product | Product chuyển sang lưu trong bảng `products`; câu SQL dùng tham số |
-| 8 | Repository, Service, Optional, enum | Thêm luồng tạo/liệt kê/tìm Customer; `OrderStatus` thay chuỗi trạng thái; console gọi Service |
-| 9 | Order/OrderItem nhiều bảng, JOIN và báo cáo | `orders.id` chuyển sang `long` tự tăng; `unit_price` giữ giá lúc mua |
-| 10 | MVC, SOLID và refactor | View → Controller → Service → Repository interface → JDBC implementation |
-| 11 | Git flow và Swing cơ bản | `ProductWindow` lấy dữ liệu từ cùng `ProductService`, không tạo kho dữ liệu riêng |
-| 12 | Capstone theo đề tài nhóm tự chọn | HitShop là đề tài tham khảo, không phải đề tài bắt buộc của mọi nhóm |
+| 8 | Repository, Service, Optional, enum; MVC, SRP/DIP và refactor | Product/Customer đi qua View → Controller → Service → repository interface; main lắp dependency; ProductService chạy JDBC/memory |
+| 9 | Order/OrderItem nhiều bảng, JOIN và báo cáo | `orders.id` chuyển sang `long` tự tăng; `OrderItemInput` chỉ nhận productId/quantity; Service chốt `unit_price` |
+| 10 | Git flow và Swing cơ bản | `ProductWindow` lấy dữ liệu từ cùng `ProductService`, không tạo kho dữ liệu riêng |
+| 11 | Capstone theo đề tài nhóm tự chọn | HitShop là đề tài tham khảo, không phải đề tài bắt buộc của mọi nhóm |
 
 ## Ranh giới trách nhiệm từ buổi 8
 
@@ -58,4 +59,4 @@ MySQL
 
 ## Phạm vi capstone
 
-Buổi 12 cho phép nhóm chọn miền bài toán khác HitShop. Dù chọn đề tài nào, sản phẩm vẫn phải chứng minh các năng lực cốt lõi của lộ trình: OOP, mô hình dữ liệu có quan hệ, JDBC CRUD, một luồng nghiệp vụ nhiều bảng có transaction, kiến trúc phân tầng, Git/PR và demo chạy được.
+Buổi 11 cho phép nhóm chọn miền bài toán khác HitShop. Dù chọn đề tài nào, sản phẩm vẫn phải chứng minh các năng lực cốt lõi của lộ trình: OOP, mô hình dữ liệu có quan hệ, JDBC CRUD, một luồng nghiệp vụ nhiều bảng có transaction, kiến trúc phân tầng, Git/PR và demo chạy được.

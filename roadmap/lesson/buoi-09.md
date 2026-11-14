@@ -30,6 +30,10 @@ Quy ước của ví dụ:
 
 Mỗi entity chỉ nên có một quy ước định danh rõ ràng trong cùng mô hình demo.
 
+### Kiểm tra nhanh
+
+Giải thích vì sao `SELECT MAX(id)` không chứng minh id đó thuộc lệnh INSERT của chương trình hiện tại khi hai người dùng tạo đơn gần như đồng thời.
+
 ## II. Mô Hình Quan Hệ
 
 ```text
@@ -79,7 +83,19 @@ Khi tạo OrderItem, Service chụp `product.getPrice()` vào `unitPrice`. Khi x
 
 Đây là sự khác biệt với CartItem buổi 3: CartItem là giỏ tạm và đọc giá hiện tại; OrderItem là dòng giao dịch đã chốt.
 
-## IV. Insert Order Và Lấy Generated Key
+## IV. Input Từ View Và Generated Key
+
+Áp dụng ranh giới các tầng đã học ở buổi 8: View chỉ nhận mã sản phẩm và số lượng, Controller chuyển yêu cầu sang Service. DTO đầu vào, đặt trong file `OrderItemInput.java` thuộc package `dto`:
+
+```java
+public record OrderItemInput(String productId, int quantity) {}
+```
+
+`OrderService.createOrder(String customerId, List<OrderItemInput> inputs, LocalDateTime createdAt)` trả `long` id mới. Service tìm Customer/Product qua repository, kiểm tra input và tạo OrderItem với `product.getPrice()`. View không tạo OrderItem hoàn chỉnh hoặc yêu cầu người dùng nhập unitPrice. Không khai báo thêm overload chỉ đổi `List<OrderItemInput>` thành `List<OrderItem>` vì type erasure.
+
+Controller chỉ điều phối; Service ghép dữ liệu và chốt giá. Phần áp dụng vào project nằm trong BTVN; các truy vấn dưới đây minh họa cơ chế JDBC.
+
+### Insert Order Và Lấy Generated Key
 
 ```java
 String sql = "INSERT INTO orders(customer_id, status, created_at) VALUES (?, ?, ?)";
@@ -225,22 +241,34 @@ Transaction bảo đảm thao tác ghi Order và toàn bộ OrderItem cùng comm
 | Tính lịch sử bằng Product.price | Tổng đơn cũ thay đổi | Dùng OrderItem.unitPrice |
 | JOIN thiếu điều kiện | Row bị nhân bản | Kiểm tra từng khóa nối |
 | Repository trả Order thiếu item mà View không biết | Hiển thị tổng 0 | Service chịu trách nhiệm hydrate đầy đủ |
-| Tự đoán id Order bằng `MAX(id)` | Có thể lấy khóa của request khác | Dùng generated key của chính lệnh INSERT |
 
 ## Tổng kết buổi 9
 
 Thiết kế nhiều bảng yêu cầu hiểu khóa, lịch sử giá và thứ tự ghi. Generated key nối Order với OrderItem; JOIN khôi phục object; GROUP BY tạo báo cáo; transaction bảo vệ tính toàn vẹn khi nhiều bước cùng tạo một nghiệp vụ.
 
+### Câu hỏi chốt buổi
+
+1. Vì sao OrderItem phải có `unitPrice` riêng thay vì luôn đọc `Product.price`?
+2. Generated key giải quyết vấn đề gì khi ghi bảng con?
+3. JOIN chi tiết và GROUP BY báo cáo trả hai loại kết quả khác nhau như thế nào?
+4. Vì sao View không nên tự gọi hai repository để ghép một Order?
+5. Điều kiện nào phải đúng để `rollback()` hoàn tác tất cả bước tạo đơn?
+
 ## Bài tập nhỏ trên lớp — Đăng ký sinh viên vào lớp học
 
-Thiết kế ba bảng `students`, `courses`, `enrollments`:
+Thiết kế ba bảng:
 
-- `enrollments` có khóa ngoại tới student và course.
-- Viết JDBC tạo một course, lấy generated id rồi thêm hai enrollment.
-- Viết một JOIN hiển thị mã sinh viên, tên sinh viên và tên khóa học.
-- Viết GROUP BY đếm số sinh viên của từng khóa, sắp xếp theo course id.
+- `students(id VARCHAR(20) PRIMARY KEY, name VARCHAR(100) NOT NULL)`.
+- `courses(id BIGINT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL)`.
+- `enrollments(id BIGINT AUTO_INCREMENT PRIMARY KEY, student_id VARCHAR(20), course_id BIGINT)` với hai khóa ngoại.
 
-**Nghiệm thu:** course có hai enrollment phải xuất hiện một lần trong báo cáo với số lượng 2; JOIN chi tiết có đúng hai dòng. Thời gian làm khoảng 20 phút.
+Tạo `EnrollmentView(String studentId, String studentName, String courseName)` và `CourseCount(long courseId, String courseName, long studentCount)` dưới dạng record.
+
+Viết `long insertCourse(String name)`, `void insertEnrollment(String studentId, long courseId)`, `List<EnrollmentView> findEnrollmentDetails()` bằng JOIN và `List<CourseCount> countStudentsByCourse()` bằng GROUP BY.
+
+Dữ liệu mẫu: S01/An, S02/Bình và khóa `Java JDBC`. Tạo course, lấy generated id rồi thêm hai enrollment bằng chính id đó.
+
+**Kết quả mong đợi:** JOIN có đúng hai dòng; báo cáo có một dòng `Java JDBC | 2`, sắp xếp theo course id. Không dùng `MAX(id)`. Thời gian làm khoảng 20 phút.
 
 ## Bài tập về nhà
 

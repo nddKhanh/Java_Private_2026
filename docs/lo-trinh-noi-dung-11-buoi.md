@@ -1,6 +1,8 @@
 # Lộ Trình Nội Dung Khóa Java Private HIT 2026
 
-> Nguồn: `Lộ trình lớp JAVA PRIVATE HIT 2026.xlsx` — trang tính `Trang tính1`. Tài liệu này chuyển nội dung 12 buổi và các cột ghi chú sang Markdown để tiện đối chiếu giáo án; lộ trình Excel vẫn là nguồn gốc.
+> Nguồn: `Lộ trình lớp JAVA PRIVATE HIT 2026.xlsx` — trang tính `Trang tính1`.
+> Bản gốc gồm 12 buổi; bản Markdown này gộp Buổi 10 cũ vào Buổi 8 và đánh lại số các buổi phía sau thành lộ trình 11 buổi.
+> File Excel là nguồn lịch sử, chưa phản ánh điều chỉnh này.
 
 ## Mục Tiêu Khóa Học
 
@@ -10,8 +12,8 @@ Cho phép áp dụng kiến thức đã học để tạo nên 1 dự án nhỏ 
 
 ### Buổi 01
 
-> Giáo án: [lesson/buoi-01.md](lesson/buoi-01.md)  
-> Bài tập: [BTVN/buoi-01-btvn.md](BTVN/buoi-01-btvn.md)
+> Giáo án: [lesson/buoi-01.md](../roadmap/lesson/buoi-01.md)
+> Bài tập: [BTVN/buoi-01-btvn.md](../roadmap/BTVN/buoi-01-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -60,8 +62,8 @@ Chương trình chỉ xử lý một lần, chưa rẽ nhánh theo điều kiệ
 
 ### Buổi 02
 
-> Giáo án: [lesson/buoi-02.md](lesson/buoi-02.md)  
-> Bài tập: [BTVN/buoi-02-btvn.md](BTVN/buoi-02-btvn.md)
+> Giáo án: [lesson/buoi-02.md](../roadmap/lesson/buoi-02.md)
+> Bài tập: [BTVN/buoi-02-btvn.md](../roadmap/BTVN/buoi-02-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -109,8 +111,8 @@ Khi quản lý nhiều thông tin sản phẩm và giỏ hàng bằng nhiều Ar
 
 ### Buổi 03
 
-> Giáo án: [lesson/buoi-03.md](lesson/buoi-03.md)  
-> Bài tập: [BTVN/buoi-03-btvn.md](BTVN/buoi-03-btvn.md)
+> Giáo án: [lesson/buoi-03.md](../roadmap/lesson/buoi-03.md)
+> Bài tập: [BTVN/buoi-03-btvn.md](../roadmap/BTVN/buoi-03-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -165,8 +167,8 @@ Khi có nhiều loại sản phẩm, đơn hàng và trạng thái đơn hàng, 
 
 ### Buổi 04
 
-> Giáo án: [lesson/buoi-04.md](lesson/buoi-04.md)  
-> Bài tập: [BTVN/buoi-04-btvn.md](BTVN/buoi-04-btvn.md)
+> Giáo án: [lesson/buoi-04.md](../roadmap/lesson/buoi-04.md)
+> Bài tập: [BTVN/buoi-04-btvn.md](../roadmap/BTVN/buoi-04-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -214,8 +216,8 @@ Các nhóm class có chung hành vi nhưng cách làm khác nhau như thanh toá
 
 ### Buổi 05
 
-> Giáo án: [lesson/buoi-05.md](lesson/buoi-05.md)  
-> Bài tập: [BTVN/buoi-05-btvn.md](BTVN/buoi-05-btvn.md)
+> Giáo án: [lesson/buoi-05.md](../roadmap/lesson/buoi-05.md)
+> Bài tập: [BTVN/buoi-05-btvn.md](../roadmap/BTVN/buoi-05-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -261,8 +263,8 @@ Chương trình vẫn dễ crash khi nhập sai, dữ liệu mất khi tắt app
 
 ### Buổi 06
 
-> Giáo án: [lesson/buoi-06.md](lesson/buoi-06.md)  
-> Bài tập: [BTVN/buoi-06-btvn.md](BTVN/buoi-06-btvn.md)
+> Giáo án: [lesson/buoi-06.md](../roadmap/lesson/buoi-06.md)
+> Bài tập: [BTVN/buoi-06-btvn.md](../roadmap/BTVN/buoi-06-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -309,8 +311,8 @@ Lưu file khó truy vấn, khó cập nhật một bản ghi, khó quản lý kh
 
 ### Buổi 07
 
-> Giáo án: [lesson/buoi-07.md](lesson/buoi-07.md)  
-> Bài tập: [BTVN/buoi-07-btvn.md](BTVN/buoi-07-btvn.md)
+> Giáo án: [lesson/buoi-07.md](../roadmap/lesson/buoi-07.md)
+> Bài tập: [BTVN/buoi-07-btvn.md](../roadmap/BTVN/buoi-07-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -357,54 +359,55 @@ Code JDBC bắt đầu lặp nhiều, SQL nằm lẫn với xử lý nghiệp v�
 - BTVN: hoàn thiện thêm, xem, sửa, xóa sản phẩm bằng JDBC.
 - Ghi chú: nên có phần thực hành khoảng 1 giờ ngay trong buổi.
 
-### Buổi 08
+### Buổi 08 — Tách Tầng, MVC Và Refactor (Gộp Buổi 8 Và 10 Cũ)
 
-> Giáo án: [lesson/buoi-08.md](lesson/buoi-08.md)  
-> Bài tập: [BTVN/buoi-08-btvn.md](BTVN/buoi-08-btvn.md)
+> Giáo án: [buoi-08.md](../roadmap/lesson/buoi-08.md)
+> Bài tập: [buoi-08-btvn.md](../roadmap/BTVN/buoi-08-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
-- DAO/Repository
-- Tách tầng đơn giản
-- Optional
-- enum
-- DTO/record giới thiệu
-- Clean code
-
-- Checked/unchecked exception (Mở rộng)
+- DAO/Repository, Service, repository interface và constructor injection.
+- MVC: Model, View, Controller; trách nhiệm và hướng gọi giữa các tầng.
+- Optional: isPresent, orElse, orElseThrow; enum cho trạng thái.
+- DTO/record ở mức giới thiệu.
+- SOLID cơ bản: SRP và DIP; composition root.
+- Refactor giữ nguyên hành vi; clean code, đặt tên và giảm lặp.
+- Singleton/Factory, checked/unchecked exception (đọc thêm).
 
 #### Vấn Đề Cần Giải Quyết
 
-Giải quyết việc code JDBC lộn xộn, lặp code và khó bảo trì khi project lớn hơn.
+Code JDBC lẫn nhập/xuất và nghiệp vụ gây khó sửa. Học viên cần hiểu vai trò từng tầng, cách dùng interface và cách đổi cấu trúc mà giữ nguyên kết quả.
 
 #### Vai Trò Của Project
 
-Tách ProductRepository, CustomerRepository, ProductService; dùng OrderStatus cho trạng thái đơn hàng.
+BTVN áp dụng vào Product/Customer: View → Controller → Service → Repository interface → JDBC implementation. Dùng OrderStatus và chạy cùng ProductService với memory repository.
 
 #### Nội Dung Cụ Thể Sẽ Dạy
 
-- Tách code truy cập DB ra DAO/Repository
-- Tách tầng đơn giản: model, repository, service, view/controller console
-- Optional làm kết quả trả về của findById: isPresent, orElse, orElseThrow
-- Dùng enum thay cho String status: PENDING, CONFIRMED, CANCELLED, COMPLETED
-- Giới thiệu DTO và record để truyền dữ liệu gọn hơn
-- Clean code: đặt tên rõ, method ngắn, giảm code lặp
-
-- Phân biệt checked exception và unchecked exception: đã gặp IOException, SQLException (Mở rộng)
+- Giải thích khái niệm bằng một chức năng tìm liên hệ nhỏ, không xây toàn bộ HitShop trên lớp.
+- Repository tách SQL/mapping khỏi nghiệp vụ; Service kiểm tra quy tắc và nhận repository qua constructor.
+- Optional diễn đạt không tìm thấy; phân biệt với lỗi kết nối database.
+- View nhập/hiển thị; Controller điều phối; Model giữ dữ liệu/hành vi.
+- Composition root chọn implementation và lắp dependency.
+- SRP theo lý do thay đổi; DIP qua repository interface và ví dụ memory/JDBC.
+- enum giới hạn trạng thái; DTO/record mang dữ liệu qua các tầng.
+- Refactor từng bước với input/output cố định; một bài thực hành nhỏ trên lớp.
+- Singleton/Factory và checked/unchecked exception để đọc thêm, không yêu cầu triển khai trong bài bắt buộc.
 
 #### Vấn Đề Để Lại Cho Buổi Sau
 
-Chưa có quan hệ giữa các bảng như đơn hàng và chi tiết đơn hàng; code đọc ResultSet vẫn còn lặp.
+Đã có kiến trúc để mở rộng; chưa học quan hệ bảng, generated key và đơn hàng nhiều dòng. Các nội dung đó tiếp tục ở buổi 9.
 
 #### Ghi Chú Và Bài Tập Theo Lộ Trình
 
-- BTVN: tách phần JDBC của buổi 7 thành repository và service, đổi status sang enum.
-- Ghi chú: buổi này tập trung vào tổ chức code JDBC. Phần quan hệ bảng và truy vấn nhiều bảng dạy ở buổi 9.
+- BTVN gộp: CRUD Product, Customer, Optional, enum, View/Controller, SRP/DIP, composition root, memory repository và nghiệm thu trước/sau refactor.
+- Không làm lại một BTVN refactor riêng; nội dung Buổi 10 cũ đã nằm trong BTVN Buổi 8.
+- Chưa yêu cầu OrderItem hoặc OrderItemInput trước khi học dữ liệu nhiều bảng; phần áp dụng đó nằm ở buổi 9.
 
 ### Buổi 09
 
-> Giáo án: [lesson/buoi-09.md](lesson/buoi-09.md)  
-> Bài tập: [BTVN/buoi-09-btvn.md](BTVN/buoi-09-btvn.md)
+> Giáo án: [lesson/buoi-09.md](../roadmap/lesson/buoi-09.md)
+> Bài tập: [BTVN/buoi-09-btvn.md](../roadmap/BTVN/buoi-09-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -437,7 +440,8 @@ Hoàn thiện OrderRepository và OrderService; tạo đơn hàng gồm orders v
 - ORDER BY để sắp xếp danh sách đơn hàng
 - Lấy ID đơn vừa tạo bằng getGeneratedKeys để ghi order_items
 - Viết JDBC cho dữ liệu nhiều bảng bằng PreparedStatement và ResultSet
-- Tổ chức OrderRepository, OrderItemRepository, OrderService
+- Tổ chức OrderRepository, OrderItemRepository, OrderService theo kiến trúc buổi 8.
+- View nhận productId/quantity bằng OrderItemInput; Controller gọi Service để tra Product và chốt giá; không nhận unitPrice từ người dùng.
 
 - LIMIT/OFFSET để phân trang danh sách đơn hàng (Nâng cao)
 - Transaction: setAutoCommit(false), commit, rollback, ACID ở mức khái niệm (Nâng cao)
@@ -446,7 +450,7 @@ Hoàn thiện OrderRepository và OrderService; tạo đơn hàng gồm orders v
 
 #### Vấn Đề Để Lại Cho Buổi Sau
 
-Project cần được tổ chức rõ hơn theo kiến trúc đơn giản để chuẩn bị kiểm tra và bài tập lớn.
+Tiếp tục kiến trúc buổi 8 cho đơn nhiều bảng; sau đó chuẩn bị Git làm việc nhóm và giao diện ở buổi 10.
 
 #### Ghi Chú Và Bài Tập Theo Lộ Trình
 
@@ -456,51 +460,8 @@ Project cần được tổ chức rõ hơn theo kiến trúc đơn giản để
 
 ### Buổi 10
 
-> Giáo án: [lesson/buoi-10.md](lesson/buoi-10.md)  
-> Bài tập: [BTVN/buoi-10-btvn.md](BTVN/buoi-10-btvn.md)
-
-#### Trọng Tâm Nên Dạy
-
-- MVC
-- SOLID cơ bản
-- Repository interface
-- Singleton/Factory đơn giản
-- Refactor service/repository
-- Kiểm tra CRUD + OOP
-
-#### Vấn Đề Cần Giải Quyết
-
-Giải quyết việc project cần được tổ chức theo tầng rõ ràng, dễ đọc, dễ sửa và dễ mở rộng.
-
-#### Vai Trò Của Project
-
-Refactor project quản lý đơn hàng theo tầng.
-
-#### Nội Dung Cụ Thể Sẽ Dạy
-
-- MVC: Model, View, Controller; gọi tên lại những gì đã tách ở buổi 8 và 9
-- Sắp xếp project theo MVC đơn giản
-- SOLID cơ bản, tập trung vào Single Responsibility và Dependency Inversion ở mức dễ hiểu
-- Dùng interface cho repository để OrderService không phụ thuộc trực tiếp vào JDBC
-- Singleton qua class cấu hình hoặc kết nối nếu phù hợp
-- Factory đơn giản nếu có nhiều loại object cần tạo
-- Refactor service và repository
-- Kiểm tra CRUD JDBC + OOP
-
-#### Vấn Đề Để Lại Cho Buổi Sau
-
-Khi làm bài tập lớn theo nhóm cần quy trình Git rõ ràng để tránh đè code, conflict và khó review; cần giao diện đơn giản để demo.
-
-#### Ghi Chú Và Bài Tập Theo Lộ Trình
-
-- BTVN: hoàn thiện refactor theo MVC và bổ sung test/thử nghiệm thủ công cho một chức năng nghiệp vụ.
-- Ghi chú: bài kiểm tra chiếm khoảng 1 giờ nên MVC và SOLID giữ ngắn.
-- Singleton/Factory dùng static; nếu học viên chưa học phần static nâng cao ở buổi 3 thì nhắc lại tối thiểu.
-
-### Buổi 11
-
-> Giáo án: [lesson/buoi-11.md](lesson/buoi-11.md)  
-> Bài tập: [BTVN/buoi-11-btvn.md](BTVN/buoi-11-btvn.md)
+> Giáo án: [lesson/buoi-10.md](../roadmap/lesson/buoi-10.md)
+> Bài tập: [BTVN/buoi-10-btvn.md](../roadmap/BTVN/buoi-10-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 
@@ -544,10 +505,10 @@ Học viên cần chọn đề tài đủ phạm vi, chia việc, tạo repo và
 - Bài mở rộng: bắt sự kiện nút Thêm/Xóa và hiển thị dữ liệu từ ProductService.
 - Ghi chú: trọng tâm là Git làm việc nhóm; giao diện giới hạn ở một form và một bảng. Dùng Swing vì có sẵn trong JDK.
 
-### Buổi 12
+### Buổi 11
 
-> Giáo án: [lesson/buoi-12.md](lesson/buoi-12.md)  
-> Bài tập: [BTVN/buoi-12-btvn.md](BTVN/buoi-12-btvn.md)
+> Giáo án: [lesson/buoi-11.md](../roadmap/lesson/buoi-11.md)
+> Bài tập: [BTVN/buoi-11-btvn.md](../roadmap/BTVN/buoi-11-btvn.md)
 
 #### Trọng Tâm Nên Dạy
 

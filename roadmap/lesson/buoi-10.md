@@ -1,4 +1,4 @@
-# Buổi 10: MVC, SOLID Và Refactor
+# Buổi 10: Git Flow, Pull Request, Code Review Và Swing Cơ Bản
 
 ---
 
@@ -6,265 +6,233 @@
 
 Sau buổi học, học viên có thể:
 
-- Chỉ ra trách nhiệm của View, Controller, Service, Repository và Model.
-- Refactor một luồng đang chạy mà giữ nguyên kết quả nghiệm thu.
-- Áp dụng SRP và DIP vào Product/Order thay vì học SOLID như định nghĩa rời.
-- Tạo composition root để nối implementation với abstraction.
-- Thay JdbcProductRepository bằng MemoryProductRepository mà không sửa ProductService.
+- Làm việc theo nhánh `main`, `develop`, `feature/*` và tạo pull request.
+- Xử lý một conflict nhỏ mà không mất thay đổi của người khác.
+- Review theo hành vi, kiến trúc và khả năng chạy, không chỉ nhìn format.
+- Tạo JFrame, JPanel, JTextField, JButton, JTable và JScrollPane.
+- Hiển thị Product từ cùng ProductService đã hoàn thiện qua buổi 8–9 trong Swing.
 
-> **Kết quả cuối buổi:** ứng dụng mẫu có luồng View → Controller → Service → Repository interface → JDBC implementation và giữ nguyên hành vi trước refactor.
+> **Kết quả cuối buổi:** một feature branch tạo được cửa sổ Swing lấy dữ liệu qua Service và được đưa vào `develop` bằng pull request.
 
-> **Môi trường:** JDK 17; không đổi schema hoặc dữ liệu chuẩn trong lúc refactor.
+> **Môi trường:** JDK 17, Git/GitHub và project buổi 9 đã chạy được qua ProductService.
 
-## I. Chẩn Đoán Code Trước Refactor
+## I. Git Flow Phục Vụ Việc Chia Nhỏ Thay Đổi
 
-Một case menu điển hình có thể đang làm quá nhiều việc:
-
-```java
-case 7 -> {
-    String customerId = scanner.nextLine();
-    // đọc item
-    // tìm Product bằng SQL
-    // kiểm tra stock
-    // insert Order và OrderItem
-    // in kết quả
-}
-```
-
-Đặt ba câu hỏi:
-
-1. Nếu thay giao diện console bằng Swing, những thành phần nào phải thay đổi?
-2. Nếu thay MySQL bằng repository in-memory để kiểm thử, những thành phần nào phải thay đổi?
-3. Nếu quy tắc tồn kho thay đổi, tầng nào cần được sửa?
-
-Nếu câu trả lời đều là “sửa case 7”, code chưa phân trách nhiệm.
-
-## II. Kiến Trúc Đích Và Luồng Thật
+Quy ước của lớp:
 
 ```text
-ConsoleView
-    ↓ dữ liệu thô
-AppController
-    ↓ yêu cầu use case
-OrderService
-    ↓ gọi hợp đồng
-OrderRepository + OrderItemRepository + ProductRepository
-    ↓
-JdbcXxxRepository
-    ↓
-MySQL
+main       phiên bản ổn định để demo
+develop    nơi tích hợp chức năng đã review
+feature/*  một thay đổi cụ thể đang làm
 ```
 
-Kết quả đi ngược lại qua cùng các tầng. MVC trong ứng dụng này không phải ba thư mục trang trí; nó là quy tắc ai được gọi ai và ai chịu trách nhiệm điều gì.
+Tạo nhánh từ develop mới nhất:
 
-## III. View Không Tạo Entity Khi Chưa Có Đủ Ngữ Cảnh
-
-Người dùng chỉ nhập product id và quantity. View không tự tra Product hoặc quyết định unit price. Tạo input record trong package `dto`:
-
-```java
-public record OrderItemInput(String productId, int quantity) {}
+```bash
+git switch develop
+git pull --ff-only
+git switch -c feature/product-ui
 ```
 
-```java
-public List<OrderItemInput> readOrderItems() {
-    // chỉ đọc id và quantity rồi trả dữ liệu thô
-}
+Sau khi hoàn thành một phần chạy được:
+
+```bash
+git status
+git add src/main/java/view/ProductManagementFrame.java
+git commit -m "feat: add product management window"
+git push -u origin feature/product-ui
 ```
 
-Controller nhận danh sách này và gọi Service. OrderService mới có repository để tìm Product, kiểm tra tồn kho và chốt giá.
+Commit nên mô tả một thay đổi có nghĩa. Không gom file cấu hình bí mật, thư mục build và nhiều chức năng không liên quan vào cùng commit.
 
-```java
-public long createOrder(
-        String customerId,
-        List<OrderItemInput> inputs,
-        LocalDateTime createdAt) {
-    // tìm Customer/Product
-    // validate quantity
-    // tạo OrderItem với product.getPrice()
-    // gọi repository
-}
+Quy ước tối thiểu của lớp dùng dạng `type: summary`: `feat:` cho chức năng, `fix:` cho sửa lỗi và `docs:` cho tài liệu. Summary dùng động từ ngắn, mô tả kết quả thay đổi; không dùng message như `update`, `done` hoặc số buổi.
+
+### Kiểm tra nhanh
+
+Với ba thay đổi “dựng layout”, “nối ProductService” và “sửa README”, hãy đề xuất cách chia commit/branch. Chỉ ra trường hợp nào gom chung sẽ làm PR khó review.
+
+## II. Pull Request Và Review Có Tiêu Chí
+
+PR `Add product management window` cần có:
+
+- Mục tiêu và phạm vi.
+- Cách chạy.
+- Ảnh cửa sổ.
+- Test case đã kiểm tra.
+- Điểm chưa làm, ví dụ nút Add chưa có event.
+
+Reviewer kiểm tra theo thứ tự:
+
+1. Dự án có build và chạy thành công trên JDK 17 không?
+2. Bảng có lấy dữ liệu thông qua ProductService không?
+3. Swing View có gọi JDBC trực tiếp không?
+4. Swing View có làm thay đổi hành vi của giao diện console hiện có không?
+5. Tên định danh và định dạng code có rõ ràng, nhất quán không?
+
+Nhận xét nên chỉ vị trí, vấn đề và kết quả mong đợi. Ví dụ: “View Swing đang tự tạo danh sách dữ liệu trong constructor; hãy inject ProductService và dùng `findAllProducts()` để UI hiển thị từ cùng nguồn.”
+
+## III. Xử Lý Conflict Nhỏ
+
+Khi develop thay đổi trong lúc feature đang làm:
+
+```bash
+git fetch origin
+git merge origin/develop
 ```
 
-Ranh giới này ngăn người dùng tự nhập unit price và ngăn View gắn với JDBC.
-
-## IV. Controller Chỉ Điều Phối
-
-```java
-public void handleCreateOrder() {
-    String customerId = view.readCustomerId();
-    List<OrderItemInput> items = view.readOrderItems();
-    LocalDateTime createdAt = view.readCreatedAt();
-
-    try {
-        long id = orderService.createOrder(customerId, items, createdAt);
-        view.showMessage("Đã tạo đơn " + id);
-    } catch (IllegalArgumentException e) {
-        view.showMessage(e.getMessage());
-    }
-}
-```
-
-Controller biết thứ tự tương tác, nhưng không viết SQL và không tự tính tổng. Nếu controller có vòng lặp giảm stock hoặc JOIN, trách nhiệm đang bị đặt sai.
-
-## V. SRP Qua Một Thay Đổi Cụ Thể
-
-Single Responsibility Principle có thể hiểu bằng lý do thay đổi:
-
-| Thành phần | Thay đổi khi |
-|---|---|
-| ConsoleView | Cách nhập/hiển thị console đổi |
-| AppController | Luồng điều phối màn hình/menu đổi |
-| OrderService | Quy tắc tạo/hủy đơn đổi |
-| JdbcOrderRepository | Schema hoặc SQL Order đổi |
-| Order | Hành vi nội tại/trạng thái Order đổi |
-
-Một class không cần “chỉ có một method”; nó cần có một nhóm trách nhiệm kết dính và một lý do thay đổi chính.
-
-## VI. DIP Qua Repository Interface
-
-Sai hướng phụ thuộc:
-
-```java
-public class ProductService {
-    private final JdbcProductRepository repository = new JdbcProductRepository();
-}
-```
-
-ProductService vừa tự tạo dependency, vừa khóa chặt MySQL. Sửa bằng constructor:
-
-```java
-public class ProductService {
-    private final ProductRepository repository;
-
-    public ProductService(ProductRepository repository) {
-        this.repository = repository;
-    }
-}
-```
-
-Memory implementation:
-
-```java
-public class MemoryProductRepository implements ProductRepository {
-    private final List<Product> products = new ArrayList<>();
-
-    @Override
-    public Optional<Product> findById(String id) {
-        return products.stream()
-                .filter(product -> product.getId().equals(id))
-                .findFirst();
-    }
-
-    // các method còn lại theo cùng hợp đồng
-}
-```
-
-Nếu cùng ProductService chạy được với JDBC và memory repository, dependency inversion đã tạo ra lợi ích quan sát được.
-
-## VII. Composition Root
-
-Tất cả việc chọn implementation nằm ở một nơi:
-
-```java
-public class Application {
-    public static void main(String[] args) {
-        ConnectionFactory connectionFactory = new ConnectionFactory();
-
-        ProductRepository productRepository =
-                new JdbcProductRepository(connectionFactory);
-        CustomerRepository customerRepository =
-                new JdbcCustomerRepository(connectionFactory);
-        OrderRepository orderRepository =
-                new JdbcOrderRepository(connectionFactory);
-        OrderItemRepository itemRepository =
-                new JdbcOrderItemRepository(connectionFactory);
-
-        ProductService productService = new ProductService(productRepository);
-        CustomerService customerService = new CustomerService(customerRepository);
-        OrderService orderService = new OrderService(
-                orderRepository, itemRepository,
-                productRepository, customerRepository);
-
-        ConsoleView view = new ConsoleView();
-        AppController controller = new AppController(
-                view, productService, customerService, orderService);
-        controller.run();
-    }
-}
-```
-
-Class main không xử lý nghiệp vụ; nó lắp ráp object graph.
-
-## VIII. Quy Trình Refactor An Toàn
-
-Không di chuyển toàn bộ project trong một lần. Dùng các bước có thể chạy độc lập:
-
-1. Ghi lại một bộ test Product/Order đang chạy đúng trước khi di chuyển code.
-2. Tạo package nhưng chưa đổi hành vi.
-3. Tách View, chạy CRUD Product.
-4. Tách Controller, chạy lại cùng test.
-5. Đổi Service sang repository interface, chạy JDBC.
-6. Thêm MemoryProductRepository, chạy cùng Service.
-7. Refactor tạo/xem Order và báo cáo.
-8. Tìm toàn project để chắc chắn SQL chỉ nằm trong JDBC repository.
-
-Mỗi bước là một commit nhỏ. Khi output sai, phạm vi tìm lỗi chỉ nằm trong bước vừa thực hiện.
-
-## IX. So Sánh Trước Và Sau
-
-### Trước
+Git đánh dấu:
 
 ```text
-main → Scanner + validation + SQL + println
+  <<<<<<< HEAD
+phần trên nhánh feature
+  =======
+phần trên develop
+  >>>>>>> origin/develop
 ```
 
-### Sau
+Người xử lý phải hiểu cả hai ý định, tạo nội dung cuối đúng rồi xóa marker. Sau đó:
 
-```text
-main → lắp dependency
-View → nhập/xuất
-Controller → điều phối
-Service → nghiệp vụ
-Repository → hợp đồng dữ liệu
-JdbcRepository → SQL
+```bash
+git add <file-da-xu-ly>
+git commit
 ```
 
-Không đánh giá refactor bằng số package nhiều hơn. Đánh giá bằng khả năng thay View/repository, vị trí quy tắc rõ ràng và test case cũ vẫn đúng.
+Trước khi push lại, build và chạy test case. Conflict được “resolve” về mặt Git chưa có nghĩa code đúng về mặt nghiệp vụ.
 
-## X. Thực Hành Có Hướng Dẫn
+## IV. Swing Và Event Dispatch Thread
 
-- Nhóm A refactor luồng list Product.
-- Nhóm B refactor find Product.
-- Nhóm C refactor create Order bằng OrderItemInput.
-- Các nhóm review chéo: khoanh mọi dòng SQL ngoài repository và mọi lời gọi repository trực tiếp từ View.
-- Cuối buổi, đổi một ProductService sang MemoryProductRepository ngay tại composition root và demo không sửa service.
+Khởi động UI:
+
+```java
+SwingUtilities.invokeLater(() -> {
+    ProductManagementFrame window = new ProductManagementFrame(productService);
+    window.setVisible(true);
+});
+```
+
+Swing component nên được tạo và cập nhật trên Event Dispatch Thread. Truy vấn database dài không nên chặn thread này trong ứng dụng thật; ở buổi nhập môn, dataset nhỏ và mục tiêu là dựng View đúng kiến trúc.
+
+## V. Dựng Một Cửa Sổ Quản Lý Product
+
+```java
+public class ProductManagementFrame extends JFrame {
+    private final ProductService productService;
+    private final DefaultTableModel tableModel;
+    private final JTextField nameField;
+    private final JTextField priceField;
+    private final JButton addButton;
+
+    public ProductManagementFrame(ProductService productService) {
+        this.productService = productService;
+
+        setTitle("Quản lý sản phẩm");
+        setSize(700, 450);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        JPanel formPanel = new JPanel();
+        nameField = new JTextField(15);
+        priceField = new JTextField(10);
+        addButton = new JButton("Thêm");
+        addButton.setEnabled(false);
+        formPanel.add(new JLabel("Tên sản phẩm"));
+        formPanel.add(nameField);
+        formPanel.add(new JLabel("Giá"));
+        formPanel.add(priceField);
+        formPanel.add(addButton);
+
+        tableModel = new DefaultTableModel(
+                new Object[]{"Mã", "Tên sản phẩm", "Đơn giá", "Tồn kho"}, 0);
+        JTable table = new JTable(tableModel);
+
+        add(formPanel, BorderLayout.NORTH);
+        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        loadProducts();
+    }
+}
+```
+
+Nút Add bị vô hiệu hóa bằng `setEnabled(false)`. Một `ActionListener` được gắn vào nút để xử lý sự kiện khi chức năng thêm được triển khai.
+
+## VI. Nạp Dữ Liệu Qua Service
+
+```java
+private void loadProducts() {
+    tableModel.setRowCount(0);
+    for (Product product : productService.findAllProducts()) {
+        tableModel.addRow(new Object[]{
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getStock()
+        });
+    }
+}
+```
+
+Không khởi tạo dữ liệu mẫu ngay trong cửa sổ. Nếu console và Swing dùng hai list khác nhau, hai giao diện sẽ cho kết quả không nhất quán. ProductService là nguồn use case chung; repository phía sau có thể là JDBC hoặc memory khi demo.
+
+Khởi tạo ba Product trong repository để kiểm tra dữ liệu hiển thị trên bảng.
+
+## VII. Nội Dung Mở Rộng — Event Handling
+
+Khi thêm event:
+
+```java
+addButton.addActionListener(event -> handleAddProduct());
+```
+
+`handleAddProduct()` đọc text, parse giá, gọi ProductService rồi reload bảng. Không viết INSERT SQL trong listener. Input sai giữ nguyên bảng và hiện thông báo rõ.
+
+Không tạo mã P04 bằng `products.size() + 1` vì thao tác xóa có thể làm trùng mã. Có thể lấy mã lớn nhất hiện có rồi cộng 1.
+
+## VIII. Thực Hành Có Hướng Dẫn Theo Nhóm
+
+1. Một thành viên tạo layout và commit.
+2. Một thành viên nối ProductService và commit riêng.
+3. Thành viên khác review PR theo checklist.
+4. Tạo một thay đổi nhỏ trên develop để thực hành xử lý conflict.
+5. Nhóm chạy lại console và Swing trước khi merge.
+
+Mỗi nhóm phải cho thấy `git log --oneline --graph --all` và giải thích nhánh nào chứa thay đổi nào.
 
 ## Lỗi thường gặp
 
-| Lỗi | Dấu hiệu | Cách sửa |
+| Lỗi | Hậu quả | Cách sửa |
 |---|---|---|
-| Chỉ chia package, code vẫn gọi chéo | View import JdbcRepository | Kiểm tra dependency theo sơ đồ |
-| Controller chứa nghiệp vụ | Tính tổng/stock trong controller | Chuyển sang Service/Model |
-| Service tự tạo `new JdbcProductRepository(...)` | Không thay repository được | Inject interface qua constructor |
-| View trả OrderItem đầy đủ | View phải tra Product/chốt giá | Trả OrderItemInput |
-| Refactor làm đổi dữ liệu mẫu | Khó biết lỗi do đâu | Giữ bộ nghiệm thu trước/sau |
+| Làm trực tiếp trên develop | Khó review/rollback | Tạo feature branch |
+| Resolve conflict bằng cách chọn toàn bộ một phía | Mất thay đổi bên kia | Hiểu ý định, ghép nội dung cuối rồi test |
+| Swing tự tạo dữ liệu mẫu | Hai nguồn dữ liệu | Inject ProductService |
+| JTable không nằm trong JScrollPane | Khó cuộn/thiếu header | Bọc table bằng JScrollPane |
+| Nút hoạt động giả | Người dùng hiểu sai | Disabled cho đến khi có handler |
+| SQL trong ActionListener | View gắn chặt database | Gọi Service |
 
 ## Tổng kết buổi 10
 
-MVC phân luồng tương tác; SRP đặt trách nhiệm theo lý do thay đổi; DIP làm nghiệp vụ phụ thuộc hợp đồng. Refactor chỉ thành công khi hành vi cũ vẫn đúng và dependency thực sự đi qua các ranh giới đã định.
+Git flow chia thay đổi thành các phần nhỏ để review và tích hợp có kiểm soát. Swing là một View sử dụng lại Service/Repository của ứng dụng console.
 
-## Bài tập nhỏ trên lớp — Refactor danh bạ theo tầng
+### Câu hỏi chốt buổi
 
-Từ một chương trình console đang giữ `List<Contact>`, tổ chức lại thành:
+1. Vì sao feature branch phải bắt đầu từ `develop` mới nhất của nhóm?
+2. Một conflict đã hết marker có đồng nghĩa code đúng không? Cần kiểm tra gì tiếp theo?
+3. Review hành vi khác review format ở tiêu chí nào?
+4. Vì sao Swing component phải được tạo trên Event Dispatch Thread?
+5. Tại sao ProductWindow phải nhận ProductService thay vì tự tạo repository?
 
-- `ContactView` đọc tên/số điện thoại và hiển thị kết quả.
-- `ContactController` điều phối thao tác thêm và tìm.
-- `ContactService` kiểm tra tên/số điện thoại không rỗng.
-- `ContactRepository` là interface; `MemoryContactRepository` lưu bằng ArrayList.
-- `Application` là nơi duy nhất khởi tạo và nối các dependency.
+## Bài tập nhỏ trên lớp — Cửa sổ danh bạ
 
-**Nghiệm thu:** View không import repository, Service không `new MemoryContactRepository`, và chức năng thêm/tìm vẫn cho kết quả như trước refactor. Thời gian làm khoảng 20 phút.
+Thực hiện trên nhánh `feature/contact-window`:
+
+- `ContactWindow extends JFrame` nhận `ContactService` qua constructor.
+- Hai `JTextField` có nhãn `Tên`, `Số điện thoại`; `JButton` chữ `Thêm` đang disabled; `JTable` có ba cột `Mã`, `Tên`, `Số điện thoại`.
+- `ContactService.findAll()` trả `List<Contact>`; method `private void loadContacts()` gọi service và nạp bảng, không tạo list riêng trong JFrame.
+- Bọc JTable trong JScrollPane; form và bảng cùng hiển thị ở kích thước 600×400.
+- Service trả C01/An/0900000001 và C02/Bình/0900000002.
+- Commit `feat: add contact window` và chuẩn bị PR nêu mục tiêu, cách chạy, ảnh và test case.
+
+**Nghiệm thu:** bảng có đúng hai contact từ Service; không có SQL, repository hoặc dữ liệu hard-code trong View; console cũ vẫn chạy. Thời gian làm khoảng 20 phút.
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 10](../BTVN/buoi-10-btvn.md), kèm README và bằng chứng chạy cả JDBC lẫn memory Product repository.
+Hoàn thành [BTVN buổi 10](../BTVN/buoi-10-btvn.md) bằng PR vào develop.

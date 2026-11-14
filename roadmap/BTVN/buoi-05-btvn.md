@@ -1,22 +1,18 @@
 # Bài Tập Về Nhà — Buổi 05
 
-## I. Tổng Kết Bài Tập Về Nhà Buổi 04
+## I. Điểm Bắt Đầu Từ Buổi 04
 
-Sau bài tập buổi 4, project đã có kế thừa `Book extends Product`, hiển thị đa hình và model `Order` giữ Customer, nhiều CartItem cùng trạng thái được kiểm soát.
+Giữ Product được bảo vệ trạng thái, Book kế thừa Product, danh sách đa hình và Order chỉ chuyển từ PENDING sang CONFIRMED hoặc CANCELLED.
 
-### 1. Các Test Case Phải Chạy Được
+### 1. Các Ca Cũ Phải Còn Đạt
 
-| Mã | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| `TC04-01` | Gọi `getDescription()` trên P01, P02 và Book P03 qua `List<Product>` | Mỗi object trả đúng mô tả; Book có thêm tác giả |
-| `TC04-02` | Tạo O01 với `P01 × 2`, `P02 × 1` | Tổng đơn bằng `350000` |
-| `TC04-03` | Xác nhận O01 đang `PENDING`, sau đó thử hủy | Trạng thái là `CONFIRMED` và không đổi sau lời gọi hủy |
-| `TC04-04` | Hủy một Order mới đang `PENDING` | Trạng thái chuyển thành `CANCELLED` |
-| `TC04-05` | Gọi lại `confirm()` hoặc `cancel()` trên Order không còn `PENDING` | Trạng thái giữ nguyên |
+| Ca | Kết quả cần giữ |
+|---|---|
+| P01 giảm stock hợp lệ/sai | Chỉ ca hợp lệ làm đổi stock |
+| Duyệt P01, P02, P03 qua List<Product> | Gọi đúng getDescription() |
+| Confirm rồi cancel O01 | Status vẫn CONFIRMED |
 
-### 2. Cây Thư Mục Sau Buổi 04
-
-Cấu trúc source tối thiểu cần đạt:
+### 2. Cây Thư Mục Đầu Buổi
 
 ```text
 src/
@@ -29,76 +25,69 @@ src/
     └── Order.java
 ```
 
-## II. Bài Bắt Buộc — Thanh Toán, Giao Hàng Và Equality Của Product
+## II. Bài Bắt Buộc
 
-### 1. Kế Thừa Từ Buổi 04
+### 1. PaymentMethod
 
-Tiếp tục repository `HitShop` bằng JDK 17. Giữ Product P01/P02/P03, Customer C01 và Order O01 có tổng `350000`. Bài này bổ sung các cách thanh toán, giao hàng và quy tắc so sánh Product; không thay mô hình giỏ hoặc đơn.
+- Interface `PaymentMethod`: `String pay(double amount)`.
+- `CashPayment` trả `Đã nhận tiền mặt: <amount>`.
+- `BankTransferPayment` trả `Đã tạo yêu cầu chuyển khoản: <amount>`.
+- Method `static void checkout(PaymentMethod method, double amount)` chỉ gọi interface.
+- Không dùng `instanceof` hoặc `if/else` theo class payment.
 
-### 2. Hợp Đồng Thanh Toán
+### 2. DeliveryMethod
 
-- Tạo interface `PaymentMethod` với method `String pay(double amount)`.
-- `CashPayment` và `BankTransferPayment` đều triển khai `PaymentMethod`.
-- `CashPayment.pay(350000)` trả `Đã nhận tiền mặt: 350000.0`.
-- `BankTransferPayment.pay(350000)` trả `Đã tạo yêu cầu chuyển khoản: 350000.0`.
-- Nơi gọi chỉ giữ biến kiểu `PaymentMethod` và gọi `pay`; không dùng `if/else` để kiểm tra class cụ thể.
+- Interface `DeliveryMethod`: `String deliver(Order order)`.
+- `StandardDelivery` trả `Giao tiêu chuẩn cho đơn <id>`.
+- `ExpressDelivery` trả `Giao nhanh cho đơn <id>`.
+- Method `static void printDelivery(DeliveryMethod method, Order order)` chỉ gọi interface.
 
-### 3. Hợp Đồng Giao Hàng
+### 3. Equality Của Product
 
-- Tạo interface `DeliveryMethod` với method `String deliver(Order order)`.
-- `StandardDelivery` trả `Giao tiêu chuẩn cho đơn O01` khi nhận Order O01.
-- `ExpressDelivery` trả `Giao nhanh cho đơn O01` khi nhận Order O01.
-- Viết method `printDelivery(DeliveryMethod method, Order order)` để chứng minh hai implementation có thể thay thế nhau mà nơi gọi không đổi.
+- `Product.equals(Object)` và `hashCode()` cùng dựa duy nhất trên `id`.
+- `id` không rỗng, không có setter.
+- Product cùng id nhưng khác tên/giá vẫn bằng nhau.
+- Kiểm tra `contains()` và `remove()` bằng object khác instance nhưng cùng id.
 
-### 4. Equality Của Product
+Dữ liệu chuẩn:
 
-- Override `equals(Object)` và `hashCode()` của Product dựa duy nhất trên `id`.
-- `id` không được null hoặc rỗng và không có setter.
-- Hai object Product cùng id nhưng khác tên hoặc giá vẫn được xem là bằng nhau và có cùng hash code.
-- Dùng `ArrayList<Product>` để kiểm tra `contains` và `remove` bằng một object khác instance nhưng cùng id.
+- Order O01 có tổng `350000`.
+- P01: `Áo thun / 150000`.
+- P01 khác instance: `Áo thun bản cập nhật / 160000`.
+- P02: `Bình nước / 50000`.
 
-### 5. Sơ Đồ Lớp Và Quan Hệ
+Object P01 thứ hai chỉ dùng kiểm tra equality; không cập nhật giá catalog trong bài này.
 
 ![Sơ đồ lớp BTVN buổi 05](assets/buoi-05-class-diagram.svg)
 
-Các lớp thanh toán và giao hàng phụ thuộc vào interface tương ứng; nơi gọi chỉ làm việc qua interface, không kiểm tra implementation cụ thể.
+## III. Mở Rộng Tự Chọn
 
-### 6. Dữ Liệu Nghiệm Thu
+Tạo `abstract class BaseDeliveryMethod` giữ `double fee`, kiểm tra `fee >= 0` và có `double getFee()`.
+`StandardDelivery` và `ExpressDelivery` có thể kế thừa class này và vẫn implements `DeliveryMethod`.
 
-- `P01 / Áo thun / 150000` và `P01 / Áo thun bản cập nhật / 160000` bằng nhau.
-- `P02 / Bình nước / 50000` không bằng P01.
-- `CashPayment` và `BankTransferPayment` trả đúng chuỗi chuẩn khi nhận amount `350000.0`.
-- `StandardDelivery` và `ExpressDelivery` trả đúng chuỗi chuẩn khi nhận Order O01.
-- Xóa một Product P01 bằng object khác instance nhưng cùng id phải loại đúng P01 khỏi danh sách.
+Không dùng Optional, generics hoặc lambda trong phần bắt buộc; các nội dung đó thuộc buổi sau.
 
-### 7. Nộp Bài
+## IV. Nộp Bài
 
-Nộp source của hai interface, bốn implementation, Product đã cập nhật và `HitShop`; kèm output nghiệm thu.
+Nộp source, output payment/delivery và kết quả các ca equality.
+Không thay mô hình giỏ hoặc Order của buổi 4.
 
-## III. Mở Rộng — Bài Tự Chọn
+## V. Nghiệm Thu Buổi 05
 
-- Tạo abstract class `BaseDeliveryMethod` giữ `fee`, kiểm tra `fee >= 0` và cung cấp `getFee()`; hai delivery kế thừa class này đồng thời implements `DeliveryMethod`.
-- Viết `findProductById` trả `Optional<Product>`.
-- Tạo generic class `Box<T>` giữ một giá trị và trả lại đúng kiểu qua `getValue()`.
-
-## IV. Tổng Kết Bài Tập Về Nhà Buổi 05
-
-Sau bài tập buổi 5, nơi sử dụng thanh toán và giao hàng phụ thuộc interface; Product được so sánh theo định danh `id` thay vì địa chỉ object.
-
-### 1. Các Test Case Phải Chạy Được
+### 1. Test Case
 
 | Mã | Thao tác | Kết quả mong đợi |
 |---|---|---|
-| `TC05-01` | Gọi `pay(350000)` qua biến `PaymentMethod` lần lượt với Cash và Bank Transfer | Trả đúng hai chuỗi thanh toán chuẩn mà nơi gọi không đổi |
-| `TC05-02` | Gọi `printDelivery(...)` với Standard và Express cho O01 | Trả đúng `Giao tiêu chuẩn cho đơn O01` và `Giao nhanh cho đơn O01` |
-| `TC05-03` | So sánh hai Product khác instance nhưng cùng id P01 | `equals()` trả `true` và hai hash code bằng nhau |
-| `TC05-04` | So sánh P01 với P02 hoặc với `null` | `equals()` trả `false` |
-| `TC05-05` | Gọi `contains()` bằng object P01 khác instance | Danh sách tìm thấy P01 |
-| `TC05-06` | Gọi `remove()` bằng object P01 khác instance | Đúng Product P01 bị xóa khỏi danh sách |
+| `TC05-01` | Checkout `350000` bằng Cash | Đúng chuỗi tiền mặt |
+| `TC05-02` | Checkout `350000` bằng Bank Transfer | Đúng chuỗi chuyển khoản |
+| `TC05-03` | Giao O01 bằng Standard và Express | Đúng hai chuỗi giao hàng |
+| `TC05-04` | So sánh hai P01 khác instance | `equals=true`, hash code bằng nhau |
+| `TC05-05` | So sánh P01 với P02 và `null` | `false` |
+| `TC05-06` | `contains()` bằng P01 khác instance | Tìm thấy |
+| `TC05-07` | `remove()` bằng P01 khác instance | Xóa đúng P01 |
+| `TC05-08` | Chạy lại Order và danh sách đa hình buổi 4 | Kết quả cũ không đổi |
 
-### 2. Cây Thư Mục Sau Buổi 05
-
-Cấu trúc source tối thiểu cần đạt:
+### 2. Cây Thư Mục Cuối Buổi
 
 ```text
 src/
