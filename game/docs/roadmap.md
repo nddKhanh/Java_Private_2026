@@ -432,7 +432,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 - SPAWN truyền nguồn sản xuất; HQ chỉ tạo WORKER, BARRACKS chỉ tạo MELEE, RANGED và SIEGE.
 - Projectile khóa tọa độ đích lúc khai hỏa và đi từng ô Bresenham mà không tìm đường vòng.
 - Công trình chặn đạn, nhận damage và bị loại khỏi state khi HP về 0.
-- TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô theo simulation tick.
+- TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô với cooldown một giây cho từng tháp.
 
 **Bằng chứng:** Toàn bộ Maven test và frontend production build pass.
 
@@ -441,8 +441,9 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 **Trạng thái:** `VERIFIED` bằng test tự động.
 
 - Project `student-bot-template` dùng JDK 21, `.env` và entry point `Main.main(Bot)`.
-- `Submit` chuyển source qua HTTP loopback tới Desktop; Desktop tự pair, compile và chạy trong JVM con.
-- API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; API đầy đủ vẫn tương thích.
+- `Submit` chuyển source qua HTTP loopback tới Desktop; Desktop tự pair, compile, chạy trong JVM con và trả kết quả về console IntelliJ.
+- API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`; API đầy đủ vẫn tương thích.
+- Batch chỉ được gửi khi chương trình kết thúc bình thường; exception hoặc Stop loại bỏ batch chưa gửi.
 - Source và class Java không được gửi tới game server.
 
 **Bằng chứng:** Maven test của template, SDK, runner và Desktop pass.

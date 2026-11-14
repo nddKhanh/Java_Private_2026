@@ -11,6 +11,7 @@ import java.util.Objects;
 
 public final class BotAdapter implements Bot {
     private final GameBot delegate;
+    private String selectedId;
 
     public BotAdapter(GameBot delegate) {
         this.delegate = Objects.requireNonNull(delegate, "delegate");
@@ -18,7 +19,8 @@ public final class BotAdapter implements Bot {
 
     @Override
     public void select(String id) {
-        delegate.selectUnit(requireText(id, "id"));
+        selectedId = requireText(id, "id");
+        delegate.selectUnit(selectedId);
     }
 
     @Override
@@ -46,15 +48,15 @@ public final class BotAdapter implements Bot {
     }
 
     @Override
-    public void spawn(String source, String type, String id, int direction) {
-        String sourceId = requireText(source, "source");
+    public void spawn(String id, String type, int direction) {
+        String sourceId = requireText(selectedId, "công trình sản xuất");
         String unitId = requireText(id, "id");
         UnitType unitType = UnitType.valueOf(requireText(type, "type").toUpperCase(Locale.ROOT));
         delegate.spawn(sourceId, unitId, unitId, unitType, direction(direction));
     }
 
     @Override
-    public void idle() {
+    public void stay() {
         delegate.waitTurn();
     }
 

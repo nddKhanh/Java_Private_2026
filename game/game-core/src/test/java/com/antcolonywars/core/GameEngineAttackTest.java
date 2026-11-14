@@ -211,6 +211,71 @@ class GameEngineAttackTest {
         assertEquals(3, unit(tick, "worker-red").hp());
     }
 
+    @Test
+    void towerFiresAtMostOnceEveryFourDefaultTicks() {
+        MatchSetup setup = new MatchSetup(
+                "tower-cooldown", "tower-cooldown", 6, 6, RuleSet.mvp(),
+                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
+                List.of(new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 5, Direction.LEFT)),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-red", "RED", new Position(5, 5), 3)
+                ),
+                List.of(),
+                List.of(new Building("tower-blue", "BLUE", BuildingType.TOWER, new Position(0, 1), 5))
+        );
+        GameSession session = new GameSession(setup);
+
+        for (int tick = 0; tick < 4; tick++) {
+            session.advanceTick();
+        }
+
+        assertEquals(4, unit(session.state(), "worker-red").hp());
+        assertTrue(session.state().projectiles().isEmpty());
+
+        session.advanceTick();
+        assertEquals(1, session.state().projectiles().size());
+        assertEquals(4, unit(session.state(), "worker-red").hp());
+    }
+
+    @Test
+    void unitsAndHeadquartersBlockProjectilesOnTheirFixedPath() {
+        MatchSetup unitBlock = new MatchSetup(
+                "unit-block", "unit-block", 6, 6, RuleSet.mvp(),
+                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
+                List.of(
+                        new Unit("worker-blue", "BLUE", "WORKER", new Position(1, 1), 3, Direction.RIGHT),
+                        new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)
+                ),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-red", "RED", new Position(5, 5), 3)
+                ),
+                List.of(),
+                List.of(new Building("tower-blue", "BLUE", BuildingType.TOWER, new Position(0, 1), 5))
+        );
+        GameSession unitSession = new GameSession(unitBlock);
+        unitSession.advanceTick();
+        assertEquals(2, unit(unitSession.state(), "worker-blue").hp());
+        assertEquals(3, unit(unitSession.state(), "worker-red").hp());
+
+        MatchSetup headquartersBlock = new MatchSetup(
+                "hq-block", "hq-block", 6, 6, RuleSet.mvp(),
+                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
+                List.of(new Unit("worker-red", "RED", "WORKER", new Position(3, 1), 3, Direction.LEFT)),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(1, 1), 3),
+                        new Headquarters("hq-red", "RED", new Position(5, 5), 3)
+                ),
+                List.of(),
+                List.of(new Building("tower-blue", "BLUE", BuildingType.TOWER, new Position(0, 1), 5))
+        );
+        GameSession headquartersSession = new GameSession(headquartersBlock);
+        headquartersSession.advanceTick();
+        assertEquals(2, headquarters(headquartersSession.state(), "hq-blue").hp());
+        assertEquals(3, unit(headquartersSession.state(), "worker-red").hp());
+    }
+
     private MatchSetup combatSetup(Position blue, Position red) {
         return combatSetup(blue, red, RuleSet.mvp(), new Position(4, 4));
     }

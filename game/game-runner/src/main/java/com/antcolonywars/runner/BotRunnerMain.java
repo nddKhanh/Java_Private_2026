@@ -1,6 +1,7 @@
 package com.antcolonywars.runner;
 
 import com.antcolonywars.bot.BotProgram;
+import com.antcolonywars.bot.BatchGameBot;
 import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.bot.GameBots;
 import com.antcolonywars.client.GameClientException;
@@ -65,16 +66,18 @@ public final class BotRunnerMain {
 
         Duration timeout = connectionTimeout(environment);
         BatchMode batchMode = batchMode(environment);
-        try (GameBot bot = GameBots.connectBatch(serverUrl, teamToken, matchId, timeout, batchMode)) {
+        try (BatchGameBot bot = GameBots.connectBatch(serverUrl, teamToken, matchId, timeout, batchMode)) {
             out.printf("Đã kết nối. Đang chạy %s.%n", args[0]);
             program.run(bot);
-            out.println("Bot đã chạy xong.");
+            bot.submitBatch();
+            out.println("Batch đã được server chấp nhận.");
             return 0;
         } catch (Throwable exception) {
             String code = exception instanceof GameClientException clientException
                     ? clientException.code()
                     : exception.getClass().getSimpleName();
-            err.printf("Lỗi bot [%s]: %s%n", code, messageOf(exception));
+            String location = sourceLocation(exception, args[0]);
+            err.printf("Lỗi bot [%s]%s: %s%n", code, location, messageOf(exception));
             return 4;
         }
     }
@@ -125,5 +128,15 @@ public final class BotRunnerMain {
     private static String messageOf(Throwable exception) {
         String message = exception.getMessage();
         return message == null || message.isBlank() ? "no details" : message;
+    }
+
+    private static String sourceLocation(Throwable exception, String className) {
+        for (StackTraceElement frame : exception.getStackTrace()) {
+            if (frame.getClassName().equals(className) && frame.getLineNumber() > 0) {
+                String fileName = frame.getFileName() == null ? className + ".java" : frame.getFileName();
+                return " tại " + fileName + " dòng " + frame.getLineNumber();
+            }
+        }
+        return "";
     }
 }

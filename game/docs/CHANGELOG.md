@@ -3,14 +3,28 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-14 — Sửa hợp đồng Update V2
+
+### Changed
+
+- API học viên dùng `stay()` và `spawn(id, type, dir)` với nguồn sản xuất lấy từ HQ hoặc BARRACKS đã chọn.
+- Runner chỉ gửi batch sau khi chương trình kết thúc bình thường và loại bỏ batch chưa hoàn chỉnh khi có exception hoặc bị dừng.
+- Desktop trả trạng thái biên dịch, chạy và lỗi server đồng bộ về console IntelliJ qua loopback.
+- Projectile giữ toàn bộ đường Bresenham lúc khai hỏa, va chạm với unit, HQ hoặc building đầu tiên và có thể trượt mục tiêu.
+- Mỗi TOWER khai hỏa tối đa một lần mỗi giây trong phạm vi 5 ô.
+
+### Verified
+
+- Test bao phủ luật spawn của bốn loại công trình, batch Atomic/Partial, exception giữa batch, đường đạn, vật cản, cooldown tháp và phản hồi server về IntelliJ.
+
 ## 2026-11-14 — P2 công trình và đường đạn cố định
 
 ### Changed
 
-- HQ chỉ sản xuất WORKER; BARRACKS chỉ sản xuất MELEE, RANGED và SIEGE từ `sourceId` được chọn.
+- HQ chỉ sản xuất WORKER; BARRACKS chỉ sản xuất MELEE, RANGED và SIEGE khi được chọn làm nguồn.
 - Projectile giữ tọa độ mục tiêu lúc khai hỏa, đi theo ô Bresenham và không đuổi theo mục tiêu đã di chuyển.
 - Công trình chặn projectile, nhận sát thương và bị xóa khỏi bản đồ khi HP về 0.
-- TOWER tự chọn mục tiêu địch gần nhất trong phạm vi 5 ô và khai hỏa theo simulation tick.
+- TOWER tự chọn mục tiêu địch gần nhất trong phạm vi 5 ô và khai hỏa tối đa một lần mỗi giây.
 
 ### Verified
 
@@ -22,7 +36,7 @@ Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay 
 ### Added
 
 - Thêm project mẫu `student-bot-template` để mở trực tiếp bằng IntelliJ, nhập pairing key trong `.env` và chạy lớp `Submit`.
-- Thêm API `Bot` rút gọn với `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`.
+- Thêm API `Bot` rút gọn với `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 - Desktop nhận source qua HTTP loopback, tự pair, biên dịch và chạy trong JVM con; source Java không được gửi tới game server.
 
 ### Changed

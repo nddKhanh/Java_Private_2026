@@ -41,9 +41,11 @@ class GameEngineSpawnTest {
         MatchSetup setup = new MatchSetup(
                 base.setupId(), base.matchId(), base.mapWidth(), base.mapHeight(), base.rules(),
                 base.teams(), base.units(), base.headquarters(), base.resourceNodes(),
-                java.util.List.of(new Building(
-                        "barracks-blue", "BLUE", BuildingType.BARRACKS, new Position(3, 3), 5
-                ))
+                java.util.List.of(
+                        new Building("barracks-blue", "BLUE", BuildingType.BARRACKS, new Position(3, 3), 5),
+                        new Building("tower-blue", "BLUE", BuildingType.TOWER, new Position(5, 3), 5),
+                        new Building("wall-blue", "BLUE", BuildingType.WALL, new Position(6, 3), 5)
+                )
         );
         GameSession session = new GameSession(setup);
 
@@ -55,6 +57,12 @@ class GameEngineSpawnTest {
         )).error());
         assertEquals(ErrorCode.PRODUCTION_SOURCE_NOT_FOUND, session.apply(new SpawnCommand(
                 "missing", "BLUE", "missing", "worker-blue-2", "Worker", "WORKER", Direction.DOWN
+        )).error());
+        assertEquals(ErrorCode.INVALID_PRODUCTION_SOURCE, session.apply(new SpawnCommand(
+                "tower", "BLUE", "tower-blue", "melee-blue", "Melee", "MELEE", Direction.DOWN
+        )).error());
+        assertEquals(ErrorCode.INVALID_PRODUCTION_SOURCE, session.apply(new SpawnCommand(
+                "wall", "BLUE", "wall-blue", "melee-blue", "Melee", "MELEE", Direction.DOWN
         )).error());
     }
 

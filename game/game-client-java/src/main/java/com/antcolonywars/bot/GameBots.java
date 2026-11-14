@@ -32,7 +32,7 @@ public final class GameBots {
         return new ClientGameBot(GameClient.connect(serverUrl, accessToken, matchId, timeout));
     }
 
-    public static GameBot connectBatch(
+    public static BatchGameBot connectBatch(
             String serverUrl,
             String accessToken,
             String matchId,
@@ -140,7 +140,7 @@ public final class GameBots {
         }
     }
 
-    private static final class BatchingGameBot implements GameBot {
+    private static final class BatchingGameBot implements BatchGameBot {
         private final GameClient client;
         private final BatchMode mode;
         private final List<BatchAction> actions = new ArrayList<>();
@@ -228,8 +228,7 @@ public final class GameBots {
 
         @Override
         public GameState awaitSimulationIdle() {
-            submit();
-            return client.awaitSimulationIdle();
+            throw new IllegalStateException("Chỉ có thể chờ mô phỏng sau khi batch đã được gửi");
         }
 
         @Override
@@ -239,20 +238,23 @@ public final class GameBots {
 
         @Override
         public void close() {
-            try {
-                submit();
-            } finally {
-                client.close();
-            }
+            discardBatch();
+            client.close();
         }
 
-        private void submit() {
+        @Override
+        public GameState submitBatch() {
             if (actions.isEmpty()) {
-                return;
+                return client.getLatestState();
             }
             List<BatchAction> submitted = List.copyOf(actions);
             actions.clear();
-            client.submitBatch(submitted, mode);
+            return client.submitBatch(submitted, mode);
+        }
+
+        @Override
+        public void discardBatch() {
+            actions.clear();
         }
     }
 }

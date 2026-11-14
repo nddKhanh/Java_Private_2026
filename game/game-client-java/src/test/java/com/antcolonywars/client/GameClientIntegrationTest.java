@@ -2,6 +2,7 @@ package com.antcolonywars.client;
 
 import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.bot.GameBots;
+import com.antcolonywars.bot.BatchGameBot;
 import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.GameSession;
 import com.antcolonywars.core.MatchSetup;
@@ -153,7 +154,7 @@ class GameClientIntegrationTest {
 
     @Test
     void batchCanBuildBarracksAndSpawnFromItSequentially() {
-        try (GameBot bot = GameBots.connectBatch(
+        try (BatchGameBot bot = GameBots.connectBatch(
                 serverUrl(), "blue-token", "match-default", Duration.ofSeconds(5), BatchMode.ATOMIC
         )) {
             bot.move(Direction.RIGHT);
@@ -166,7 +167,7 @@ class GameClientIntegrationTest {
                     com.antcolonywars.core.UnitType.MELEE, Direction.DOWN
             );
 
-            GameState state = bot.awaitSimulationIdle();
+            GameState state = bot.submitBatch();
 
             assertTrue(state.snapshot().buildings().stream()
                     .anyMatch(building -> building.id().equals("barracks-blue")));

@@ -13,9 +13,9 @@ public interface Bot {
 
     void build(String id, String type, int direction);
 
-    void spawn(String source, String type, String id, int direction);
+    void spawn(String id, String type, int direction);
 
-    void idle();
+    void stay();
 
     GameState state();
 }

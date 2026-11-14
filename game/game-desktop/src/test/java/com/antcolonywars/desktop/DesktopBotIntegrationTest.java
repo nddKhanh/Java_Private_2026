@@ -11,6 +11,10 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.Duration;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,9 +64,10 @@ class DesktopBotIntegrationTest {
 
                 public final class Main {
                     public static void main(Bot bot) {
-                        bot.select("worker-blue");
-                        bot.go(2);
-                        bot.idle();
+                        bot.select("hq-blue");
+                        bot.spawn("worker-blue-2", "WORKER", 3);
+                        bot.select("worker-blue-2");
+                        bot.stay();
                     }
                 }
                 """;
@@ -76,7 +81,38 @@ class DesktopBotIntegrationTest {
             assertTrue(result.successful(), result.standardError());
             try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
                 assertEquals(2, observer.getLatestState().revision());
-                assertEquals(2, observer.getLatestState().snapshot().units().stream()
+                assertEquals(0, observer.getLatestState().snapshot().units().stream()
+                        .filter(unit -> unit.id().equals("worker-blue-2"))
+                        .findFirst().orElseThrow().position().x());
+            }
+        }
+    }
+
+    @Test
+    void studentExceptionDiscardsIncompleteBatch() throws Exception {
+        String source = """
+                import com.antcolonywars.sdk.Bot;
+
+                public final class FailingMain {
+                    public static void main(Bot bot) {
+                        bot.select("worker-blue");
+                        bot.go(2);
+                        throw new IllegalStateException("lỗi giữa batch");
+                    }
+                }
+                """;
+        BotCompiler compiler = new BotCompiler();
+        try (BotCompilation compilation = compiler.compile("FailingMain", source);
+             BotProcessRunner runner = new BotProcessRunner()) {
+            BotRunResult result = runner.start(request(compilation, "blue-token", Duration.ofSeconds(10)))
+                    .completion()
+                    .get(15, TimeUnit.SECONDS);
+
+            assertFalse(result.successful());
+            assertTrue(result.standardError().contains("lỗi giữa batch"));
+            try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
+                assertEquals(0, observer.getLatestState().revision());
+                assertEquals(1, observer.getLatestState().snapshot().units().stream()
                         .filter(unit -> unit.id().equals("worker-blue"))
                         .findFirst().orElseThrow().position().x());
             }
@@ -142,6 +178,32 @@ class DesktopBotIntegrationTest {
 
             assertEquals(4, result.exitCode());
             assertTrue(result.standardError().contains("CONNECTION_FAILED"));
+        }
+    }
+
+    @Test
+    void intellijSubmissionReceivesVietnameseServerErrorLog() throws Exception {
+        try (StudentSubmissionServer submissions = new StudentSubmissionServer(
+                ignored -> java.util.concurrent.CompletableFuture.completedFuture(
+                        new StudentSubmissionResult(false, "Lệnh 1, bot worker-blue: Ô đích đang bị chiếm.")
+                ),
+                0
+        )) {
+            submissions.start();
+            String body = """
+                    {"className":"Main","source":"class Main {}","pairingKey":"123456","batchMode":"ATOMIC"}
+                    """;
+            HttpResponse<String> response = HttpClient.newHttpClient().send(
+                    HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + submissions.port() + "/submit"))
+                            .header("Content-Type", "application/json")
+                            .POST(HttpRequest.BodyPublishers.ofString(body))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            assertEquals(422, response.statusCode());
+            assertTrue(response.body().contains("Lệnh 1, bot worker-blue"));
+            assertTrue(response.body().contains("Ô đích đang bị chiếm"));
         }
     }
 

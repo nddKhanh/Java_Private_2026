@@ -17,7 +17,16 @@ public final class Submit {
     private Submit() {
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
+        try {
+            submit();
+        } catch (Exception exception) {
+            System.err.println("Lỗi gửi Desktop: " + rootMessage(exception));
+            System.exit(1);
+        }
+    }
+
+    private static void submit() throws Exception {
         Map<String, String> environment = readEnvironment(Path.of(".env"));
         String key = required(environment, "MATCH_KEY");
         String mode = environment.getOrDefault("BATCH_MODE", "ATOMIC").trim().toUpperCase();
@@ -30,17 +39,29 @@ public final class Submit {
                 "batchMode", mode
         ));
         HttpRequest request = HttpRequest.newBuilder(DESKTOP_ENDPOINT)
-                .timeout(Duration.ofSeconds(5))
+                .timeout(Duration.ofSeconds(150))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofByteArray(body))
                 .build();
+        System.out.println("Đang gửi Main.java tới Desktop...");
         HttpResponse<String> response = HttpClient.newHttpClient().send(
                 request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)
         );
-        if (response.statusCode() != 202) {
-            throw new IllegalStateException("Desktop từ chối source: " + response.body());
+        String result = response.body().strip();
+        if (!result.isEmpty()) {
+            System.out.println(result);
         }
-        System.out.println("Đã gửi Main.java tới Desktop Code Studio.");
+        if (response.statusCode() != 200) {
+            System.exit(1);
+        }
+    }
+
+    private static String rootMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current.getMessage() == null ? current.getClass().getSimpleName() : current.getMessage();
     }
 
     private static Map<String, String> readEnvironment(Path path) throws Exception {

@@ -10,27 +10,45 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 final class StudentSubmissionServer implements AutoCloseable {
     static final int PORT = 17321;
     private static final int MAX_SOURCE_BYTES = 512 * 1024;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Consumer<StudentSubmission> consumer;
+    private final Function<StudentSubmission, CompletableFuture<StudentSubmissionResult>> handler;
+    private final int requestedPort;
     private HttpServer server;
     private ExecutorService executor;
 
-    StudentSubmissionServer(Consumer<StudentSubmission> consumer) {
-        this.consumer = Objects.requireNonNull(consumer, "consumer");
+    StudentSubmissionServer(Function<StudentSubmission, CompletableFuture<StudentSubmissionResult>> handler) {
+        this(handler, PORT);
+    }
+
+    StudentSubmissionServer(
+            Function<StudentSubmission, CompletableFuture<StudentSubmissionResult>> handler,
+            int requestedPort
+    ) {
+        this.handler = Objects.requireNonNull(handler, "handler");
+        this.requestedPort = requestedPort;
     }
 
     void start() throws IOException {
-        server = HttpServer.create(new InetSocketAddress("127.0.0.1", PORT), 0);
+        server = HttpServer.create(new InetSocketAddress("127.0.0.1", requestedPort), 0);
         server.createContext("/submit", this::handle);
         executor = Executors.newVirtualThreadPerTaskExecutor();
         server.setExecutor(executor);
         server.start();
+    }
+
+    int port() {
+        if (server == null) {
+            throw new IllegalStateException("Submission server is not running");
+        }
+        return server.getAddress().getPort();
     }
 
     @Override
@@ -58,8 +76,8 @@ final class StudentSubmissionServer implements AutoCloseable {
         try {
             StudentSubmission submission = objectMapper.readValue(body, StudentSubmission.class);
             validate(submission);
-            consumer.accept(submission);
-            respond(exchange, 202, "Đã nhận source.");
+            StudentSubmissionResult result = handler.apply(submission).get(150, TimeUnit.SECONDS);
+            respond(exchange, result.successful() ? 200 : 422, result.output());
         } catch (Exception exception) {
             respond(exchange, 400, "Yêu cầu không hợp lệ: " + messageOf(exception));
         }

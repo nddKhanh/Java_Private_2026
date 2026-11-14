@@ -13,7 +13,7 @@ final class DefaultBotSource {
 
                     bot.select("worker-blue");
                     bot.go(2);
-                    bot.idle();
+                    bot.stay();
                 }
             }
             """;

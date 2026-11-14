@@ -3,12 +3,22 @@
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
+## 2026-11-14 — Sửa hợp đồng Update V2
+
+- **Trạng thái:** `VERIFIED` bằng test tự động.
+- **Đã đạt:** API học viên đúng bộ lệnh ngắn; spawn lấy nguồn từ công trình đã chọn và áp đúng luật HQ/BARRACKS/TOWER/WALL.
+- **Đã đạt:** Batch chỉ được gửi sau khi chương trình Java kết thúc bình thường; exception hoặc Stop bỏ batch chưa gửi.
+- **Đã đạt:** Một lần Run trong IntelliJ chờ Desktop compile, chạy và trả log hoặc lỗi server về đúng console gọi.
+- **Đã đạt:** Projectile đi theo đường Bresenham cố định, va chạm đối tượng đầu tiên; TOWER có cooldown một giây.
+- **Bằng chứng:** Test Maven bao phủ các hợp đồng trên; frontend production build xác nhận schema projectile vẫn tương thích.
+- **Chưa kiểm chứng:** Chưa thao tác trực quan bằng nút Run trong IntelliJ thật hoặc quan sát animation đường đạn trên trình duyệt.
+
 ## 2026-11-14 — P2 công trình và đường đạn cố định
 
 - **Trạng thái:** `VERIFIED` bằng test tự động.
 - **Đã đạt:** SPAWN nhận ID nguồn sản xuất; HQ chỉ tạo WORKER và BARRACKS chỉ tạo MELEE, RANGED hoặc SIEGE.
 - **Đã đạt:** Projectile giữ tọa độ đích tại thời điểm bắn, đi thẳng theo Bresenham và có thể trượt khi mục tiêu di chuyển.
-- **Đã đạt:** Công trình chặn đạn, giảm HP, biến mất ở HP 0; TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô.
+- **Đã đạt:** Công trình chặn đạn, giảm HP, biến mất ở HP 0; TOWER tự bắn trong phạm vi 5 ô với cooldown một giây.
 - **Bằng chứng:** `mvnw -q test` và `npm run build` trong `game-web` đều hoàn tất với exit code 0.
 - **Chưa kiểm chứng:** Chưa kiểm thử trực quan đường đạn chéo, tower và animation phá hủy công trình trên trình duyệt thật.
 
@@ -17,9 +27,8 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Trạng thái:** `VERIFIED` bằng test tự động.
 - **Đã đạt:** Thêm project mẫu IntelliJ với `.env`, `Main.main(Bot)` và lớp `Submit` gửi source tới Desktop qua loopback.
 - **Đã đạt:** Desktop tự điền pairing key, chọn Atomic/Partial, biên dịch và chạy source; game server không nhận source hoặc class Java.
-- **Đã đạt:** API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; API đầy đủ cũ vẫn hoạt động.
+- **Đã đạt:** API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`; API đầy đủ cũ vẫn hoạt động.
 - **Bằng chứng:** `mvnw -q -pl student-bot-template,game-desktop -am test` hoàn tất với exit code 0.
-- **Giới hạn:** Java không cho override `Object.wait()` vì phương thức này là `final`, nên thao tác chờ của API ngắn mang tên `idle()`.
 - **Chưa kiểm chứng:** Chưa kiểm thử trực quan thao tác Run `Submit` trong IntelliJ với app-image Desktop đã đóng gói.
 - **Tiếp theo:** Kiểm thử trực quan P2 trên viewer và cân bằng tốc độ bắn nếu cần.
 

@@ -70,6 +70,9 @@ public final class BotProcessRunner implements AutoCloseable {
     private static List<String> command(BotRunRequest request, Path classesDirectory) {
         List<String> command = new ArrayList<>();
         command.add(javaExecutable().toString());
+        command.add("-Dfile.encoding=UTF-8");
+        command.add("-Dsun.stdout.encoding=UTF-8");
+        command.add("-Dsun.stderr.encoding=UTF-8");
         command.add("-Xmx" + request.maxHeapMegabytes() + "m");
         command.add("-cp");
         command.add(classesDirectory + File.pathSeparator + runtimeClassPath());

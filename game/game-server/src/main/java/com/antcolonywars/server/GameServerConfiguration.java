@@ -41,7 +41,8 @@ public class GameServerConfiguration {
                         profile.rules().barracksCost(),
                         profile.rules().towerCost(),
                         profile.rules().wallCost(),
-                        profile.rules().buildingHp()
+                        profile.rules().buildingHp(),
+                        Math.max(1, (int) Math.ceil(1000.0 / profile.limits().tickMillis()))
                 ),
                 profile.teams().stream()
                         .map(team -> new Team(team.id(), team.displayName(), team.color(), team.factionId()))

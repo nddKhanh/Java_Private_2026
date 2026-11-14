@@ -17,7 +17,7 @@ public final class GameEngine {
             return ApplyResult.failure(state, ErrorCode.DUPLICATE_COMMAND);
         }
         if (action instanceof TickCommand tick) {
-            return applyTick(state, tick);
+            return applyTick(state, tick, rules);
         }
         if (action instanceof SpawnCommand spawn) {
             return applySpawn(state, spawn, rules);
@@ -225,7 +225,7 @@ public final class GameEngine {
                 .orElse(Integer.MAX_VALUE);
     }
 
-    private ApplyResult applyTick(MatchState state, TickCommand command) {
+    private ApplyResult applyTick(MatchState state, TickCommand command, RuleSet rules) {
         List<Unit> units = state.units();
         List<String> retiredUnitIds = state.retiredUnitIds();
         List<Headquarters> headquarters = state.headquarters();
@@ -235,9 +235,9 @@ public final class GameEngine {
         String winnerTeamId = state.winnerTeamId();
 
         List<Projectile> active = new ArrayList<>(state.projectiles());
-        active.addAll(towerProjectiles(state, command));
+        active.addAll(towerProjectiles(state, command, rules));
         for (Projectile projectile : active) {
-            Position next = bresenhamStep(projectile.position(), projectile.targetPosition());
+            Position next = projectile.nextPosition();
             Building blockingBuilding = findBuildingAt(buildings, next);
             if (blockingBuilding != null) {
                 Building damaged = blockingBuilding.takeDamage(projectile.damage());
@@ -246,17 +246,21 @@ public final class GameEngine {
                         : replaceBuilding(buildings, damaged);
                 continue;
             }
-            if (!next.equals(projectile.targetPosition())) {
-                remaining.add(projectile.moveTo(next));
+            Headquarters blockingHeadquarters = findHeadquartersAt(headquarters, next);
+            if (blockingHeadquarters != null) {
+                Headquarters damaged = blockingHeadquarters.takeDamage(projectile.damage());
+                headquarters = replaceHeadquarters(headquarters, damaged);
+                if (damaged.hp() == 0 && hasSingleActiveFaction(state.teams(), headquarters)) {
+                    status = MatchStatus.FINISHED;
+                    winnerTeamId = firstActiveTeamId(headquarters);
+                    remaining.clear();
+                    break;
+                }
                 continue;
             }
-            Unit targetUnit = findUnit(units, projectile.targetId());
-            Headquarters targetHeadquarters = findHeadquarters(headquarters, projectile.targetId());
-            if (targetUnit != null) {
-                if (!cells(targetUnit).contains(projectile.targetPosition())) {
-                    continue;
-                }
-                Unit damaged = targetUnit.takeDamage(projectile.damage());
+            Unit blockingUnit = findUnitAt(units, next);
+            if (blockingUnit != null) {
+                Unit damaged = blockingUnit.takeDamage(projectile.damage());
                 if (damaged.hp() == 0) {
                     units = removeUnit(units, damaged.id());
                     retiredUnitIds = new ArrayList<>(retiredUnitIds);
@@ -264,16 +268,10 @@ public final class GameEngine {
                 } else {
                     units = replaceUnit(units, damaged);
                 }
-            } else if (targetHeadquarters != null
-                    && targetHeadquarters.position().equals(projectile.targetPosition())) {
-                Headquarters damaged = targetHeadquarters.takeDamage(projectile.damage());
-                headquarters = replaceHeadquarters(headquarters, damaged);
-                if (damaged.hp() == 0 && hasSingleActiveFaction(state.teams(), headquarters)) {
-                    status = MatchStatus.FINISHED;
-                    winnerTeamId = projectile.teamId();
-                    remaining.clear();
-                    break;
-                }
+                continue;
+            }
+            if (!projectile.reachesDestinationNext()) {
+                remaining.add(projectile.moveNext());
             }
         }
 
@@ -282,13 +280,16 @@ public final class GameEngine {
     }
 
     boolean hasSimulationWork(MatchState state) {
-        return !state.projectiles().isEmpty() || !towerProjectiles(
-                state, new TickCommand("system:probe:" + state.simulationTick())
-        ).isEmpty();
+        return !state.projectiles().isEmpty() || state.buildings().stream()
+                .filter(building -> building.hp() > 0 && building.type() == BuildingType.TOWER)
+                .anyMatch(tower -> closestTowerTarget(state, tower) != null);
     }
 
-    private List<Projectile> towerProjectiles(MatchState state, TickCommand command) {
+    private List<Projectile> towerProjectiles(MatchState state, TickCommand command, RuleSet rules) {
         List<Projectile> projectiles = new ArrayList<>();
+        if (state.simulationTick() % rules.towerCooldownTicks() != 0) {
+            return projectiles;
+        }
         for (Building tower : state.buildings()) {
             if (tower.hp() == 0 || tower.type() != BuildingType.TOWER) {
                 continue;
@@ -441,24 +442,6 @@ public final class GameEngine {
                 .orElseThrow();
     }
 
-    private Position bresenhamStep(Position current, Position target) {
-        int x = current.x();
-        int y = current.y();
-        int dx = Math.abs(target.x() - x);
-        int dy = Math.abs(target.y() - y);
-        int sx = Integer.signum(target.x() - x);
-        int sy = Integer.signum(target.y() - y);
-        int error = dx - dy;
-        int doubled = error * 2;
-        if (doubled > -dy) {
-            x += sx;
-        }
-        if (doubled < dx) {
-            y += sy;
-        }
-        return new Position(x, y);
-    }
-
     private Position adjacentPosition(
             Position source,
             int sourceWidth,
@@ -505,6 +488,14 @@ public final class GameEngine {
                 .count() == 1;
     }
 
+    private String firstActiveTeamId(List<Headquarters> headquarters) {
+        return headquarters.stream()
+                .filter(item -> item.hp() > 0)
+                .map(Headquarters::teamId)
+                .findFirst()
+                .orElse(null);
+    }
+
     private int buildingCost(BuildingType type, RuleSet rules) {
         return switch (type) {
             case BARRACKS -> rules.barracksCost();
@@ -518,7 +509,7 @@ public final class GameEngine {
             Headquarters headquarters = findHeadquarters(state, command.sourceId());
             if (headquarters != null && headquarters.hp() > 0) {
                 return new ProductionSource(
-                        headquarters.id(), headquarters.teamId(), headquarters.position(), true
+                        headquarters.id(), headquarters.teamId(), headquarters.position(), null
                 );
             }
             Building building = state.buildings().stream()
@@ -526,21 +517,21 @@ public final class GameEngine {
                     .findFirst()
                     .orElse(null);
             return building == null ? null : new ProductionSource(
-                    building.id(), building.teamId(), building.position(), false
+                    building.id(), building.teamId(), building.position(), building.type()
             );
         }
         if (unitType == UnitType.WORKER) {
             return state.headquarters().stream()
                     .filter(item -> item.teamId().equals(command.actorTeamId()) && item.hp() > 0)
                     .findFirst()
-                    .map(item -> new ProductionSource(item.id(), item.teamId(), item.position(), true))
+                    .map(item -> new ProductionSource(item.id(), item.teamId(), item.position(), null))
                     .orElse(null);
         }
         return state.buildings().stream()
                 .filter(item -> item.teamId().equals(command.actorTeamId()))
                 .filter(item -> item.type() == BuildingType.BARRACKS && item.hp() > 0)
                 .findFirst()
-                .map(item -> new ProductionSource(item.id(), item.teamId(), item.position(), false))
+                .map(item -> new ProductionSource(item.id(), item.teamId(), item.position(), item.type()))
                 .orElse(null);
     }
 
@@ -574,6 +565,20 @@ public final class GameEngine {
                 .orElse(null);
     }
 
+    private Headquarters findHeadquartersAt(List<Headquarters> headquarters, Position position) {
+        return headquarters.stream()
+                .filter(item -> item.hp() > 0 && item.position().equals(position))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Unit findUnitAt(List<Unit> units, Position position) {
+        return units.stream()
+                .filter(unit -> unit.hp() > 0 && cells(unit).contains(position))
+                .findFirst()
+                .orElse(null);
+    }
+
     private List<Building> replaceBuilding(List<Building> buildings, Building replacement) {
         return buildings.stream()
                 .map(building -> building.id().equals(replacement.id()) ? replacement : building)
@@ -584,9 +589,11 @@ public final class GameEngine {
         return buildings.stream().filter(building -> !building.id().equals(buildingId)).toList();
     }
 
-    private record ProductionSource(String id, String teamId, Position position, boolean headquarters) {
+    private record ProductionSource(String id, String teamId, Position position, BuildingType buildingType) {
         boolean supports(UnitType unitType) {
-            return headquarters ? unitType == UnitType.WORKER : unitType != UnitType.WORKER;
+            return buildingType == null
+                    ? unitType == UnitType.WORKER
+                    : buildingType == BuildingType.BARRACKS && unitType != UnitType.WORKER;
         }
     }
 }

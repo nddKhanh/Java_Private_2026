@@ -185,7 +185,15 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
             }
             if (!result.ok()) {
                 int actionNumber = result.failedIndex() == null ? 0 : result.failedIndex() + 1;
-                String prefix = actionNumber == 0 ? "" : "Lệnh " + actionNumber + ": ";
+                String prefix = "";
+                if (actionNumber > 0) {
+                    BatchAction failed = actions.get(actionNumber - 1);
+                    String botId = failed.sourceId() != null && !failed.sourceId().isBlank()
+                            ? failed.sourceId()
+                            : failed.unitId();
+                    prefix = "Lệnh " + actionNumber + ", bot "
+                            + (botId == null || botId.isBlank() ? "mặc định" : botId) + ": ";
+                }
                 String detail = result.errorMessage() == null ? "Lệnh không thể thực hiện." : result.errorMessage();
                 throw new GameClientException(result.error(), prefix + detail);
             }

@@ -55,6 +55,7 @@ public final class CodeStudioApplication extends Application {
     private RunningBot activeProcess;
     private boolean compileAfterPairing;
     private boolean runAfterCompilation;
+    private CompletableFuture<StudentSubmissionResult> activeSubmission;
 
     @Override
     public void start(Stage stage) {
@@ -163,6 +164,7 @@ public final class CodeStudioApplication extends Application {
             runAfterCompilation = false;
             status.setText("Pairing failed");
             appendConsole("Pairing error: " + messageOf(error));
+            completeSubmission(false, "Lỗi kết nối trận: " + messageOf(error));
             return;
         }
         serverUrl.setText(result.serverUrl());
@@ -180,8 +182,13 @@ public final class CodeStudioApplication extends Application {
         }
     }
 
-    private void acceptSubmission(StudentSubmission submission) {
+    private CompletableFuture<StudentSubmissionResult> acceptSubmission(StudentSubmission submission) {
+        CompletableFuture<StudentSubmissionResult> result = new CompletableFuture<>();
         Platform.runLater(() -> {
+            if (activeSubmission != null && !activeSubmission.isDone()) {
+                activeSubmission.complete(new StudentSubmissionResult(false, "Lần Run trước đã bị thay thế."));
+            }
+            activeSubmission = result;
             if (activeProcess != null) {
                 activeProcess.stop();
                 activeProcess = null;
@@ -199,6 +206,7 @@ public final class CodeStudioApplication extends Application {
             appendConsole("Đã nhận " + submission.className() + " từ IntelliJ. Đang pair trận đấu...");
             pairWithServer();
         });
+        return result;
     }
 
     private VBox bottomPanel() {
@@ -221,6 +229,7 @@ public final class CodeStudioApplication extends Application {
             runAfterCompilation = false;
             status.setText("Compile failed");
             appendConsole("Compiler error: " + messageOf(error));
+            completeSubmission(false, "Lỗi biên dịch: " + messageOf(error));
             return;
         }
         closeCompilation();
@@ -238,6 +247,7 @@ public final class CodeStudioApplication extends Application {
             runAfterCompilation = false;
             status.setText("Compile failed");
             runButton.setDisable(true);
+            completeSubmission(false, compilationOutput(result));
         }
         if (result.successful() && runAfterCompilation) {
             runAfterCompilation = false;
@@ -248,11 +258,13 @@ public final class CodeStudioApplication extends Application {
     private void runBot() {
         if (activeCompilation == null || !activeCompilation.successful()) {
             appendConsole("Compile the source before running it.");
+            completeSubmission(false, "Chưa biên dịch được source.");
             return;
         }
         String selectedTeamToken = teamToken.getEditor().getText().trim();
         if (serverUrl.getText().isBlank() || selectedTeamToken.isBlank()) {
             appendConsole("Server URL and team token are required.");
+            completeSubmission(false, "Thiếu địa chỉ server hoặc token đội.");
             return;
         }
 
@@ -288,6 +300,7 @@ public final class CodeStudioApplication extends Application {
             compileButton.setDisable(false);
             runButton.setDisable(false);
             appendConsole("Start error: " + messageOf(error));
+            completeSubmission(false, "Không thể chạy bot: " + messageOf(error));
             return;
         }
         activeProcess = process;
@@ -308,6 +321,7 @@ public final class CodeStudioApplication extends Application {
         if (error != null) {
             status.setText("Runner failed");
             appendConsole("Runner error: " + messageOf(error));
+            completeSubmission(false, "Lỗi chạy bot: " + messageOf(error));
             return;
         }
         appendOutput("stdout", result.standardOutput());
@@ -321,6 +335,7 @@ public final class CodeStudioApplication extends Application {
         } else {
             status.setText("Failed (exit " + result.exitCode() + ")");
         }
+        completeSubmission(result.successful(), runOutput(result));
     }
 
     private void stopBot() {
@@ -374,6 +389,42 @@ public final class CodeStudioApplication extends Application {
         return label + position + ": " + message.message();
     }
 
+    private static String compilationOutput(BotCompilation compilation) {
+        String className = compilation.className() == null || compilation.className().isBlank()
+                ? "Main"
+                : compilation.className();
+        String fileName = className.substring(className.lastIndexOf('.') + 1) + ".java";
+        String output = compilation.messages().stream()
+                .map(message -> fileName + " — " + format(message))
+                .collect(java.util.stream.Collectors.joining(System.lineSeparator()));
+        return output.isBlank() ? "Biên dịch thất bại." : output;
+    }
+
+    private static String runOutput(BotRunResult result) {
+        StringBuilder output = new StringBuilder();
+        if (result.standardOutput() != null && !result.standardOutput().isBlank()) {
+            output.append(result.standardOutput().stripTrailing());
+        }
+        if (result.standardError() != null && !result.standardError().isBlank()) {
+            if (!output.isEmpty()) {
+                output.append(System.lineSeparator());
+            }
+            output.append(result.standardError().stripTrailing());
+        }
+        if (output.isEmpty()) {
+            output.append(result.successful() ? "Batch đã chạy xong." : "Bot chạy thất bại.");
+        }
+        return output.toString();
+    }
+
+    private void completeSubmission(boolean successful, String output) {
+        CompletableFuture<StudentSubmissionResult> submission = activeSubmission;
+        if (submission != null && !submission.isDone()) {
+            submission.complete(new StudentSubmissionResult(successful, output));
+        }
+        activeSubmission = null;
+    }
+
     private static String messageOf(Throwable error) {
         Throwable current = error;
         while (current.getCause() != null) {
@@ -384,6 +435,7 @@ public final class CodeStudioApplication extends Application {
     }
 
     private void shutdown() {
+        completeSubmission(false, "Desktop đã đóng trước khi hoàn tất Run.");
         if (activeProcess != null) {
             activeProcess.stop();
             activeProcess = null;

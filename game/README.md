@@ -16,7 +16,7 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - R8.4 thêm đăng ký/đăng nhập trên web, tạo trận từ JSON map script, tìm trận bằng mã + token đội và phòng chờ theo slot.
 - R8 LAN cho phép một máy phát server/viewer để nhiều máy cùng Wi-Fi truy cập trực tiếp, không qua dịch vụ trung gian.
 - Desktop pairing cho phép nhập một key sáu ký tự để tự tìm server trong LAN, điền match code và chọn token đội theo màu.
-- P1 cho phép viết `Main.main(Bot)` trong project IntelliJ mẫu rồi chạy `Submit` để Desktop tự pair, compile và chạy source local.
+- P1 cho phép viết `Main.main(Bot)` trong project IntelliJ mẫu rồi chạy `Submit` để Desktop tự pair, compile, chạy source local và trả kết quả về console IntelliJ.
 - P2 bắt buộc nguồn sản xuất theo HQ/BARRACKS, cho công trình chặn và nhận damage, tower tự bắn tầm 5 và projectile khóa tọa độ đích theo Bresenham.
 
 ## Kiến trúc
@@ -68,7 +68,7 @@ Nhấn `Compile` (`Ctrl+B`) rồi `Run` (`Ctrl+R`) để chạy chương trình 
 Quan sát kết quả trên trang bản đồ.
 
 Để viết trong IntelliJ, mở `student-bot-template`, điền `MATCH_KEY` trong `.env`, sửa `Main.java` rồi chạy `Submit.main()` khi Desktop đang mở.
-API ngắn dùng `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; `idle` thay cho `wait` vì `Object.wait()` là `final` trong Java.
+API ngắn dùng `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 
 Nếu chỉ muốn chạy kịch bản có sẵn, dùng lệnh sau thay cho Desktop Code Studio:
 
@@ -109,5 +109,5 @@ Sau khi cập nhật, chạy `git diff --check` và ghi commit bằng tiếng An
 - Có thể tạo nhiều trận riêng bằng mã; chưa có danh sách phòng công khai, matchmaking tự động hoặc production deployment.
 - Chưa có xác minh email, quên mật khẩu, thu hồi mọi session hoặc giới hạn số account mỗi team.
 - Chưa có load test quy mô lớn hoặc kiểm thử trực quan projectile trên nhiều trình duyệt.
-- HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE/RANGED/SIEGE; building chặn và nhận damage, còn TOWER tự bắn trong tầm 5.
+- HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE/RANGED/SIEGE; building chặn và nhận damage, còn mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
 - Desktop Code Studio chỉ nên chạy source do người dùng tin cậy.

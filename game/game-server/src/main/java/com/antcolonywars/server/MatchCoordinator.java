@@ -9,6 +9,7 @@ import com.antcolonywars.core.GameCommand;
 import com.antcolonywars.core.GameSession;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.MatchState;
+import com.antcolonywars.core.SpawnCommand;
 
 import java.time.Clock;
 import java.util.HashMap;
@@ -96,7 +97,11 @@ public final class MatchCoordinator {
     private int firstLimitViolation(List<? extends ActionCommand> commands) {
         Map<String, Integer> actionsByBot = new HashMap<>();
         for (int index = 0; index < commands.size(); index++) {
-            String botId = commands.get(index).unitId();
+            ActionCommand command = commands.get(index);
+            String botId = command instanceof SpawnCommand spawn
+                    && spawn.sourceId() != null && !spawn.sourceId().isBlank()
+                    ? spawn.sourceId()
+                    : command.unitId();
             int count = actionsByBot.merge(botId, 1, Integer::sum);
             if (count > maxActionsPerBotPerBatch) {
                 return index;

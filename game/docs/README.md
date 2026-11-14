@@ -107,14 +107,15 @@ Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để St
 1. Mở `student-bot-template` bằng IntelliJ với JDK 21.
 2. Điền `MATCH_KEY` và `BATCH_MODE` trong `.env`.
 3. Sửa `src/main/java/Main.java`.
-4. Chạy `Submit.main()` trong khi Desktop đang mở.
+4. Chạy `Submit.main()` trong khi Desktop đang mở và xem toàn bộ kết quả trong console IntelliJ.
 
-API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`.
-Tên `idle` được dùng thay cho `wait` vì Java không cho override phương thức `Object.wait()` dạng `final`.
+API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
+`spawn(id, type, dir)` dùng HQ hoặc BARRACKS đã chọn làm nguồn sản xuất.
+Desktop chỉ gửi batch sau khi chương trình kết thúc bình thường và trả log biên dịch, Java hoặc server về console IntelliJ.
 
 Nếu sửa source sau khi compile, ứng dụng bắt buộc compile lại trước khi Run.
-Nút Stop kết thúc ngay JVM con đang chạy.
-Các hành động đã thực hiện trong trận vẫn được giữ sau khi dừng chương trình.
+Nút Stop kết thúc ngay JVM con đang chạy và bỏ batch chưa gửi.
+Batch đã được server chấp nhận vẫn được giữ sau khi dừng chương trình.
 
 ## Account và lobby team
 
@@ -202,7 +203,7 @@ Không dùng các token này cho môi trường public hoặc production.
 - Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server xử lý batch tuần tự theo chế độ Atomic hoặc Partial.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
 - Spawn tạo unit ở ô kề nguồn sản xuất; HQ chỉ tạo WORKER và BARRACKS chỉ tạo quân chiến đấu; chi phí spawn chưa được áp dụng.
-- Resource node, harvest và building đã có; công trình chặn/nhận damage, bị phá hủy ở HP 0 và TOWER tự bắn trong tầm 5.
+- Resource node, harvest và building đã có; công trình chặn/nhận damage, bị phá hủy ở HP 0 và mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
 - Account, lobby membership, session, snapshot và event history được lưu bằng H2/Flyway; file database mặc định nằm trong `game-server/data/`.
 - Hai match được route độc lập theo `matchId`; reconnect nhận snapshot authoritative mới nhất.
 - Chưa có danh sách phòng công khai, matchmaking tự động, email verification, quên mật khẩu, backup hoặc database production.

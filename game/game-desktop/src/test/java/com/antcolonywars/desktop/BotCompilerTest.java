@@ -30,7 +30,7 @@ class BotCompilerTest {
                     public static void main(Bot bot) {
                         bot.select("worker-blue");
                         bot.go(2);
-                        bot.idle();
+                        bot.stay();
                     }
                 }
                 """;
@@ -63,7 +63,6 @@ class BotCompilerTest {
                         for (int step = 0; step < 3; step++) {
                             bot.move(Direction.RIGHT);
                         }
-                        bot.awaitSimulationIdle();
                         System.out.println("moves-complete");
                     }
                 }

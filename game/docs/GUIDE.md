@@ -90,7 +90,10 @@ Nếu Windows Firewall chặn kết nối, mở TCP `8080` trên máy chủ.
 2. Điền pairing key sáu ký tự vào `MATCH_KEY` trong file `.env`.
 3. Viết chương trình trong `src/main/java/Main.java` với entry point `public static void main(Bot bot)`.
 4. Chạy `Submit.main()` trong IntelliJ khi Desktop Code Studio đang mở.
-5. Desktop nhận source qua `127.0.0.1:17321`, tự pair, compile và chạy bot.
+5. Theo dõi trạng thái gửi, biên dịch, chạy và kết quả server ngay trong console IntelliJ.
+
+Desktop nhận source qua `127.0.0.1:17321`, tự pair, compile, chạy bot và trả kết quả về lần Run đang chờ.
+Không cần nhấn thêm Compile hoặc Run trong Desktop.
 
 Source chỉ đi từ IntelliJ tới Desktop trên chính máy đang chạy và không được upload lên game server.
 Có thể đặt `BATCH_MODE=ATOMIC` hoặc `BATCH_MODE=PARTIAL` trong `.env`.
@@ -139,14 +142,15 @@ public final class Main {
     public static void main(Bot bot) {
         bot.select("worker-blue");
         bot.go(2);
-        bot.idle();
+        bot.stay();
     }
 }
 ```
 
 Các hướng của `go` là `1` lên, `2` phải, `3` xuống và `4` trái.
 API ngắn còn có `hit`, `mine`, `build`, `spawn` và `state`.
-Java không cho định nghĩa `bot.wait()` vì `Object.wait()` là phương thức `final`, do đó thao tác chờ dùng tên `bot.idle()`.
+Để tạo quân, chọn HQ hoặc BARRACKS trước rồi gọi `bot.spawn(id, type, dir)`.
+HQ chỉ tạo WORKER; BARRACKS chỉ tạo MELEE, RANGED hoặc SIEGE; TOWER và WALL không thể tạo quân.
 API `BotProgram`/`GameBot` đầy đủ bên dưới vẫn được giữ để tương thích.
 
 ### Bước 1 — chọn đội và nhập chương trình
@@ -183,12 +187,14 @@ public final class MyBot implements BotProgram {
 4. Mở trang bản đồ: quân xanh đi từ `(1, 0)` sang `(2, 0)` rồi đứng chờ.
 5. Nhấn `Stop` (`Ctrl+K`) khi cần dừng chương trình đang chạy.
 
-Mỗi bot có tối đa 10 hành động trong một batch; `selectUnit` chỉ đổi bot đang chọn nên không tính hạn mức.
+Mỗi bot hoặc công trình sản xuất có tối đa 10 hành động trong một batch; thao tác chọn chỉ đổi đối tượng đang chọn nên không tính hạn mức.
 Không có giới hạn lệnh theo giây hoặc simulation tick.
 Các lời gọi đọc state trong lúc tạo batch dùng snapshot nhận tại đầu lần Run.
+Batch chỉ được gửi sau khi `main` hoặc `run` kết thúc bình thường.
+Exception hoặc thao tác Stop trước thời điểm đó sẽ bỏ toàn bộ batch chưa gửi.
 
 Sau mỗi lần sửa, biên dịch lại trước khi chạy.
-Dừng chương trình không hoàn tác hành động đã thực hiện.
+Stop không hoàn tác batch đã được server chấp nhận.
 Khởi động lại server mặc định sẽ phục hồi trận đã lưu.
 Để thử kịch bản từ state seed mà không xóa dữ liệu, dừng máy chủ bằng `Ctrl+C`, chạy `.\scripts\start-server.ps1 -Fresh` rồi chờ bản đồ kết nối lại.
 
@@ -234,7 +240,7 @@ Nếu đã gọi `bot.selectUnit("ranged-blue-1")`, có thể viết ngắn `bot
 Nếu không có mục tiêu trên đường bắn trong tầm, server trả `TARGET_NOT_FOUND`; nếu đồng minh đứng trước, server trả `FRIENDLY_TARGET`.
 Đạn giữ tọa độ của mục tiêu tại lúc khai hỏa, đi theo đường Bresenham và không đổi hướng khi mục tiêu di chuyển.
 Công trình trên đường bay chặn đạn và nhận sát thương; công trình biến mất khi HP về 0.
-TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô theo simulation tick.
+TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô và mỗi tháp khai hỏa tối đa một lần mỗi giây.
 
 ### Cách khác — chạy kịch bản có sẵn
 
