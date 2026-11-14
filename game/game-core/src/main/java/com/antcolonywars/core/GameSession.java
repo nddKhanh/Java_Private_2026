@@ -34,6 +34,37 @@ public final class GameSession {
         return result;
     }
 
+    public BatchApplyResult applyBatch(List<? extends ActionCommand> commands, BatchMode mode) {
+        Objects.requireNonNull(commands, "commands");
+        Objects.requireNonNull(mode, "mode");
+        MatchState originalState = state;
+        MatchState workingState = state;
+        List<GameEvent> events = new ArrayList<>();
+        List<ActionCommand> acceptedCommands = new ArrayList<>();
+
+        for (int index = 0; index < commands.size(); index++) {
+            ActionCommand command = Objects.requireNonNull(commands.get(index), "command");
+            ApplyResult result = engine.apply(workingState, command, rules);
+            if (!result.accepted()) {
+                if (mode == BatchMode.ATOMIC) {
+                    return BatchApplyResult.failure(originalState, List.of(), result.error(), index, 0);
+                }
+                state = workingState;
+                commandLog.addAll(acceptedCommands);
+                return BatchApplyResult.failure(
+                        workingState, events, result.error(), index, acceptedCommands.size()
+                );
+            }
+            workingState = result.state();
+            events.addAll(result.events());
+            acceptedCommands.add(command);
+        }
+
+        state = workingState;
+        commandLog.addAll(acceptedCommands);
+        return BatchApplyResult.success(workingState, events, acceptedCommands.size());
+    }
+
     public ApplyResult advanceTick() {
         if (state.projectiles().isEmpty()) {
             return ApplyResult.success(state, List.of());

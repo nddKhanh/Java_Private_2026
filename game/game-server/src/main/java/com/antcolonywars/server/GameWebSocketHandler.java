@@ -2,6 +2,8 @@ package com.antcolonywars.server;
 
 import com.antcolonywars.core.ActionCommand;
 import com.antcolonywars.core.ApplyResult;
+import com.antcolonywars.core.BatchApplyResult;
+import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.core.AttackCommand;
 import com.antcolonywars.core.BuildCommand;
 import com.antcolonywars.core.BuildingType;
@@ -24,12 +26,14 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 6;
+    public static final int SCHEMA_VERSION = 7;
 
     private final MatchRegistry matchRegistry;
     private final ObjectMapper objectMapper;
@@ -75,6 +79,10 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             handleGetState(session, request, coordinator);
             return;
         }
+        if ("BATCH".equals(request.type())) {
+            handleBatch(session, request, coordinator, state);
+            return;
+        }
         if (!"COMMAND".equals(request.type())) {
             sendFailure(session, request.commandId(), "INVALID_MESSAGE_TYPE");
             return;
@@ -116,6 +124,50 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         broadcastState(result.state(), event);
     }
 
+    private void handleBatch(
+            WebSocketSession session,
+            ClientMessage request,
+            MatchCoordinator coordinator,
+            MatchState state
+    ) throws IOException {
+        String teamId = (String) session.getAttributes().get(TokenHandshakeInterceptor.TEAM_ID_ATTRIBUTE);
+        if (teamId == null) {
+            sendFailure(session, request.commandId(), "UNAUTHORIZED");
+            return;
+        }
+        if (request.commands() == null || request.commands().isEmpty()) {
+            sendFailure(session, request.commandId(), "INVALID_BATCH");
+            return;
+        }
+
+        BatchMode mode;
+        List<ActionCommand> commands = new ArrayList<>();
+        try {
+            mode = BatchMode.valueOf(requireText(request.mode()));
+            for (BatchCommandMessage command : request.commands()) {
+                commands.add(toCommand(command, teamId, state));
+            }
+        } catch (IllegalArgumentException exception) {
+            sendFailure(session, request.commandId(), "INVALID_COMMAND");
+            return;
+        }
+
+        BatchApplyResult result = coordinator.applyBatch(commands, mode);
+        send(session, CommandResultMessage.batch(
+                result.state().matchId(),
+                request.commandId(),
+                result.error() == null ? null : result.error().name(),
+                result.failedIndex() < 0 ? null : result.failedIndex(),
+                result.appliedCount(),
+                result.state().revision(),
+                result.state().eventSequence()
+        ));
+        if (!result.events().isEmpty()) {
+            GameEvent event = result.events().getLast();
+            broadcastState(result.state(), event);
+        }
+    }
+
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         sessions.remove(session);
@@ -145,6 +197,14 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     private ActionCommand toCommand(ClientMessage request, String teamId, MatchState state) {
+        return toCommand(new BatchCommandMessage(
+                request.commandId(), request.action(), request.unitId(), request.displayName(),
+                request.unitType(), request.direction(), request.targetId(), request.buildingId(),
+                request.buildingType()
+        ), teamId, state);
+    }
+
+    private ActionCommand toCommand(BatchCommandMessage request, String teamId, MatchState state) {
         requireText(request.commandId());
         requireText(request.action());
         if ("SPAWN".equals(request.action())) {

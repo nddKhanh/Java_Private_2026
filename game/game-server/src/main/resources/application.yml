@@ -227,6 +227,6 @@ game:
         amount: 10
     buildings: []
     limits:
-      actions-per-second: 10
+      max-actions-per-bot-per-batch: 10
       command-queue-capacity: 32
       tick-millis: 250

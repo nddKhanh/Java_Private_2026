@@ -480,31 +480,33 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 ## R4 — Hàng đợi và quota
 
-- Giới hạn hành động theo team, dùng chung cho mọi Java client của team.
-- Coordinator xử lý command theo queue tuần tự có capacity cấu hình.
-- Mã lỗi `RATE_LIMITED` và `COMMAND_QUEUE_FULL` được trả về mà không đổi state.
+- Mỗi lần Run tạo một batch với tối đa 10 hành động cho mỗi bot.
+- Coordinator xử lý lệnh tuần tự theo state sau từng hành động và không giới hạn theo giây.
+- Atomic rollback toàn batch khi có lỗi; Partial giữ kết quả trước lỗi đầu tiên.
+- Kết quả trả mã lỗi, thông báo tiếng Việt, vị trí lỗi và số hành động đã áp dụng.
 
 **Nghiệm thu:**
 
-- [x] Mặc định giới hạn 10 action mỗi giây theo team.
-- [x] Queue capacity mặc định là 32 và không làm thay đổi thứ tự revision.
-- [x] Rate window dùng clock server và được kiểm thử với clock deterministic.
-- [x] Cấu hình nằm trong profile, không đưa quota vào Game Core.
+- [x] Tối đa 10 hành động cho mỗi bot trong một batch; chọn bot không tính hạn mức.
+- [x] Nhiều bot trong cùng batch có bộ đếm độc lập.
+- [x] Atomic không thay đổi state nếu bất kỳ hành động nào lỗi.
+- [x] Partial dừng tại lỗi đầu tiên và giữ đúng các hành động trước đó.
+- [x] Simulation tick không tham gia hạn mức batch.
 
-**Bằng chứng:** 41 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
+**Bằng chứng:** Toàn bộ Maven test pass sau khi nâng giao thức batch lên schema 7.
 
 ## R4.1 — Footprint, projectile và simulation tick
 
 - SIEGE chiếm footprint 2×2 trong spawn, movement, occupancy, attack range và render.
 - ATTACK tạo projectile; damage và winner chỉ được áp dụng khi projectile chạm mục tiêu.
-- Server chạy simulation tick mặc định 250 ms ngoài quota hành động của team và phát state mới qua WebSocket schema 5.
+- Server chạy simulation tick mặc định 250 ms ngoài batch hành động của bot và phát state mới qua WebSocket schema 7.
 - Java SDK và `GameBot` có thể chờ simulation trở về trạng thái không còn projectile.
 
 **Nghiệm thu:**
 
 - [x] Mọi ô trong footprint 2×2 được kiểm tra bounds và occupancy.
 - [x] Projectile cùng tick được đưa vào snapshot, replay và state hash xác định.
-- [x] Simulation tick không tiêu thụ rate limit của team.
+- [x] Simulation tick không tiêu thụ hạn mức batch của bot.
 - [x] Phaser hiển thị footprint SIEGE và projectile từ snapshot server-authoritative.
 - [x] Kịch bản Java client chờ projectile kết thúc trước khi đọc winner.
 
@@ -518,7 +520,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 - Mật khẩu BCrypt, session token ngẫu nhiên chỉ lưu hash SHA-256 và hạn dùng cấu hình được.
 - Session token đã join team dùng trực tiếp cho WebSocket; demo token cũ tiếp tục hỗ trợ kịch bản local.
 - H2 dạng file và Flyway lưu account, session, lobby membership, snapshot cùng event history.
-- Server nạp snapshot tương thích với `MatchSetup` khi khởi động; nhiều account cùng team điều khiển chung state và quota.
+- Server nạp snapshot tương thích với `MatchSetup` khi khởi động; nhiều account cùng team điều khiển chung state và giới hạn batch theo bot.
 
 **Nghiệm thu:**
 

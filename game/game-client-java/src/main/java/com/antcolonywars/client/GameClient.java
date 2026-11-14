@@ -1,6 +1,7 @@
 package com.antcolonywars.client;
 
 import com.antcolonywars.core.MatchState;
+import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.core.UnitType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -23,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 6;
+    private static final int SCHEMA_VERSION = 7;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -143,6 +145,55 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         return new GameState(state);
     }
 
+    public GameState submitBatch(List<BatchAction> actions, BatchMode mode) {
+        Objects.requireNonNull(actions, "actions");
+        Objects.requireNonNull(mode, "mode");
+        if (actions.isEmpty()) {
+            return getLatestState();
+        }
+        ensureOpen();
+        String batchId = UUID.randomUUID().toString();
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "BATCH");
+        message.put("schemaVersion", SCHEMA_VERSION);
+        message.put("matchId", latestState.matchId());
+        message.put("commandId", batchId);
+        message.put("mode", mode.name());
+        message.put("commands", List.copyOf(actions));
+
+        CompletableFuture<CommandResult> response = new CompletableFuture<>();
+        pending.put(batchId, response);
+        try {
+            webSocket.sendText(objectMapper.writeValueAsString(message), true)
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            CommandResult result = response.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (result.appliedCount() > 0) {
+                waitForRevision(result.revision(), false);
+            }
+            if (!result.ok()) {
+                int actionNumber = result.failedIndex() == null ? 0 : result.failedIndex() + 1;
+                String prefix = actionNumber == 0 ? "" : "Lệnh " + actionNumber + ": ";
+                String detail = result.errorMessage() == null ? "Lệnh không thể thực hiện." : result.errorMessage();
+                throw new GameClientException(result.error(), prefix + detail);
+            }
+            waitForRevision(result.revision(), false);
+            return getLatestState();
+        } catch (GameClientException exception) {
+            throw exception;
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new GameClientException("INTERRUPTED", "Đã dừng khi đang gửi batch.", exception);
+        } catch (ExecutionException exception) {
+            throw new GameClientException("BATCH_FAILED", "Không thể gửi batch.", exception.getCause());
+        } catch (TimeoutException exception) {
+            throw new GameClientException("TIMEOUT", "Hết thời gian chờ kết quả batch.", exception);
+        } catch (Exception exception) {
+            throw new GameClientException("INVALID_MESSAGE", "Không thể mã hóa batch.", exception);
+        } finally {
+            pending.remove(batchId);
+        }
+    }
+
     public GameState awaitSimulationIdle() {
         return awaitSimulationIdle(timeout);
     }
@@ -260,11 +311,10 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
                     .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             CommandResult result = response.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
             if (!result.ok()) {
-                if ("RATE_LIMITED".equals(result.error())) {
-                    waitForRateWindow();
-                    return sendAction(action, parameters);
-                }
-                throw new GameClientException(result.error(), "Command rejected: " + result.error());
+                String messageText = result.errorMessage() == null
+                        ? "Lệnh không thể thực hiện."
+                        : result.errorMessage();
+                throw new GameClientException(result.error(), messageText);
             }
             waitForRevision(result.revision(), false);
             return getLatestState();
@@ -284,15 +334,6 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
             throw new GameClientException("INVALID_MESSAGE", "Cannot encode command", exception);
         } finally {
             pending.remove(commandId);
-        }
-    }
-
-    private void waitForRateWindow() {
-        try {
-            Thread.sleep(1_050);
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new GameClientException("INTERRUPTED", "Interrupted while waiting for rate limit", exception);
         }
     }
 
@@ -335,6 +376,9 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
                             commandId,
                             message.path("ok").asBoolean(),
                             message.path("error").isNull() ? null : message.path("error").asText(),
+                            message.path("errorMessage").isNull() ? null : message.path("errorMessage").asText(),
+                            message.path("failedIndex").isNull() ? null : message.path("failedIndex").asInt(),
+                            message.path("appliedCount").asInt(),
                             message.path("revision").asLong(),
                             message.path("sequence").asLong()
                     ));

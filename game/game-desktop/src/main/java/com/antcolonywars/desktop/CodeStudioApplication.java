@@ -1,5 +1,7 @@
 package com.antcolonywars.desktop;
 
+import com.antcolonywars.core.BatchMode;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -38,6 +40,7 @@ public final class CodeStudioApplication extends Application {
     private final TextField serverUrl = new TextField("ws://localhost:8080/game");
     private final TextField matchId = new TextField();
     private final ComboBox<String> teamToken = new ComboBox<>();
+    private final ComboBox<BatchMode> batchMode = new ComboBox<>();
     private final TextField className = new TextField(DefaultBotSource.CLASS_NAME);
     private final Spinner<Integer> timeoutSeconds = new Spinner<>(1, 300, 15);
     private final TextArea editor = new TextArea(DefaultBotSource.SOURCE);
@@ -55,6 +58,8 @@ public final class CodeStudioApplication extends Application {
         pairingKey.setPromptText("6-character pairing key");
         teamToken.setPromptText("Team token");
         teamToken.setEditable(true);
+        batchMode.getItems().setAll(BatchMode.ATOMIC, BatchMode.PARTIAL);
+        batchMode.getSelectionModel().select(BatchMode.ATOMIC);
         matchId.setPromptText("Match code (blank = match-default)");
         editor.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px;");
         console.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
@@ -122,7 +127,8 @@ public final class CodeStudioApplication extends Application {
         HBox match = new HBox(
                 8,
                 new Label("Match code"), matchId,
-                new Label("Team token"), teamToken
+                new Label("Team token"), teamToken,
+                new Label("Batch"), batchMode
         );
         HBox.setHgrow(matchId, Priority.ALWAYS);
         HBox.setHgrow(teamToken, Priority.ALWAYS);
@@ -212,6 +218,7 @@ public final class CodeStudioApplication extends Application {
                 serverUrl.getText().trim(),
                 matchId.getText().trim(),
                 selectedTeamToken,
+                batchMode.getValue(),
                 Duration.ofSeconds(timeoutSeconds.getValue()),
                 64,
                 MAX_OUTPUT_BYTES
@@ -317,9 +324,10 @@ public final class CodeStudioApplication extends Application {
 
     private static String format(CompilationMessage message) {
         String position = message.line() > 0
-                ? " line " + message.line() + ", column " + message.column()
+                ? " dòng " + message.line() + ", cột " + message.column()
                 : "";
-        return message.kind() + position + ": " + message.message();
+        String label = message.kind() == CompilationMessage.Kind.ERROR ? "Lỗi biên dịch" : "Thông báo biên dịch";
+        return label + position + ": " + message.message();
     }
 
     private static String messageOf(Throwable error) {

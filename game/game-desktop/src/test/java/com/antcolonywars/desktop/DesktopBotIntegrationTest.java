@@ -1,5 +1,7 @@
 package com.antcolonywars.desktop;
 
+import com.antcolonywars.core.BatchMode;
+
 import com.antcolonywars.client.GameClient;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.server.GameServerApplication;
@@ -124,6 +126,7 @@ class DesktopBotIntegrationTest {
                 serverUrl(),
                 matchId,
                 token,
+                BatchMode.ATOMIC,
                 timeout,
                 64,
                 16 * 1024

@@ -3,6 +3,19 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-14 — P0 batch Atomic và Partial
+
+### Changed
+
+- Thay rate limit theo giây bằng giới hạn tối đa 10 hành động cho mỗi bot trong một batch.
+- Thêm chế độ Atomic để rollback toàn batch và Partial để giữ các lệnh hợp lệ trước lỗi đầu tiên.
+- Desktop gom các hành động của một lần Run thành batch và cho phép chọn chế độ xử lý.
+- Nâng WebSocket schema lên version 7 và trả mã lỗi kèm thông báo tiếng Việt, vị trí lệnh lỗi và số lệnh đã áp dụng.
+
+### Verified
+
+- Toàn bộ Maven test pass, gồm rollback Atomic, dừng tại lỗi đầu tiên của Partial, giới hạn độc lập theo bot và WebSocket batch.
+
 ## 2026-11-14 — Desktop pairing trong LAN
 
 ### Added

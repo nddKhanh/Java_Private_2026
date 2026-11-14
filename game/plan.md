@@ -355,7 +355,7 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 2. Đơn vị bị hạ được xóa khỏi snapshot để giải phóng ô và quota.
 3. R2 đã bổ sung resource node, stockpile, khai thác và xây BARRACKS/TOWER/WALL qua schema 3.
 4. R3 đã bổ sung các loại MELEE/RANGED/SIEGE và combat profile cơ bản.
-5. R4 đã bổ sung rate limit theo team và hàng đợi tuần tự có capacity.
+5. P0 batch đã thay rate limit theo team bằng tối đa 10 hành động/bot/lần Run với chế độ Atomic hoặc Partial.
 6. R4.1 đã bổ sung footprint 2×2 cho SIEGE, projectile và simulation tick cấu hình được.
 7. R5 đã bổ sung account, lobby membership, session token, H2/Flyway và restart recovery.
 8. R6 đã thêm 10 đội chia 2 phe, hai match, tối đa 50 đơn vị mỗi đội, 5 account/team và load gate tick/reconnect.

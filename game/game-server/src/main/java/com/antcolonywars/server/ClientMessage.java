@@ -1,5 +1,7 @@
 package com.antcolonywars.server;
 
+import java.util.List;
+
 public record ClientMessage(
         String type,
         int schemaVersion,
@@ -12,6 +14,8 @@ public record ClientMessage(
         String direction,
         String targetId,
         String buildingId,
-        String buildingType
+        String buildingType,
+        String mode,
+        List<BatchCommandMessage> commands
 ) {
 }

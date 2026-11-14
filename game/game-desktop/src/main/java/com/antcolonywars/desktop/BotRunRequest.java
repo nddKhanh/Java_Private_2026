@@ -1,5 +1,7 @@
 package com.antcolonywars.desktop;
 
+import com.antcolonywars.core.BatchMode;
+
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Objects;
@@ -10,6 +12,7 @@ public record BotRunRequest(
         String serverUrl,
         String matchId,
         String teamToken,
+        BatchMode batchMode,
         Duration timeout,
         int maxHeapMegabytes,
         int maxOutputBytes
@@ -20,6 +23,7 @@ public record BotRunRequest(
         Objects.requireNonNull(serverUrl, "serverUrl");
         Objects.requireNonNull(matchId, "matchId");
         Objects.requireNonNull(teamToken, "teamToken");
+        Objects.requireNonNull(batchMode, "batchMode");
         Objects.requireNonNull(timeout, "timeout");
         if (className.isBlank() || serverUrl.isBlank() || teamToken.isBlank()) {
             throw new IllegalArgumentException("Class name, server URL and team token are required");

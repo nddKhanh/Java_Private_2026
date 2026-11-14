@@ -39,6 +39,7 @@ public final class BotProcessRunner implements AutoCloseable {
         builder.directory(classesDirectory.toFile());
         builder.environment().put("GAME_WS_URL", request.serverUrl());
         builder.environment().put("GAME_TEAM_TOKEN", request.teamToken());
+        builder.environment().put("GAME_BATCH_MODE", request.batchMode().name());
         if (request.matchId().isBlank()) {
             builder.environment().remove("GAME_MATCH_ID");
         } else {

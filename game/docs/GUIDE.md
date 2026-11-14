@@ -114,7 +114,7 @@ Invoke-RestMethod -Method Put -Uri http://localhost:8080/api/lobby/membership -H
 
 Dùng `$session.token` ở trường Token của Desktop Code Studio.
 Account phải join team trước khi session token được phép điều khiển quân qua WebSocket.
-Có thể tạo tối đa năm account và join cùng BLUE; tất cả account dùng chung state và quota của đội.
+Có thể tạo tối đa năm account và join cùng BLUE; tất cả account dùng chung state của đội.
 Account thứ sáu bị từ chối với mã `TEAM_FULL`.
 
 ## 4. Viết và chạy chương trình điều khiển
@@ -123,6 +123,7 @@ Account thứ sáu bị từ chối với mã `TEAM_FULL`.
 
 Với trận tạo từ web, ưu tiên nhập pairing key và nhấn **Pair**.
 Chọn một token màu trong ô `Team token`; Server và Match code đã được điền tự động.
+Chọn `ATOMIC` để toàn bộ batch chỉ được áp dụng khi mọi hành động hợp lệ, hoặc `PARTIAL` để dừng tại lỗi đầu tiên và giữ các hành động trước đó.
 Luồng thủ công vẫn hỗ trợ `ws://192.168.1.23:8080/game`, mã trận và token đội khi không thể quét LAN.
 Với `match-default`, để trống Match code và dùng demo token `blue-token` hoặc `red-token`.
 Giữ tên lớp là `MyBot`.
@@ -148,8 +149,13 @@ public final class MyBot implements BotProgram {
 
 1. Nhấn `Compile` (`Ctrl+B`); nếu có lỗi, sửa theo dòng và cột được thông báo.
 2. Nhấn `Run` (`Ctrl+R`) sau khi biên dịch thành công.
-3. Mở trang bản đồ: quân xanh đi từ `(1, 0)` sang `(2, 0)` rồi đứng chờ.
-4. Nhấn `Stop` (`Ctrl+K`) khi cần dừng chương trình đang chạy.
+3. Desktop gom các hành động của lần Run thành một batch rồi gửi đến server.
+4. Mở trang bản đồ: quân xanh đi từ `(1, 0)` sang `(2, 0)` rồi đứng chờ.
+5. Nhấn `Stop` (`Ctrl+K`) khi cần dừng chương trình đang chạy.
+
+Mỗi bot có tối đa 10 hành động trong một batch; `selectUnit` chỉ đổi bot đang chọn nên không tính hạn mức.
+Không có giới hạn lệnh theo giây hoặc simulation tick.
+Các lời gọi đọc state trong lúc tạo batch dùng snapshot nhận tại đầu lần Run.
 
 Sau mỗi lần sửa, biên dịch lại trước khi chạy.
 Dừng chương trình không hoàn tác hành động đã thực hiện.
@@ -286,13 +292,14 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Mỗi đội có giới hạn 10 hành động trong một giây theo cấu hình mặc định.
 - [x] Hai chương trình cùng điều khiển một đội dùng chung giới hạn này.
 - [x] Chương trình Java tự chờ rồi gửi lại khi bị giới hạn tốc độ.
-- [~] Hàng đợi có giới hạn 32 lệnh theo cấu hình mặc định; chưa có giao diện riêng để xem hàng đợi.
+- [x] Batch giới hạn 10 hành động cho mỗi bot và được server xử lý tuần tự.
+- [x] Desktop cho chọn Atomic hoặc Partial trước khi Run.
 
 ### Account, lobby và dữ liệu đã lưu
 
 - [x] Đăng ký account và đăng nhập để nhận session token.
 - [x] Join BLUE hoặc RED trước khi dùng session token điều khiển quân.
-- [x] Năm account cùng team điều khiển chung state và dùng chung quota team.
+- [x] Năm account cùng team điều khiển chung state; giới hạn được tính theo bot trong từng batch.
 - [x] Account thứ sáu bị từ chối khi team đã đủ chỗ.
 - [x] Reconnect nhận lại snapshot mới nhất; `matchId` tách biệt giữa các match.
 - [x] Snapshot cùng event history được ghi vào H2 qua Flyway migration.

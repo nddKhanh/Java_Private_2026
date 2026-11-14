@@ -12,6 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.time.Duration;
 import java.util.Map;
+import java.util.List;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -88,6 +89,35 @@ class GameWebSocketIntegrationTest {
         assertEquals("UNSUPPORTED_SCHEMA_VERSION", schemaError.path("error").asText());
 
         viewer.close();
+        blue.close();
+    }
+
+    @Test
+    void appliesAtomicAndPartialBatchesWithVietnameseErrors() throws Exception {
+        SocketClient blue = connect("blue-token");
+        blue.awaitType("STATE_UPDATED");
+
+        blue.send(batch("atomic-batch", "ATOMIC", List.of(
+                action("atomic-wait", "WAIT", Map.of("unitId", "worker-blue")),
+                action("atomic-steal", "WAIT", Map.of("unitId", "worker-red"))
+        )));
+        JsonNode atomic = blue.awaitType("COMMAND_RESULT");
+        assertFalse(atomic.path("ok").asBoolean());
+        assertEquals("NOT_OWNER", atomic.path("error").asText());
+        assertEquals("Quân không thuộc đội của bạn.", atomic.path("errorMessage").asText());
+        assertEquals(0, atomic.path("appliedCount").asInt());
+        assertEquals(0, atomic.path("revision").asLong());
+
+        blue.send(batch("partial-batch", "PARTIAL", List.of(
+                action("partial-wait", "WAIT", Map.of("unitId", "worker-blue")),
+                action("partial-steal", "WAIT", Map.of("unitId", "worker-red"))
+        )));
+        JsonNode partial = blue.awaitType("COMMAND_RESULT");
+        assertFalse(partial.path("ok").asBoolean());
+        assertEquals("NOT_OWNER", partial.path("error").asText());
+        assertEquals(1, partial.path("failedIndex").asInt());
+        assertEquals(1, partial.path("appliedCount").asInt());
+        assertEquals(1, blue.awaitType("STATE_UPDATED").path("revision").asLong());
         blue.close();
     }
 
@@ -189,8 +219,26 @@ class GameWebSocketIntegrationTest {
     private Map<String, Object> command(String commandId, String action, Map<String, Object> extra) {
         Map<String, Object> message = new java.util.HashMap<>(extra);
         message.put("type", "COMMAND");
-        message.put("schemaVersion", 6);
+        message.put("schemaVersion", 7);
         message.put("matchId", "match-default");
+        message.put("commandId", commandId);
+        message.put("action", action);
+        return message;
+    }
+
+    private Map<String, Object> batch(String commandId, String mode, List<Map<String, Object>> commands) {
+        return Map.of(
+                "type", "BATCH",
+                "schemaVersion", 7,
+                "matchId", "match-default",
+                "commandId", commandId,
+                "mode", mode,
+                "commands", commands
+        );
+    }
+
+    private Map<String, Object> action(String commandId, String action, Map<String, Object> extra) {
+        Map<String, Object> message = new java.util.HashMap<>(extra);
         message.put("commandId", commandId);
         message.put("action", action);
         return message;

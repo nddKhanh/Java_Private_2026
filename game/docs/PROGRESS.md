@@ -3,6 +3,16 @@
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
+## 2026-11-14 — P0 batch và kiểm tra lệnh
+
+- **Trạng thái:** VERIFIED.
+- **Đã đạt:** Mỗi lần Run trên Desktop tạo một batch; mỗi bot có tối đa 10 hành động và thao tác chọn bot không tính hạn mức.
+- **Đã đạt:** Desktop cho chọn Atomic hoặc Partial; server kiểm tra lại tuần tự trên state sau từng lệnh và trả lỗi tiếng Việt tại lệnh đầu tiên không hợp lệ.
+- **Đã đạt:** Đã bỏ rate limit theo giây; simulation tick tiếp tục chạy độc lập với batch của người chơi.
+- **Bằng chứng:** Toàn bộ Maven test pass, gồm test Game Core, coordinator, WebSocket schema 7, Java client, runner và Desktop.
+- **Tiếp theo:** P1 project mẫu IntelliJ, API rút gọn và luồng chuyển source qua Desktop.
+- **Chưa kiểm chứng:** Chưa kiểm thử trực quan combobox chế độ batch trong app-image đã đóng gói.
+
 ## 2026-11-14 — Desktop pairing trong LAN
 
 - **Trạng thái:** `IMPLEMENTED`.
@@ -139,6 +149,7 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
 - **Trạng thái:** `VERIFIED`
 - **Đã đạt:** Thêm rate limit 10 action/giây theo team và queue tuần tự có capacity cấu hình mặc định 32.
+- **Ghi chú:** Cơ chế rate limit theo giây của mốc này đã được thay bằng batch tối đa 10 hành động/bot ở P0 ngày 2026-11-14.
 - **Đã đạt:** Nhiều client cùng team dùng chung cửa sổ quota; `RATE_LIMITED` và `COMMAND_QUEUE_FULL` không làm tăng revision.
 - **Bằng chứng:** 41 Maven test pass; frontend production build pass; npm audit 0 vulnerability.
 - **Tiếp theo:** Hoàn thiện footprint, projectile và fixed simulation tick trước khi mở rộng tài khoản/dữ liệu bền vững.

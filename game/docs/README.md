@@ -11,7 +11,7 @@ Khi thay đổi README cấp gốc về cách dùng, chức năng, trạng thái
 ## Kiến trúc
 
 ```text
-Java bot → GameClient → WebSocket /game → Spring Boot → Game Core → STATE_UPDATED → Phaser
+Java bot → batch → GameClient → WebSocket /game → Spring Boot → Game Core → STATE_UPDATED → Phaser
 ```
 
 Server là nguồn sự thật duy nhất cho movement, damage, HP và winner.
@@ -25,6 +25,9 @@ Desktop Code Studio dùng JavaFX để viết, biên dịch và chạy source Ja
 ```text
 JavaFX editor → Java Compiler API → child JVM → GameBot/GameClient → WebSocket → server → Phaser
 ```
+
+Mỗi lần Run gom các hành động thành một batch; người dùng chọn Atomic để từ chối toàn bộ khi có lỗi hoặc Partial để giữ phần hợp lệ trước lỗi đầu tiên.
+Mỗi bot được gửi tối đa 10 hành động trong một batch và không có giới hạn theo giây hoặc simulation tick.
 
 ## Yêu cầu
 
@@ -83,11 +86,12 @@ Trong ứng dụng:
 
 1. Với phòng tạo từ web, nhập pairing key sáu ký tự đang hiển thị trong phòng chờ rồi nhấn **Pair**.
 2. Chờ ứng dụng tự điền Server, Match code và danh sách Team token; chọn token màu của đội muốn điều khiển.
-3. Nếu không dùng pairing, vẫn có thể nhập thủ công `ws://IP_MAY_CHU:8080/game`, mã phòng và token đội.
-4. Giữ Bot class là `MyBot` và source mẫu mặc định.
-5. Nhấn **Compile**; trạng thái phải chuyển thành `Compiled`.
-6. Nhấn **Run**; console phải hiện thông báo spawn, harvest và build thành công.
-7. Quan sát Phaser: `worker-blue-2` xuất hiện, đi tới resource node, stockpile đổi và barracks mới được hiển thị.
+3. Chọn Atomic hoặc Partial tại ô Batch.
+4. Nếu không dùng pairing, vẫn có thể nhập thủ công WebSocket URL, mã phòng và token đội.
+5. Giữ Bot class là MyBot và source mẫu mặc định.
+6. Nhấn **Compile**; trạng thái phải chuyển thành Compiled.
+7. Nhấn **Run**; Desktop gửi một batch và console hiển thị kết quả hoặc lỗi tiếng Việt.
+8. Quan sát Phaser cập nhật theo các hành động server đã chấp nhận.
 
 Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để Stop.
 
@@ -103,7 +107,7 @@ Lobby động dùng `POST /api/lobbies`, `POST /api/lobbies/join`, `GET /api/lob
 Desktop pairing dùng `GET /api/desktop/pairing/{key}` và trả về WebSocket URL, match code, trạng thái cùng danh sách team token.
 Mật khẩu được lưu bằng BCrypt; session token trả về cho client chỉ được lưu dưới dạng SHA-256 trong database.
 Sau khi join team, dùng session token ở trường Token của Desktop Code Studio hoặc tham số thứ hai của `GameClient.connect`/`GameBots.connect`.
-Tối đa 5 account có thể join cùng team và dùng chung unit, quota cùng state server-authoritative; account thứ 6 nhận lỗi `TEAM_FULL`.
+Tối đa 5 account có thể join cùng team và dùng chung unit cùng state server-authoritative; account thứ 6 nhận lỗi `TEAM_FULL`.
 Các demo token `blue-token` và `red-token` vẫn hoạt động cho kịch bản local cũ.
 
 Lịch sử event của trận mặc định đọc tại `GET /api/matches/match-default/history`.
@@ -155,9 +159,9 @@ Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy c
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
-Map, rules, match list, team, faction, màu, token demo, unit, HQ, resource node, building, quota action, tick interval, session lifetime và HP spawn đều có thể đổi mà không sửa handler WebSocket hoặc Phaser renderer.
+Map, rules, match list, team, faction, màu, token demo, unit, HQ, resource node, building, giới hạn batch, tick interval, session lifetime và HP spawn đều có thể đổi mà không sửa Phaser renderer.
 
-Profile mặc định giới hạn 10 action mỗi giây cho mỗi team và queue tuần tự tối đa 32 command.
+Profile mặc định giới hạn 10 hành động cho mỗi bot trong một batch.
 
 Token mặc định chỉ dùng cho demo local:
 
@@ -178,7 +182,7 @@ Không dùng các token này cho môi trường public hoặc production.
 
 - Server mặc định phục hồi state từ H2 sau khi restart; chế độ `-Fresh` mới chủ ý giữ state trong RAM.
 - Có 10 team trong 2 faction; mỗi team có một unit seed, một HQ và có thể spawn tối đa 50 unit theo profile mặc định.
-- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server có rate limit theo team và queue tuần tự.
+- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server xử lý batch tuần tự theo chế độ Atomic hoặc Partial.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
 - Spawn tạo unit ở ô kề HQ; chi phí spawn chưa được áp dụng.
 - Resource node, harvest và building đã có; building production/defense chưa có.

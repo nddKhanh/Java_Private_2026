@@ -73,6 +73,40 @@ class GameEngineMovementTest {
     }
 
     @Test
+    void atomicBatchRollsBackAllActionsWhenOneActionIsInvalid() {
+        GameSession session = new GameSession(setupWithBlueAt(new Position(2, 2)));
+        MatchState before = session.state();
+
+        BatchApplyResult result = session.applyBatch(List.of(
+                new MoveCommand("atomic-up", "BLUE", "worker-blue", Direction.UP),
+                new MoveCommand("atomic-outside", "BLUE", "worker-blue", Direction.UP),
+                new MoveCommand("atomic-outside-2", "BLUE", "worker-blue", Direction.UP)
+        ), BatchMode.ATOMIC);
+
+        assertEquals(ErrorCode.OUT_OF_BOUNDS, result.error());
+        assertEquals(2, result.failedIndex());
+        assertEquals(0, result.appliedCount());
+        assertSame(before, session.state());
+    }
+
+    @Test
+    void partialBatchKeepsActionsBeforeTheFirstInvalidAction() {
+        GameSession session = new GameSession(setupWithBlueAt(new Position(2, 2)));
+
+        BatchApplyResult result = session.applyBatch(List.of(
+                new MoveCommand("partial-up", "BLUE", "worker-blue", Direction.UP),
+                new MoveCommand("partial-up-2", "BLUE", "worker-blue", Direction.UP),
+                new MoveCommand("partial-outside", "BLUE", "worker-blue", Direction.UP)
+        ), BatchMode.PARTIAL);
+
+        assertEquals(ErrorCode.OUT_OF_BOUNDS, result.error());
+        assertEquals(2, result.failedIndex());
+        assertEquals(2, result.appliedCount());
+        assertEquals(new Position(2, 0), unit(session.state(), "worker-blue").position());
+        assertEquals(2, session.state().revision());
+    }
+
+    @Test
     void validatesMovementAgainstEveryCellOfTwoByTwoSiegeFootprint() {
         MatchSetup setup = new MatchSetup(
                 "footprint-setup", "footprint-match", 6, 6, RuleSet.mvp(),

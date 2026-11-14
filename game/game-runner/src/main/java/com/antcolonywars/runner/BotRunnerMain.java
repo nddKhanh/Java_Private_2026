@@ -4,6 +4,7 @@ import com.antcolonywars.bot.BotProgram;
 import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.bot.GameBots;
 import com.antcolonywars.client.GameClientException;
+import com.antcolonywars.core.BatchMode;
 
 import java.io.PrintStream;
 import java.time.Duration;
@@ -14,6 +15,7 @@ public final class BotRunnerMain {
     static final String TEAM_TOKEN_ENV = "GAME_TEAM_TOKEN";
     static final String MATCH_ID_ENV = "GAME_MATCH_ID";
     static final String CONNECTION_TIMEOUT_ENV = "GAME_CONNECTION_TIMEOUT_SECONDS";
+    static final String BATCH_MODE_ENV = "GAME_BATCH_MODE";
 
     private BotRunnerMain() {
     }
@@ -52,19 +54,27 @@ public final class BotRunnerMain {
         }
 
         Duration timeout = connectionTimeout(environment);
-        try (GameBot bot = matchId.isBlank()
-                ? GameBots.connect(serverUrl, teamToken, timeout)
-                : GameBots.connect(serverUrl, teamToken, matchId, timeout)) {
-            out.printf("Connected. Running %s.%n", args[0]);
+        BatchMode batchMode = batchMode(environment);
+        try (GameBot bot = GameBots.connectBatch(serverUrl, teamToken, matchId, timeout, batchMode)) {
+            out.printf("Đã kết nối. Đang chạy %s.%n", args[0]);
             program.run(bot);
-            out.println("Bot finished successfully.");
+            out.println("Bot đã chạy xong.");
             return 0;
         } catch (Throwable exception) {
             String code = exception instanceof GameClientException clientException
                     ? clientException.code()
                     : exception.getClass().getSimpleName();
-            err.printf("Bot failed: %s: %s%n", code, messageOf(exception));
+            err.printf("Lỗi bot [%s]: %s%n", code, messageOf(exception));
             return 4;
+        }
+    }
+
+    private static BatchMode batchMode(Map<String, String> environment) {
+        String value = environment.getOrDefault(BATCH_MODE_ENV, BatchMode.ATOMIC.name());
+        try {
+            return BatchMode.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            return BatchMode.ATOMIC;
         }
     }
 

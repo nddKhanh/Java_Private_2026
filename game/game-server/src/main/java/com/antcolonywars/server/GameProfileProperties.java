@@ -26,10 +26,10 @@ public record GameProfileProperties(
                 .toList();
     }
 
-    public record Limits(int actionsPerSecond, int commandQueueCapacity, int tickMillis) {
+    public record Limits(int maxActionsPerBotPerBatch, int commandQueueCapacity, int tickMillis) {
         public Limits {
-            if (actionsPerSecond < 1 || commandQueueCapacity < 1 || tickMillis < 1) {
-                throw new IllegalArgumentException("Rate, queue and tick limits must be positive");
+            if (maxActionsPerBotPerBatch < 1 || commandQueueCapacity < 1 || tickMillis < 1) {
+                throw new IllegalArgumentException("Batch, queue and tick limits must be positive");
             }
         }
     }

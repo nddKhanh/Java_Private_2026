@@ -2,6 +2,8 @@ package com.antcolonywars.server;
 
 import com.antcolonywars.core.ApplyResult;
 import com.antcolonywars.core.AttackCommand;
+import com.antcolonywars.core.BatchApplyResult;
+import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.core.DefaultMatchSetup;
 import com.antcolonywars.core.Direction;
 import com.antcolonywars.core.ErrorCode;
@@ -28,23 +30,36 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MatchCoordinatorTest {
     @Test
-    void sharesTeamRateLimitAcrossCommandsAndReleasesItAfterOneSecond() {
-        MutableClock clock = new MutableClock();
+    void limitsActionsPerBotInEachBatchWithoutRateLimitingSeparateBatches() {
         MatchCoordinator coordinator = new MatchCoordinator(
-                DefaultMatchSetup.create(), new GameProfileProperties.Limits(2, 4, 250), clock);
+                DefaultMatchSetup.create(), new GameProfileProperties.Limits(2, 4, 250), Clock.systemUTC());
 
-        assertTrue(coordinator.apply(new WaitCommand("wait-1", "BLUE", "worker-blue")).accepted());
-        assertTrue(coordinator.apply(new WaitCommand("wait-2", "BLUE", "worker-blue")).accepted());
-        ApplyResult limited = coordinator.apply(new WaitCommand("wait-3", "BLUE", "worker-blue"));
-        assertEquals(ErrorCode.RATE_LIMITED, limited.error());
+        BatchApplyResult atomic = coordinator.applyBatch(List.of(
+                new WaitCommand("atomic-1", "BLUE", "worker-blue"),
+                new WaitCommand("atomic-2", "BLUE", "worker-blue"),
+                new WaitCommand("atomic-3", "BLUE", "worker-blue")
+        ), BatchMode.ATOMIC);
+        assertEquals(ErrorCode.BATCH_LIMIT_EXCEEDED, atomic.error());
+        assertEquals(0, atomic.state().revision());
 
-        clock.advanceMillis(1000);
-        assertTrue(coordinator.apply(new WaitCommand("wait-4", "BLUE", "worker-blue")).accepted());
+        BatchApplyResult partial = coordinator.applyBatch(List.of(
+                new WaitCommand("partial-1", "BLUE", "worker-blue"),
+                new WaitCommand("partial-2", "BLUE", "worker-blue"),
+                new WaitCommand("partial-3", "BLUE", "worker-blue")
+        ), BatchMode.PARTIAL);
+        assertEquals(ErrorCode.BATCH_LIMIT_EXCEEDED, partial.error());
+        assertEquals(2, partial.appliedCount());
+        assertEquals(2, partial.state().revision());
+
+        assertTrue(coordinator.apply(new WaitCommand("next-1", "BLUE", "worker-blue")).accepted());
+        assertTrue(coordinator.apply(new WaitCommand("next-2", "BLUE", "worker-blue")).accepted());
+        assertTrue(coordinator.apply(new WaitCommand("next-3", "BLUE", "worker-blue")).accepted());
+        assertEquals(5, coordinator.state().revision());
         assertEquals(4, coordinator.commandQueueCapacity());
     }
 
     @Test
-    void simulationTickerAdvancesProjectilesOutsideTheTeamRateLimit() {
+    void simulationTickerAdvancesProjectilesOutsidePlayerBatches() {
         MatchSetup setup = new MatchSetup(
                 "tick-setup", "tick-match", 5, 5, RuleSet.mvp(),
                 List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
