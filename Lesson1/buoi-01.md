@@ -397,7 +397,7 @@ Viết chương trình `RectangleCalculator`:
 
 ## Bài Tập Về Nhà
 
-Hoàn thành [Bài tập về nhà Buổi 01](../BTVN/buoi-01-btvn.md).
+Hoàn thành [Bài tập về nhà Buổi 01](buoi-01-btvn.md).
 
 ## Tài Liệu Tham Khảo
 

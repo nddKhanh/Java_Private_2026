@@ -308,4 +308,4 @@ Viết chương trình quản lý một `ArrayList<Double>` điểm số:
 
 ## Bài tập về nhà
 
-Hoàn thành [BTVN buổi 02](../BTVN/buoi-02-btvn.md).
+Hoàn thành [BTVN buổi 02](buoi-02-btvn.md).

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1220" height="720" viewBox="0 0 1220 720" role="img" aria-labelledby="title desc">
+<title id="title">BTVN Buổi 08 — Repository, MVC và SRP/DIP</title>
+<desc id="desc">View calls Controller; Controller calls Service; Service uses repository interfaces. Main wires dependencies. JDBC and memory implement the same contract.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z"/></marker></defs>
+<rect width="1220" height="720" fill="white"/>
+<g font-family="Arial, sans-serif" fill="black">
+<text x="40" y="38" font-size="24" font-weight="bold">BTVN Buổi 08 — Repository, MVC và SRP/DIP</text>
+<text x="40" y="65" font-size="15">Call flow: View → Controller → Service → Repository; composition root selects implementations.</text>
+<rect x="40" y="100" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="52" y="123" font-size="16" font-weight="bold">ConsoleView</text>
+<text x="52" y="146" font-size="13">readChoice(), readId()</text>
+<text x="52" y="165" font-size="13">readProduct(), readCustomer()</text>
+<text x="52" y="184" font-size="13">showProducts(), showCustomers()</text>
+<rect x="440" y="100" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="452" y="123" font-size="16" font-weight="bold">ShopController</text>
+<text x="452" y="146" font-size="13">run(), handleChoice(int)</text>
+<text x="452" y="165" font-size="13">ProductService + CustomerService</text>
+<rect x="840" y="100" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="852" y="123" font-size="16" font-weight="bold">Services</text>
+<text x="852" y="146" font-size="13">ProductService(ProductRepository)</text>
+<text x="852" y="165" font-size="13">CustomerService(CustomerRepository)</text>
+<text x="852" y="184" font-size="13">Validation + use cases</text>
+<rect x="840" y="310" width="340" height="115" rx="6" fill="white" stroke="black"/>
+<text x="852" y="333" font-size="16" font-weight="bold">Repository interfaces</text>
+<text x="852" y="356" font-size="13">ProductRepository: CRUD + Optional</text>
+<text x="852" y="375" font-size="13">CustomerRepository: insert/list/find</text>
+<text x="852" y="394" font-size="13">Implementations keep same contract</text>
+<rect x="40" y="310" width="340" height="115" rx="6" fill="white" stroke="black"/>
+<text x="52" y="333" font-size="16" font-weight="bold">JDBC implementations</text>
+<text x="52" y="356" font-size="13">JdbcProductRepository</text>
+<text x="52" y="375" font-size="13">JdbcCustomerRepository</text>
+<text x="52" y="394" font-size="13">SQL + mapping via ConnectionFactory</text>
+<rect x="440" y="310" width="340" height="115" rx="6" fill="white" stroke="black"/>
+<text x="452" y="333" font-size="16" font-weight="bold">MemoryProductRepository</text>
+<text x="452" y="356" font-size="13">implements ProductRepository</text>
+<text x="452" y="375" font-size="13">List&lt;Product&gt; products</text>
+<text x="452" y="394" font-size="13">All five CRUD methods; no MySQL</text>
+<rect x="40" y="550" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="52" y="573" font-size="16" font-weight="bold">app.HitShop (composition root)</text>
+<text x="52" y="596" font-size="13">Choose jdbc / memory</text>
+<text x="52" y="615" font-size="13">Create and connect dependencies</text>
+<text x="52" y="634" font-size="13">Start controller or memory demo</text>
+<rect x="440" y="550" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="452" y="573" font-size="16" font-weight="bold">Models</text>
+<text x="452" y="596" font-size="13">Product, Customer, CartItem, Order</text>
+<text x="452" y="615" font-size="13">Order keeps String id before session 9</text>
+<text x="452" y="634" font-size="13">No SQL or console I/O</text>
+<rect x="840" y="550" width="340" height="100" rx="6" fill="white" stroke="black"/>
+<text x="852" y="573" font-size="16" font-weight="bold">OrderStatus (enum)</text>
+<text x="852" y="596" font-size="13">PENDING, CONFIRMED, CANCELLED</text>
+<text x="852" y="615" font-size="13">Order controls legal transitions</text>
+</g>
+<g fill="none" stroke="black" stroke-width="1.5" marker-end="url(#arrow)">
+<path d="M380 150 H440"/><path d="M780 150 H840"/><path d="M1010 200 V310"/>
+<path d="M210 310 V260 H940 V310" stroke-dasharray="6 4"/>
+<path d="M610 310 V280 H980 V310" stroke-dasharray="6 4"/>
+<path d="M780 600 H840"/>
+</g>
+<text x="40" y="692" font-family="Arial" font-size="14">Solid arrows: calls/uses. Dashed arrows: implements. Main wires dependencies (not shown as call edges).</text>
+</svg>

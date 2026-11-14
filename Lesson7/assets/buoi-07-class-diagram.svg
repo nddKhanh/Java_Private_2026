@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="650" viewBox="0 0 1180 650" role="img" aria-labelledby="title desc">
+  <title id="title">BTVN Buổi 07 — Product CRUD qua JDBC</title>
+  <desc id="desc">HitShop sở hữu Connection; ProductJdbc đóng Statement/ResultSet do nó tạo</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/></marker>
+    <marker id="arrowSmall" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/></marker>
+    <marker id="triangle" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/></marker>
+    <marker id="diamond" viewBox="0 0 14 10" refX="13" refY="5" markerWidth="12" markerHeight="10" orient="auto"><path d="M 1 5 L 6 1 L 13 5 L 6 9 z" fill="#000000"/></marker>
+  </defs>
+  <style>
+    .title { font: 700 27px Arial, sans-serif; fill: #000000; }
+    .subtitle { font: 14px Arial, sans-serif; fill: #000000; }
+    .class-title { font: 700 16px Arial, sans-serif; fill: #000000; }
+    .member { font: 11px Consolas, monospace; fill: #000000; }
+    .method { fill: #000000; }
+    .edge-label { font: 12px Arial, sans-serif; fill: #000000; }
+    .note { font: 12px Arial, sans-serif; fill: #000000; }
+    .legend { font: 12px Arial, sans-serif; fill: #000000; }
+  </style>
+  <rect width="100%" height="100%" fill="#FFFFFF"/>
+  <text x="40" y="42" class="title">BTVN Buổi 07 — Product CRUD qua JDBC</text>
+  <text x="40" y="66" class="subtitle">HitShop sở hữu Connection; ProductJdbc đóng Statement/ResultSet do nó tạo</text>
+  <path d="M 330 200 L 440 200" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrow)"/><text x="385.0" y="186.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 385.0 186.0)" class="edge-label">uses</text>
+<path d="M 790 190 L 860 190" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrow)"/><text x="825.0" y="176.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(0.0 825.0 176.0)" class="edge-label">uses</text>
+<path d="M 195 300 L 195 420" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrow)"/><text x="209.0" y="360.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(90.0 209.0 360.0)" class="edge-label">uses</text>
+<path d="M 530 330 L 260 420" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrow)"/><text x="399.4" y="388.3" text-anchor="middle" dominant-baseline="middle" transform="rotate(-18.4 399.4 388.3)" class="edge-label">uses</text>
+<path d="M 615 330 L 615 420" fill="none" stroke="#000000" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#arrow)"/><text x="629.0" y="375.0" text-anchor="middle" dominant-baseline="middle" transform="rotate(90.0 629.0 375.0)" class="edge-label">uses</text>
+  <g class="class-box"><rect x="60" y="130" width="270" height="106" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 68 130 H 322 Q 330 130 330 138 V 178 H 60 V 138 Q 60 130 68 130" fill="#FFFFFF"/><line x1="60" y1="178" x2="330" y2="178" stroke="#000000" stroke-width="1.5"/><text x="195" y="168" text-anchor="middle" class="class-title">HitShop</text><text x="72" y="200" class="member method">+ main(args: String[]): void</text><text x="72" y="220" class="member method">+ showMenu(): void</text></g>
+<g class="class-box"><rect x="440" y="90" width="350" height="154" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 448 90 H 782 Q 790 90 790 98 V 126 H 440 V 98 Q 440 90 448 90" fill="#FFFFFF"/><line x1="440" y1="126" x2="790" y2="126" stroke="#000000" stroke-width="1.5"/><text x="615" y="114" text-anchor="middle" class="class-title">ProductJdbc</text><text x="452" y="148" class="member method">+ add(Connection, Product): boolean</text><text x="452" y="168" class="member method">+ findAll(Connection): List&lt;Product&gt;</text><text x="452" y="188" class="member method">+ findById(Connection, String): Product</text><text x="452" y="208" class="member method">+ update(Connection, Product): boolean</text><text x="452" y="228" class="member method">+ deleteById(Connection, String): boolean</text></g>
+<g class="class-box"><rect x="860" y="90" width="270" height="162" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 868 90 H 1122 Q 1130 90 1130 98 V 126 H 860 V 98 Q 860 90 868 90" fill="#FFFFFF"/><line x1="860" y1="126" x2="1130" y2="126" stroke="#000000" stroke-width="1.5"/><text x="995" y="114" text-anchor="middle" class="class-title">Product</text><text x="872" y="148" class="member">- id: String</text><text x="872" y="168" class="member">- name: String</text><text x="872" y="188" class="member">- price: double</text><text x="872" y="208" class="member">- stock: int</text><line x1="860" y1="218" x2="1130" y2="218" stroke="#000000"/><text x="872" y="232" class="member method">+ getId(): String</text></g>
+<g class="class-box"><rect x="60" y="420" width="270" height="106" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 68 420 H 322 Q 330 420 330 428 V 468 H 60 V 428 Q 60 420 68 420" fill="#FFFFFF"/><line x1="60" y1="468" x2="330" y2="468" stroke="#000000" stroke-width="1.5"/><text x="195" y="458" text-anchor="middle" class="class-title">Connection</text><text x="72" y="490" class="member method">+ prepareStatement(String): PreparedStatement</text><text x="72" y="510" class="member method">+ close(): void</text></g>
+<g class="class-box"><rect x="440" y="420" width="350" height="146" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 448 420 H 782 Q 790 420 790 428 V 468 H 440 V 428 Q 440 420 448 420" fill="#FFFFFF"/><line x1="440" y1="468" x2="790" y2="468" stroke="#000000" stroke-width="1.5"/><text x="615" y="458" text-anchor="middle" class="class-title">products</text><text x="452" y="490" class="member">id: VARCHAR(20)</text><text x="452" y="510" class="member">name: VARCHAR(100)</text><text x="452" y="530" class="member">price: DECIMAL(12,2)</text><text x="452" y="550" class="member">stock: INT</text></g>
+  <g><rect x="845" y="430" width="285" height="58" rx="8" fill="#FFFFFF" stroke="#000000" stroke-dasharray="5 4"/><text x="857" y="453" class="note">Buổi 07 chưa tách Repository/Service.</text><text x="857" y="472" class="note">Input SQL dùng PreparedStatement.</text></g>
+  <g transform="translate(40 625)">
+    <text class="legend">Tam giác: extends/implements · Hình thoi: HAS-A · Nét đứt: uses (dependency)</text>
+  </g>
+</svg>
