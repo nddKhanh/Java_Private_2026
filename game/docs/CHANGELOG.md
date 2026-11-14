@@ -3,6 +3,20 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-14 — P2 công trình và đường đạn cố định
+
+### Changed
+
+- HQ chỉ sản xuất WORKER; BARRACKS chỉ sản xuất MELEE, RANGED và SIEGE từ `sourceId` được chọn.
+- Projectile giữ tọa độ mục tiêu lúc khai hỏa, đi theo ô Bresenham và không đuổi theo mục tiêu đã di chuyển.
+- Công trình chặn projectile, nhận sát thương và bị xóa khỏi bản đồ khi HP về 0.
+- TOWER tự chọn mục tiêu địch gần nhất trong phạm vi 5 ô và khai hỏa theo simulation tick.
+
+### Verified
+
+- Toàn bộ Maven test pass, gồm luật nguồn sản xuất, né đạn, va chạm công trình, tower tự bắn và tích hợp client/server.
+- Frontend production build pass với state projectile mở rộng.
+
 ## 2026-11-14 — P1 IntelliJ và API bot rút gọn
 
 ### Added

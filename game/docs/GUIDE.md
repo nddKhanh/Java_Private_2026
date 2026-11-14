@@ -204,7 +204,7 @@ Mỗi dòng là một ví dụ riêng; cần đưa quân tới vị trí phù h�
 | Đứng chờ | `bot.waitTurn();` | Giữ nguyên vị trí. |
 | Tấn công | `bot.attack("ranged-blue-1", Direction.RIGHT);` | Quét sang phải đến hết tầm; mục tiêu đầu tiên trên đường bắn nhận projectile. |
 | Chờ đạn chạm mục tiêu | `bot.awaitSimulationIdle();` | Chờ toàn bộ projectile hiện tại kết thúc trước khi đọc HP hoặc winner. |
-| Tạo quân | `bot.spawn("ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);` | Hỗ trợ `WORKER`, `MELEE`, `RANGED`, `SIEGE`; vùng xuất quân phải trống. |
+| Tạo quân | `bot.spawn("barracks-blue", "ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);` | HQ chỉ tạo `WORKER`; BARRACKS tạo `MELEE`, `RANGED`, `SIEGE`; vùng xuất quân phải trống. |
 | Khai thác | `bot.harvest();` | Mặc định đứng tại điểm tài nguyên còn trữ lượng. |
 | Xây doanh trại | `bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);` | Ô bên phải trống; mặc định tốn 3 tài nguyên. |
 | Xây tháp | `bot.build("tower-blue", BuildingType.TOWER, Direction.DOWN);` | Ô bên dưới trống; mặc định tốn 2 tài nguyên. |
@@ -223,7 +223,7 @@ import com.antcolonywars.core.UnitType;
 Trong hàm `run`, có thể tạo và điều khiển quân đánh xa như sau:
 
 ```java
-bot.spawn("ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);
+bot.spawn("barracks-blue", "ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);
 bot.selectUnit("ranged-blue-1");
 bot.move(Direction.RIGHT);
 bot.attack(Direction.RIGHT);
@@ -232,6 +232,9 @@ bot.attack(Direction.RIGHT);
 Đổi `UnitType.RANGED` thành `MELEE` (cận chiến), `SIEGE` (công thành) hoặc `WORKER` (quân thợ).
 Nếu đã gọi `bot.selectUnit("ranged-blue-1")`, có thể viết ngắn `bot.attack(Direction.RIGHT)`.
 Nếu không có mục tiêu trên đường bắn trong tầm, server trả `TARGET_NOT_FOUND`; nếu đồng minh đứng trước, server trả `FRIENDLY_TARGET`.
+Đạn giữ tọa độ của mục tiêu tại lúc khai hỏa, đi theo đường Bresenham và không đổi hướng khi mục tiêu di chuyển.
+Công trình trên đường bay chặn đạn và nhận sát thương; công trình biến mất khi HP về 0.
+TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô theo simulation tick.
 
 ### Cách khác — chạy kịch bản có sẵn
 

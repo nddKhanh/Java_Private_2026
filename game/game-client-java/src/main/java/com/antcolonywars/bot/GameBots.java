@@ -75,6 +75,17 @@ public final class GameBots {
         }
 
         @Override
+        public GameState spawn(
+                String sourceId,
+                String unitId,
+                String displayName,
+                UnitType unitType,
+                Direction direction
+        ) {
+            return client.spawn(sourceId, unitId, displayName, unitType, direction);
+        }
+
+        @Override
         public GameState harvest() {
             return selectedUnitId == null ? client.harvest() : client.harvest(selectedUnitId);
         }
@@ -164,6 +175,18 @@ public final class GameBots {
         @Override
         public GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction) {
             actions.add(BatchAction.spawn(unitId, displayName, unitType.name(), direction));
+            return batchSnapshot;
+        }
+
+        @Override
+        public GameState spawn(
+                String sourceId,
+                String unitId,
+                String displayName,
+                UnitType unitType,
+                Direction direction
+        ) {
+            actions.add(BatchAction.spawn(sourceId, unitId, displayName, unitType.name(), direction));
             return batchSnapshot;
         }
 

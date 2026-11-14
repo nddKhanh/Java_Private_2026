@@ -15,6 +15,7 @@ public record ClientMessage(
         String targetId,
         String buildingId,
         String buildingType,
+        String sourceId,
         String mode,
         List<BatchCommandMessage> commands
 ) {

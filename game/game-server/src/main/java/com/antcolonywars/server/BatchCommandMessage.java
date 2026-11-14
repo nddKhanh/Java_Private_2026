@@ -9,6 +9,7 @@ public record BatchCommandMessage(
         String direction,
         String targetId,
         String buildingId,
-        String buildingType
+        String buildingType,
+        String sourceId
 ) {
 }

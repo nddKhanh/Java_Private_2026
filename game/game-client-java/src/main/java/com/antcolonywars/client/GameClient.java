@@ -96,16 +96,29 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
     }
 
     public GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction) {
+        return spawn(null, unitId, displayName, unitType, direction);
+    }
+
+    public GameState spawn(
+            String sourceId,
+            String unitId,
+            String displayName,
+            UnitType unitType,
+            Direction direction
+    ) {
         Objects.requireNonNull(unitId, "unitId");
         Objects.requireNonNull(displayName, "displayName");
         Objects.requireNonNull(unitType, "unitType");
         Objects.requireNonNull(direction, "direction");
-        return sendAction("SPAWN", Map.of(
-                "unitId", unitId,
-                "displayName", displayName,
-                "unitType", unitType.name(),
-                "direction", direction.name()
-        ));
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("unitId", unitId);
+        payload.put("displayName", displayName);
+        payload.put("unitType", unitType.name());
+        payload.put("direction", direction.name());
+        if (sourceId != null && !sourceId.isBlank()) {
+            payload.put("sourceId", sourceId);
+        }
+        return sendAction("SPAWN", payload);
     }
 
     public GameState harvest() {

@@ -425,6 +425,17 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 # D. CÁC HƯỚNG MỞ RỘNG SAU DESKTOP
 
+## P2 — Công trình và đường đạn cố định
+
+**Trạng thái:** `VERIFIED` bằng test tự động.
+
+- SPAWN truyền nguồn sản xuất; HQ chỉ tạo WORKER, BARRACKS chỉ tạo MELEE, RANGED và SIEGE.
+- Projectile khóa tọa độ đích lúc khai hỏa và đi từng ô Bresenham mà không tìm đường vòng.
+- Công trình chặn đạn, nhận damage và bị loại khỏi state khi HP về 0.
+- TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô theo simulation tick.
+
+**Bằng chứng:** Toàn bộ Maven test và frontend production build pass.
+
 ## P1 — IntelliJ và API bot rút gọn
 
 **Trạng thái:** `VERIFIED` bằng test tự động.

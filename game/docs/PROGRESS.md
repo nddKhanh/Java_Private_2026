@@ -3,6 +3,15 @@
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
+## 2026-11-14 — P2 công trình và đường đạn cố định
+
+- **Trạng thái:** `VERIFIED` bằng test tự động.
+- **Đã đạt:** SPAWN nhận ID nguồn sản xuất; HQ chỉ tạo WORKER và BARRACKS chỉ tạo MELEE, RANGED hoặc SIEGE.
+- **Đã đạt:** Projectile giữ tọa độ đích tại thời điểm bắn, đi thẳng theo Bresenham và có thể trượt khi mục tiêu di chuyển.
+- **Đã đạt:** Công trình chặn đạn, giảm HP, biến mất ở HP 0; TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô.
+- **Bằng chứng:** `mvnw -q test` và `npm run build` trong `game-web` đều hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa kiểm thử trực quan đường đạn chéo, tower và animation phá hủy công trình trên trình duyệt thật.
+
 ## 2026-11-14 — P1 IntelliJ và API bot rút gọn
 
 - **Trạng thái:** `VERIFIED` bằng test tự động.
@@ -12,7 +21,7 @@ Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 - **Bằng chứng:** `mvnw -q -pl student-bot-template,game-desktop -am test` hoàn tất với exit code 0.
 - **Giới hạn:** Java không cho override `Object.wait()` vì phương thức này là `final`, nên thao tác chờ của API ngắn mang tên `idle()`.
 - **Chưa kiểm chứng:** Chưa kiểm thử trực quan thao tác Run `Submit` trong IntelliJ với app-image Desktop đã đóng gói.
-- **Tiếp theo:** P2 luật sản xuất theo công trình, building combat, tower tự bắn và projectile theo đường cố định.
+- **Tiếp theo:** Kiểm thử trực quan P2 trên viewer và cân bằng tốc độ bắn nếu cần.
 
 ## 2026-11-14 — P0 batch và kiểm tra lệnh
 

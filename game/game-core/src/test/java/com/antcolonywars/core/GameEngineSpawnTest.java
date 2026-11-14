@@ -10,11 +10,21 @@ class GameEngineSpawnTest {
     @Test
     void spawnsEverySupportedUnitType() {
         for (UnitType type : UnitType.values()) {
-            GameSession session = new GameSession(DefaultMatchSetup.create());
+            MatchSetup base = DefaultMatchSetup.create();
+            MatchSetup setup = new MatchSetup(
+                    base.setupId(), base.matchId(), base.mapWidth(), base.mapHeight(), base.rules(),
+                    base.teams(), base.units(), base.headquarters(), base.resourceNodes(),
+                    java.util.List.of(new Building(
+                            "barracks-blue", "BLUE", BuildingType.BARRACKS, new Position(3, 3), 5
+                    ))
+            );
+            GameSession session = new GameSession(setup);
             String unitId = "spawned-" + type.name().toLowerCase();
+            String sourceId = type == UnitType.WORKER ? "hq-blue" : "barracks-blue";
 
             ApplyResult result = session.apply(new SpawnCommand(
-                    "spawn-" + type.name(), "BLUE", unitId, type.name(), type.name(), Direction.DOWN
+                    "spawn-" + type.name(), "BLUE", sourceId,
+                    unitId, type.name(), type.name(), Direction.DOWN
             ));
 
             assertTrue(result.accepted(), type.name());
@@ -23,6 +33,29 @@ class GameEngineSpawnTest {
             assertEquals(type == UnitType.SIEGE ? 2 : 1, unit.width());
             assertEquals(type == UnitType.SIEGE ? 2 : 1, unit.height());
         }
+    }
+
+    @Test
+    void enforcesHeadquartersAndBarracksProductionRules() {
+        MatchSetup base = DefaultMatchSetup.create();
+        MatchSetup setup = new MatchSetup(
+                base.setupId(), base.matchId(), base.mapWidth(), base.mapHeight(), base.rules(),
+                base.teams(), base.units(), base.headquarters(), base.resourceNodes(),
+                java.util.List.of(new Building(
+                        "barracks-blue", "BLUE", BuildingType.BARRACKS, new Position(3, 3), 5
+                ))
+        );
+        GameSession session = new GameSession(setup);
+
+        assertEquals(ErrorCode.INVALID_PRODUCTION_SOURCE, session.apply(new SpawnCommand(
+                "hq-melee", "BLUE", "hq-blue", "melee-blue", "Melee", "MELEE", Direction.DOWN
+        )).error());
+        assertEquals(ErrorCode.INVALID_PRODUCTION_SOURCE, session.apply(new SpawnCommand(
+                "barracks-worker", "BLUE", "barracks-blue", "worker-blue-2", "Worker", "WORKER", Direction.DOWN
+        )).error());
+        assertEquals(ErrorCode.PRODUCTION_SOURCE_NOT_FOUND, session.apply(new SpawnCommand(
+                "missing", "BLUE", "missing", "worker-blue-2", "Worker", "WORKER", Direction.DOWN
+        )).error());
     }
 
     @Test

@@ -200,7 +200,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         return toCommand(new BatchCommandMessage(
                 request.commandId(), request.action(), request.unitId(), request.displayName(),
                 request.unitType(), request.direction(), request.targetId(), request.buildingId(),
-                request.buildingType()
+                request.buildingType(), request.sourceId()
         ), teamId, state);
     }
 
@@ -211,6 +211,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return new SpawnCommand(
                     request.commandId(),
                     teamId,
+                    request.sourceId(),
                     requireText(request.unitId()),
                     requireText(request.displayName()),
                     request.unitType() == null || request.unitType().isBlank() ? "WORKER" : request.unitType(),

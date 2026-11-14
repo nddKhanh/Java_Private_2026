@@ -11,22 +11,23 @@ public record BatchAction(
         String direction,
         String targetId,
         String buildingId,
-        String buildingType
+        String buildingType,
+        String sourceId
 ) {
     public static BatchAction move(String unitId, Direction direction) {
-        return action("MOVE", unitId, null, null, direction.name(), null, null);
+        return action("MOVE", unitId, null, null, direction.name(), null, null, null);
     }
 
     public static BatchAction waitTurn(String unitId) {
-        return action("WAIT", unitId, null, null, null, null, null);
+        return action("WAIT", unitId, null, null, null, null, null, null);
     }
 
     public static BatchAction attack(String unitId, Direction direction) {
-        return action("ATTACK", unitId, null, null, direction.name(), null, null);
+        return action("ATTACK", unitId, null, null, direction.name(), null, null, null);
     }
 
     public static BatchAction harvest(String unitId) {
-        return action("HARVEST", unitId, null, null, null, null, null);
+        return action("HARVEST", unitId, null, null, null, null, null, null);
     }
 
     public static BatchAction build(
@@ -35,7 +36,17 @@ public record BatchAction(
             BuildingType buildingType,
             Direction direction
     ) {
-        return action("BUILD", unitId, null, null, direction.name(), buildingId, buildingType.name());
+        return action("BUILD", unitId, null, null, direction.name(), buildingId, buildingType.name(), null);
+    }
+
+    public static BatchAction spawn(
+            String sourceId,
+            String unitId,
+            String displayName,
+            String unitType,
+            Direction direction
+    ) {
+        return action("SPAWN", unitId, displayName, unitType, direction.name(), null, null, sourceId);
     }
 
     public static BatchAction spawn(
@@ -44,7 +55,7 @@ public record BatchAction(
             String unitType,
             Direction direction
     ) {
-        return action("SPAWN", unitId, displayName, unitType, direction.name(), null, null);
+        return spawn(null, unitId, displayName, unitType, direction);
     }
 
     private static BatchAction action(
@@ -54,11 +65,12 @@ public record BatchAction(
             String unitType,
             String direction,
             String buildingId,
-            String buildingType
+            String buildingType,
+            String sourceId
     ) {
         return new BatchAction(
                 UUID.randomUUID().toString(), action, unitId, displayName, unitType,
-                direction, null, buildingId, buildingType
+                direction, null, buildingId, buildingType, sourceId
         );
     }
 }

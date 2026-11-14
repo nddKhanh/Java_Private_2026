@@ -47,10 +47,10 @@ public final class BotAdapter implements Bot {
 
     @Override
     public void spawn(String source, String type, String id, int direction) {
-        requireText(source, "source");
+        String sourceId = requireText(source, "source");
         String unitId = requireText(id, "id");
         UnitType unitType = UnitType.valueOf(requireText(type, "type").toUpperCase(Locale.ROOT));
-        delegate.spawn(unitId, unitId, unitType, direction(direction));
+        delegate.spawn(sourceId, unitId, unitId, unitType, direction(direction));
     }
 
     @Override

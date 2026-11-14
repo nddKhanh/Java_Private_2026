@@ -5,6 +5,7 @@ import java.util.Objects;
 public record SpawnCommand(
         String commandId,
         String actorTeamId,
+        String sourceId,
         String unitId,
         String displayName,
         String unitType,
@@ -19,7 +20,18 @@ public record SpawnCommand(
         Objects.requireNonNull(direction, "direction");
     }
 
+    public SpawnCommand(
+            String commandId,
+            String actorTeamId,
+            String unitId,
+            String displayName,
+            String unitType,
+            Direction direction
+    ) {
+        this(commandId, actorTeamId, null, unitId, displayName, unitType, direction);
+    }
+
     public SpawnCommand(String commandId, String actorTeamId, String unitId, String displayName, Direction direction) {
-        this(commandId, actorTeamId, unitId, displayName, UnitType.WORKER.name(), direction);
+        this(commandId, actorTeamId, null, unitId, displayName, UnitType.WORKER.name(), direction);
     }
 }

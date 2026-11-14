@@ -14,6 +14,8 @@ public interface GameBot extends AutoCloseable {
 
     GameState spawn(String unitId, String displayName, UnitType unitType, Direction direction);
 
+    GameState spawn(String sourceId, String unitId, String displayName, UnitType unitType, Direction direction);
+
     GameState harvest();
 
     GameState build(String buildingId, BuildingType buildingType, Direction direction);

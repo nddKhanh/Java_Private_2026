@@ -18,6 +18,8 @@ final class ErrorMessages {
             Map.entry("ENTITY_ID_TAKEN", "ID đã được sử dụng."),
             Map.entry("INVALID_DISPLAY_NAME", "Tên hiển thị không hợp lệ."),
             Map.entry("INVALID_UNIT_TYPE", "Loại quân không hợp lệ."),
+            Map.entry("PRODUCTION_SOURCE_NOT_FOUND", "Không tìm thấy công trình sản xuất."),
+            Map.entry("INVALID_PRODUCTION_SOURCE", "Công trình không thể sản xuất loại quân này."),
             Map.entry("UNIT_LIMIT_REACHED", "Đội đã đạt giới hạn quân."),
             Map.entry("RESOURCE_NOT_FOUND", "Không tìm thấy tài nguyên."),
             Map.entry("RESOURCE_DEPLETED", "Tài nguyên đã cạn."),

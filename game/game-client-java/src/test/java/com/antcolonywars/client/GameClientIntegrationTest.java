@@ -5,6 +5,7 @@ import com.antcolonywars.bot.GameBots;
 import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.GameSession;
 import com.antcolonywars.core.MatchSetup;
+import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
 import com.antcolonywars.client.BuildingType;
@@ -24,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.Map;
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -128,16 +130,48 @@ class GameClientIntegrationTest {
     @Test
     void botSpawnsSelectsAndMovesAnotherUnit() {
         try (GameBot bot = GameBots.connect(serverUrl(), "blue-token")) {
-            bot.spawn("worker-blue-2", "Builder", com.antcolonywars.core.UnitType.RANGED, Direction.DOWN);
+            bot.move(Direction.RIGHT);
+            bot.move(Direction.DOWN);
+            bot.move(Direction.DOWN);
+            bot.harvest();
+            bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
+            bot.spawn(
+                    "barracks-blue", "worker-blue-2", "Builder",
+                    com.antcolonywars.core.UnitType.RANGED, Direction.DOWN
+            );
             bot.selectUnit("worker-blue-2").move(Direction.RIGHT);
 
             assertEquals("worker-blue-2", bot.selectedUnitId());
             assertEquals("RANGED", bot.getLatestState().snapshot().units().stream()
                     .filter(unit -> unit.id().equals("worker-blue-2"))
                     .findFirst().orElseThrow().type());
-            assertEquals(1, unitX(bot.getLatestState(), "worker-blue-2"));
-            assertEquals(1, unitX(bot.getLatestState(), "worker-blue"));
-            assertEquals(2, bot.getLatestState().revision());
+            assertEquals(4, unitX(bot.getLatestState(), "worker-blue-2"));
+            assertEquals(2, unitX(bot.getLatestState(), "worker-blue"));
+            assertEquals(7, bot.getLatestState().revision());
+        }
+    }
+
+    @Test
+    void batchCanBuildBarracksAndSpawnFromItSequentially() {
+        try (GameBot bot = GameBots.connectBatch(
+                serverUrl(), "blue-token", "match-default", Duration.ofSeconds(5), BatchMode.ATOMIC
+        )) {
+            bot.move(Direction.RIGHT);
+            bot.move(Direction.DOWN);
+            bot.move(Direction.DOWN);
+            bot.harvest();
+            bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
+            bot.spawn(
+                    "barracks-blue", "melee-blue-1", "Melee",
+                    com.antcolonywars.core.UnitType.MELEE, Direction.DOWN
+            );
+
+            GameState state = bot.awaitSimulationIdle();
+
+            assertTrue(state.snapshot().buildings().stream()
+                    .anyMatch(building -> building.id().equals("barracks-blue")));
+            assertTrue(state.snapshot().units().stream()
+                    .anyMatch(unit -> unit.id().equals("melee-blue-1") && unit.type().equals("MELEE")));
         }
     }
 

@@ -8,6 +8,7 @@ public record Projectile(
         String sourceUnitId,
         String targetId,
         Position position,
+        Position targetPosition,
         int damage
 ) {
     public Projectile {
@@ -16,12 +17,13 @@ public record Projectile(
         Objects.requireNonNull(sourceUnitId, "sourceUnitId");
         Objects.requireNonNull(targetId, "targetId");
         Objects.requireNonNull(position, "position");
+        Objects.requireNonNull(targetPosition, "targetPosition");
         if (damage <= 0) {
             throw new IllegalArgumentException("Projectile damage must be positive");
         }
     }
 
     public Projectile moveTo(Position nextPosition) {
-        return new Projectile(id, teamId, sourceUnitId, targetId, nextPosition, damage);
+        return new Projectile(id, teamId, sourceUnitId, targetId, nextPosition, targetPosition, damage);
     }
 }

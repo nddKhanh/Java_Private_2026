@@ -147,6 +147,70 @@ class GameEngineAttackTest {
         assertEquals("BLUE", finished.winnerTeamId());
     }
 
+    @Test
+    void projectileKeepsOriginalTargetPositionAndCanMissMovingUnit() {
+        GameSession session = new GameSession(combatSetup(
+                new Position(1, 1), new Position(3, 1), new RuleSet("range", 1, 3), new Position(4, 4)
+        ));
+
+        assertTrue(session.apply(new AttackCommand(
+                "fixed-shot", "BLUE", "worker-blue", Direction.RIGHT
+        )).accepted());
+        assertTrue(session.apply(new MoveCommand(
+                "dodge", "RED", "worker-red", Direction.DOWN
+        )).accepted());
+        session.advanceTick();
+        MatchState afterMiss = session.advanceTick().state();
+
+        assertEquals(3, unit(afterMiss, "worker-red").hp());
+        assertTrue(afterMiss.projectiles().isEmpty());
+    }
+
+    @Test
+    void buildingBlocksProjectileTakesDamageAndIsRemovedAtZeroHp() {
+        MatchSetup base = combatSetup(
+                new Position(1, 1), new Position(4, 1), new RuleSet("building-hit", 2, 4), new Position(4, 4)
+        );
+        MatchSetup setup = new MatchSetup(
+                base.setupId(), base.matchId(), base.mapWidth(), base.mapHeight(), base.rules(),
+                base.teams(), base.units(), base.headquarters(), base.resourceNodes(),
+                List.of(new Building("wall-red", "RED", BuildingType.WALL, new Position(2, 1), 2))
+        );
+        GameSession session = new GameSession(setup);
+
+        assertTrue(session.apply(new AttackCommand(
+                "wall-shot", "BLUE", "worker-blue", Direction.RIGHT
+        )).accepted());
+        MatchState hit = session.advanceTick().state();
+
+        assertTrue(hit.buildings().isEmpty());
+        assertEquals(3, unit(hit, "worker-red").hp());
+        assertTrue(hit.projectiles().isEmpty());
+    }
+
+    @Test
+    void towerAutomaticallyFiresWithinFiveCellsAndUsesDiagonalBresenhamCell() {
+        MatchSetup base = combatSetup(
+                new Position(4, 0), new Position(3, 3), RuleSet.mvp(), new Position(5, 5)
+        );
+        MatchSetup setup = new MatchSetup(
+                base.setupId(), base.matchId(), 6, 6, base.rules(),
+                base.teams(), base.units(), base.headquarters(), base.resourceNodes(),
+                List.of(
+                        new Building("tower-blue", "BLUE", BuildingType.TOWER, new Position(0, 1), 5),
+                        new Building("wall-blue", "BLUE", BuildingType.WALL, new Position(1, 2), 5)
+                )
+        );
+        GameSession session = new GameSession(setup);
+
+        MatchState tick = session.advanceTick().state();
+
+        assertEquals(4, tick.buildings().stream()
+                .filter(building -> building.id().equals("wall-blue"))
+                .findFirst().orElseThrow().hp());
+        assertEquals(3, unit(tick, "worker-red").hp());
+    }
+
     private MatchSetup combatSetup(Position blue, Position red) {
         return combatSetup(blue, red, RuleSet.mvp(), new Position(4, 4));
     }

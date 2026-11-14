@@ -14,8 +14,12 @@ public record Building(
         Objects.requireNonNull(teamId, "teamId");
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(position, "position");
-        if (hp <= 0) {
-            throw new IllegalArgumentException("Building hp must be positive");
+        if (hp < 0) {
+            throw new IllegalArgumentException("Building hp cannot be negative");
         }
+    }
+
+    public Building takeDamage(int damage) {
+        return new Building(id, teamId, type, position, Math.max(0, hp - damage));
     }
 }

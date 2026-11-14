@@ -368,3 +368,6 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 11. Bổ sung pixel art, animation, tutorial, replay và cân bằng.
 
 Tinh thần của MVP là chứng minh chu trình **Java program → WebSocket → server xử lý → state đổi → Phaser hiển thị → trận kết thúc** với số thành phần ít nhất có thể.
+SPAWN phải chỉ rõ hoặc suy ra nguồn sản xuất hợp lệ: HQ chỉ tạo WORKER, BARRACKS chỉ tạo MELEE, RANGED và SIEGE.
+Projectile khóa tọa độ mục tiêu lúc khai hỏa, đi theo các ô Bresenham, bị công trình chặn và không tìm đường vòng.
+Công trình nhận damage và bị xóa ở HP 0; TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô theo simulation tick.

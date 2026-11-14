@@ -17,6 +17,9 @@ Java bot → batch → GameClient → WebSocket /game → Spring Boot → Game C
 Server là nguồn sự thật duy nhất cho movement, damage, HP và winner.
 Phaser chỉ render snapshot và không tự tính gameplay.
 Bot có thể spawn `WORKER`, `MELEE`, `RANGED`, `SIEGE`; lệnh attack nhận mã quân và hướng, rồi server chọn mục tiêu đầu tiên trong tầm trên đường bắn.
+HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE, RANGED và SIEGE.
+Projectile giữ tọa độ đích lúc khai hỏa, đi theo Bresenham, bị công trình chặn và không đuổi theo mục tiêu.
+TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô.
 Web viewer có đăng ký/đăng nhập, tạo/tìm trận, phòng chờ theo đội, cùng bảng trạng thái revision, tick, lực lượng và kết quả trận.
 Khi chạy `start-web.ps1`, viewer mở trên mọi địa chỉ mạng để các máy cùng Wi-Fi truy cập bằng IPv4 của máy chủ.
 
@@ -198,8 +201,8 @@ Không dùng các token này cho môi trường public hoặc production.
 - Có 10 team trong 2 faction; mỗi team có một unit seed, một HQ và có thể spawn tối đa 50 unit theo profile mặc định.
 - Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server xử lý batch tuần tự theo chế độ Atomic hoặc Partial.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
-- Spawn tạo unit ở ô kề HQ; chi phí spawn chưa được áp dụng.
-- Resource node, harvest và building đã có; building production/defense chưa có.
+- Spawn tạo unit ở ô kề nguồn sản xuất; HQ chỉ tạo WORKER và BARRACKS chỉ tạo quân chiến đấu; chi phí spawn chưa được áp dụng.
+- Resource node, harvest và building đã có; công trình chặn/nhận damage, bị phá hủy ở HP 0 và TOWER tự bắn trong tầm 5.
 - Account, lobby membership, session, snapshot và event history được lưu bằng H2/Flyway; file database mặc định nằm trong `game-server/data/`.
 - Hai match được route độc lập theo `matchId`; reconnect nhận snapshot authoritative mới nhất.
 - Chưa có danh sách phòng công khai, matchmaking tự động, email verification, quên mật khẩu, backup hoặc database production.
