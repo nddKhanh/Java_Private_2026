@@ -71,7 +71,7 @@ class GameEngineSpawnTest {
         GameSession session = new GameSession(DefaultMatchSetup.create());
 
         ApplyResult spawned = session.apply(new SpawnCommand(
-                "spawn-1", "BLUE", "worker-blue-2", "Builder", Direction.DOWN
+                "spawn-1", "BLUE", "hq-blue", "worker-blue-2", "Builder", "WORKER", Direction.DOWN
         ));
         ApplyResult moved = session.apply(new MoveCommand(
                 "move-1", "BLUE", "worker-blue-2", Direction.RIGHT
@@ -86,6 +86,18 @@ class GameEngineSpawnTest {
     }
 
     @Test
+    void rejectsSpawnWithoutAnExplicitProductionSource() {
+        GameSession session = new GameSession(DefaultMatchSetup.create());
+
+        ApplyResult result = session.apply(new SpawnCommand(
+                "missing-source", "BLUE", "worker-blue-2", "Builder", Direction.DOWN
+        ));
+
+        assertEquals(ErrorCode.PRODUCTION_SOURCE_NOT_FOUND, result.error());
+        assertEquals(0, result.state().revision());
+    }
+
+    @Test
     void rejectsTakenIdOccupiedCellAndTeamLimit() {
         GameSession session = new GameSession(DefaultMatchSetup.create());
 
@@ -93,10 +105,10 @@ class GameEngineSpawnTest {
                 "duplicate", "BLUE", "worker-blue", "Duplicate", Direction.DOWN
         )).error());
         assertEquals(ErrorCode.CELL_OCCUPIED, session.apply(new SpawnCommand(
-                "occupied", "BLUE", "worker-blue-2", "Blocked", Direction.RIGHT
+                "occupied", "BLUE", "hq-blue", "worker-blue-2", "Blocked", "WORKER", Direction.RIGHT
         )).error());
         assertEquals(ErrorCode.OUT_OF_BOUNDS, session.apply(new SpawnCommand(
-                "outside", "BLUE", "worker-blue-2", "Outside", Direction.UP
+                "outside", "BLUE", "hq-blue", "worker-blue-2", "Outside", "WORKER", Direction.UP
         )).error());
 
         MatchSetup limitedSetup = DefaultMatchSetup.create();

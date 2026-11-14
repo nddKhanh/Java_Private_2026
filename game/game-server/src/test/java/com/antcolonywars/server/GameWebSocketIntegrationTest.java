@@ -179,6 +179,7 @@ class GameWebSocketIntegrationTest {
         blue.awaitType("STATE_UPDATED");
 
         blue.send(command("spawn-blue-2", "SPAWN", Map.of(
+                "sourceId", "hq-blue",
                 "unitId", "worker-blue-2",
                 "displayName", "Builder",
                 "direction", "DOWN"

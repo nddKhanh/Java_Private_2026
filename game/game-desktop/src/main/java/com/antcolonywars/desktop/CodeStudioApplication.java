@@ -36,6 +36,7 @@ public final class CodeStudioApplication extends Application {
     private final BotProcessRunner processRunner = new BotProcessRunner();
     private final LanPairingClient pairingClient = new LanPairingClient();
     private final StudentSubmissionServer submissionServer = new StudentSubmissionServer(this::acceptSubmission);
+    private final RunGeneration runGeneration = new RunGeneration();
     private final ExecutorService background = Executors.newVirtualThreadPerTaskExecutor();
     private final TextField pairingKey = new TextField();
     private final TextField serverUrl = new TextField("ws://localhost:8080/game");
@@ -55,7 +56,6 @@ public final class CodeStudioApplication extends Application {
     private RunningBot activeProcess;
     private boolean compileAfterPairing;
     private boolean runAfterCompilation;
-    private CompletableFuture<StudentSubmissionResult> activeSubmission;
 
     @Override
     public void start(Stage stage) {
@@ -75,9 +75,9 @@ public final class CodeStudioApplication extends Application {
 
         editor.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
         className.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
-        compileButton.setOnAction(event -> compileSource());
-        pairButton.setOnAction(event -> pairWithServer());
-        runButton.setOnAction(event -> runBot());
+        compileButton.setOnAction(event -> compileSource(runGeneration.current()));
+        pairButton.setOnAction(event -> pairWithServer(runGeneration.current()));
+        runButton.setOnAction(event -> runBot(runGeneration.current()));
         stopButton.setOnAction(event -> stopBot());
 
         BorderPane root = new BorderPane();
@@ -149,22 +149,27 @@ public final class CodeStudioApplication extends Application {
         return new VBox(8, pairing, connection, match, source);
     }
 
-    private void pairWithServer() {
+    private void pairWithServer(long generation) {
         String key = pairingKey.getText().trim();
         pairButton.setDisable(true);
         status.setText("Searching LAN...");
         CompletableFuture.supplyAsync(() -> pairingClient.find(key), background)
-                .whenComplete((result, error) -> Platform.runLater(() -> finishPairing(result, error)));
+                .whenComplete((result, error) -> Platform.runLater(
+                        () -> finishPairing(generation, result, error)
+                ));
     }
 
-    private void finishPairing(PairingConfiguration result, Throwable error) {
+    private void finishPairing(long generation, PairingConfiguration result, Throwable error) {
+        if (!runGeneration.isCurrent(generation)) {
+            return;
+        }
         pairButton.setDisable(false);
         if (error != null) {
             compileAfterPairing = false;
             runAfterCompilation = false;
             status.setText("Pairing failed");
             appendConsole("Pairing error: " + messageOf(error));
-            completeSubmission(false, "Lỗi kết nối trận: " + messageOf(error));
+            completeSubmission(generation, false, "Lỗi kết nối trận: " + messageOf(error));
             return;
         }
         serverUrl.setText(result.serverUrl());
@@ -178,17 +183,14 @@ public final class CodeStudioApplication extends Application {
         if (compileAfterPairing) {
             compileAfterPairing = false;
             runAfterCompilation = true;
-            compileSource();
+            compileSource(generation);
         }
     }
 
     private CompletableFuture<StudentSubmissionResult> acceptSubmission(StudentSubmission submission) {
         CompletableFuture<StudentSubmissionResult> result = new CompletableFuture<>();
         Platform.runLater(() -> {
-            if (activeSubmission != null && !activeSubmission.isDone()) {
-                activeSubmission.complete(new StudentSubmissionResult(false, "Lần Run trước đã bị thay thế."));
-            }
-            activeSubmission = result;
+            long generation = runGeneration.replace(result);
             if (activeProcess != null) {
                 activeProcess.stop();
                 activeProcess = null;
@@ -204,7 +206,7 @@ public final class CodeStudioApplication extends Application {
             compileAfterPairing = true;
             runAfterCompilation = false;
             appendConsole("Đã nhận " + submission.className() + " từ IntelliJ. Đang pair trận đấu...");
-            pairWithServer();
+            pairWithServer(generation);
         });
         return result;
     }
@@ -214,22 +216,30 @@ public final class CodeStudioApplication extends Application {
         return new VBox(8, actions, console);
     }
 
-    private void compileSource() {
+    private void compileSource(long generation) {
         setBusy("Compiling...");
         console.clear();
         String requestedClass = className.getText().trim();
         String requestedSource = editor.getText();
         CompletableFuture.supplyAsync(() -> compiler.compile(requestedClass, requestedSource), background)
-                .whenComplete((result, error) -> Platform.runLater(() -> finishCompilation(result, error)));
+                .whenComplete((result, error) -> Platform.runLater(
+                        () -> finishCompilation(generation, result, error)
+                ));
     }
 
-    private void finishCompilation(BotCompilation result, Throwable error) {
+    private void finishCompilation(long generation, BotCompilation result, Throwable error) {
+        if (!runGeneration.isCurrent(generation)) {
+            if (result != null) {
+                result.close();
+            }
+            return;
+        }
         compileButton.setDisable(false);
         if (error != null) {
             runAfterCompilation = false;
             status.setText("Compile failed");
             appendConsole("Compiler error: " + messageOf(error));
-            completeSubmission(false, "Lỗi biên dịch: " + messageOf(error));
+            completeSubmission(generation, false, "Lỗi biên dịch: " + messageOf(error));
             return;
         }
         closeCompilation();
@@ -247,24 +257,27 @@ public final class CodeStudioApplication extends Application {
             runAfterCompilation = false;
             status.setText("Compile failed");
             runButton.setDisable(true);
-            completeSubmission(false, compilationOutput(result));
+            completeSubmission(generation, false, compilationOutput(result));
         }
         if (result.successful() && runAfterCompilation) {
             runAfterCompilation = false;
-            runBot();
+            runBot(generation);
         }
     }
 
-    private void runBot() {
+    private void runBot(long generation) {
+        if (!runGeneration.isCurrent(generation)) {
+            return;
+        }
         if (activeCompilation == null || !activeCompilation.successful()) {
             appendConsole("Compile the source before running it.");
-            completeSubmission(false, "Chưa biên dịch được source.");
+            completeSubmission(generation, false, "Chưa biên dịch được source.");
             return;
         }
         String selectedTeamToken = teamToken.getEditor().getText().trim();
         if (serverUrl.getText().isBlank() || selectedTeamToken.isBlank()) {
             appendConsole("Server URL and team token are required.");
-            completeSubmission(false, "Thiếu địa chỉ server hoặc token đội.");
+            completeSubmission(generation, false, "Thiếu địa chỉ server hoặc token đội.");
             return;
         }
 
@@ -283,7 +296,9 @@ public final class CodeStudioApplication extends Application {
         compileButton.setDisable(true);
         runButton.setDisable(true);
         CompletableFuture.supplyAsync(() -> startProcess(request), background)
-                .whenComplete((process, error) -> Platform.runLater(() -> processStarted(process, error)));
+                .whenComplete((process, error) -> Platform.runLater(
+                        () -> processStarted(generation, process, error)
+                ));
     }
 
     private RunningBot startProcess(BotRunRequest request) {
@@ -294,24 +309,33 @@ public final class CodeStudioApplication extends Application {
         }
     }
 
-    private void processStarted(RunningBot process, Throwable error) {
+    private void processStarted(long generation, RunningBot process, Throwable error) {
+        if (!runGeneration.isCurrent(generation)) {
+            if (process != null) {
+                process.stop();
+            }
+            return;
+        }
         if (error != null) {
             status.setText("Start failed");
             compileButton.setDisable(false);
             runButton.setDisable(false);
             appendConsole("Start error: " + messageOf(error));
-            completeSubmission(false, "Không thể chạy bot: " + messageOf(error));
+            completeSubmission(generation, false, "Không thể chạy bot: " + messageOf(error));
             return;
         }
         activeProcess = process;
         status.setText("Running");
         stopButton.setDisable(false);
         process.completion().whenComplete((result, failure) -> Platform.runLater(
-                () -> processFinished(process, result, failure)
+                () -> processFinished(generation, process, result, failure)
         ));
     }
 
-    private void processFinished(RunningBot process, BotRunResult result, Throwable error) {
+    private void processFinished(long generation, RunningBot process, BotRunResult result, Throwable error) {
+        if (!runGeneration.isCurrent(generation)) {
+            return;
+        }
         if (activeProcess == process) {
             activeProcess = null;
         }
@@ -321,7 +345,7 @@ public final class CodeStudioApplication extends Application {
         if (error != null) {
             status.setText("Runner failed");
             appendConsole("Runner error: " + messageOf(error));
-            completeSubmission(false, "Lỗi chạy bot: " + messageOf(error));
+            completeSubmission(generation, false, "Lỗi chạy bot: " + messageOf(error));
             return;
         }
         appendOutput("stdout", result.standardOutput());
@@ -335,7 +359,7 @@ public final class CodeStudioApplication extends Application {
         } else {
             status.setText("Failed (exit " + result.exitCode() + ")");
         }
-        completeSubmission(result.successful(), runOutput(result));
+        completeSubmission(generation, result.successful(), runOutput(result));
     }
 
     private void stopBot() {
@@ -417,12 +441,8 @@ public final class CodeStudioApplication extends Application {
         return output.toString();
     }
 
-    private void completeSubmission(boolean successful, String output) {
-        CompletableFuture<StudentSubmissionResult> submission = activeSubmission;
-        if (submission != null && !submission.isDone()) {
-            submission.complete(new StudentSubmissionResult(successful, output));
-        }
-        activeSubmission = null;
+    private void completeSubmission(long generation, boolean successful, String output) {
+        runGeneration.complete(generation, new StudentSubmissionResult(successful, output));
     }
 
     private static String messageOf(Throwable error) {
@@ -435,7 +455,7 @@ public final class CodeStudioApplication extends Application {
     }
 
     private void shutdown() {
-        completeSubmission(false, "Desktop đã đóng trước khi hoàn tất Run.");
+        completeSubmission(runGeneration.current(), false, "Desktop đã đóng trước khi hoàn tất Run.");
         if (activeProcess != null) {
             activeProcess.stop();
             activeProcess = null;

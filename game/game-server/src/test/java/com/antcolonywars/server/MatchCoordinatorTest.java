@@ -19,6 +19,7 @@ import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
 import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.MatchState;
+import com.antcolonywars.core.MoveCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -100,6 +101,53 @@ class MatchCoordinatorTest {
 
         assertTrue(mixed.accepted());
         assertEquals(4, mixed.appliedCount());
+    }
+
+    @Test
+    void rejectsSpawnWithoutSourceBeforeDifferentUnitIdsCanBypassTheLimit() {
+        MatchCoordinator coordinator = new MatchCoordinator(
+                DefaultMatchSetup.create(), new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC()
+        );
+        List<SpawnCommand> commands = java.util.stream.IntStream.rangeClosed(1, 11)
+                .mapToObj(index -> new SpawnCommand(
+                        "missing-source-" + index, "BLUE", "worker-new-" + index,
+                        "Worker " + index, "WORKER", Direction.DOWN
+                ))
+                .toList();
+
+        BatchApplyResult atomic = coordinator.applyBatch(commands, BatchMode.ATOMIC);
+        BatchApplyResult partial = coordinator.applyBatch(commands, BatchMode.PARTIAL);
+
+        assertEquals(ErrorCode.PRODUCTION_SOURCE_NOT_FOUND, atomic.error());
+        assertEquals(0, atomic.failedIndex());
+        assertEquals(0, atomic.appliedCount());
+        assertEquals(ErrorCode.PRODUCTION_SOURCE_NOT_FOUND, partial.error());
+        assertEquals(0, partial.failedIndex());
+        assertEquals(0, partial.appliedCount());
+    }
+
+    @Test
+    void reportsTheFirstGameRuleFailureBeforeALaterBatchLimit() {
+        List<com.antcolonywars.core.ActionCommand> commands = new java.util.ArrayList<>();
+        commands.add(new MoveCommand("outside", "BLUE", "worker-blue", Direction.UP));
+        for (int index = 1; index <= 10; index++) {
+            commands.add(new WaitCommand("wait-" + index, "BLUE", "worker-blue"));
+        }
+        GameProfileProperties.Limits limits = new GameProfileProperties.Limits(10, 32, 250);
+
+        BatchApplyResult atomic = new MatchCoordinator(
+                DefaultMatchSetup.create(), limits, Clock.systemUTC()
+        ).applyBatch(commands, BatchMode.ATOMIC);
+        BatchApplyResult partial = new MatchCoordinator(
+                DefaultMatchSetup.create(), limits, Clock.systemUTC()
+        ).applyBatch(commands, BatchMode.PARTIAL);
+
+        assertEquals(ErrorCode.OUT_OF_BOUNDS, atomic.error());
+        assertEquals(0, atomic.failedIndex());
+        assertEquals(0, atomic.appliedCount());
+        assertEquals(ErrorCode.OUT_OF_BOUNDS, partial.error());
+        assertEquals(0, partial.failedIndex());
+        assertEquals(0, partial.appliedCount());
     }
 
     private SpawnCommand spawn(String commandId, String sourceId, String unitId, Direction direction) {

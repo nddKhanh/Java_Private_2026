@@ -61,23 +61,11 @@ public final class MatchCoordinator {
 
     public synchronized BatchApplyResult applyBatch(List<? extends ActionCommand> commands, BatchMode mode) {
         int limitIndex = firstLimitViolation(commands);
-        if (limitIndex >= 0 && mode == BatchMode.ATOMIC) {
-            return BatchApplyResult.failure(
-                    session.state(), List.of(), ErrorCode.BATCH_LIMIT_EXCEEDED, limitIndex, 0
-            );
-        }
-
-        List<? extends ActionCommand> acceptedRange = limitIndex < 0
-                ? commands : commands.subList(0, limitIndex);
-        BatchApplyResult result = session.applyBatch(acceptedRange, mode);
-        persist(result);
-        if (!result.accepted() || limitIndex < 0) {
-            return result;
-        }
-        return BatchApplyResult.failure(
-                result.state(), result.events(), ErrorCode.BATCH_LIMIT_EXCEEDED,
-                limitIndex, result.appliedCount()
+        BatchApplyResult result = session.applyBatch(
+                commands, mode, limitIndex, ErrorCode.BATCH_LIMIT_EXCEEDED
         );
+        persist(result);
+        return result;
     }
 
     public synchronized MatchState state() {
@@ -99,7 +87,6 @@ public final class MatchCoordinator {
         for (int index = 0; index < commands.size(); index++) {
             ActionCommand command = commands.get(index);
             String botId = command instanceof SpawnCommand spawn
-                    && spawn.sourceId() != null && !spawn.sourceId().isBlank()
                     ? spawn.sourceId()
                     : command.unitId();
             int count = actionsByBot.merge(botId, 1, Integer::sum);

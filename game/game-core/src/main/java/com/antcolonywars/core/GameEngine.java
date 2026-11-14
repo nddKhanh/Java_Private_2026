@@ -71,7 +71,7 @@ public final class GameEngine {
             return ApplyResult.failure(state, ErrorCode.UNIT_LIMIT_REACHED);
         }
         UnitType unitType = UnitType.valueOf(command.unitType());
-        ProductionSource source = productionSource(state, command, unitType);
+        ProductionSource source = productionSource(state, command);
         if (source == null) {
             return ApplyResult.failure(state, ErrorCode.PRODUCTION_SOURCE_NOT_FOUND);
         }
@@ -169,9 +169,6 @@ public final class GameEngine {
         if (target == null) {
             return ApplyResult.failure(state, ErrorCode.TARGET_NOT_FOUND);
         }
-        if (sameFaction(state, actor.teamId(), target.teamId())) {
-            return ApplyResult.failure(state, ErrorCode.FRIENDLY_TARGET);
-        }
 
         List<Projectile> projectiles = new ArrayList<>(state.projectiles());
         Position targetCell = closestCell(target.cells(), actor.position());
@@ -207,6 +204,7 @@ public final class GameEngine {
                         distanceInDirection(cells(actor), List.of(building.position()), direction)
                 )));
         return targets.stream()
+                .filter(target -> !sameFaction(state, actor.teamId(), target.teamId()))
                 .filter(target -> target.distance() >= 1 && target.distance() <= range)
                 .min(java.util.Comparator.comparingInt(AttackTarget::distance).thenComparing(AttackTarget::id))
                 .orElse(null);
@@ -509,35 +507,23 @@ public final class GameEngine {
         };
     }
 
-    private ProductionSource productionSource(MatchState state, SpawnCommand command, UnitType unitType) {
-        if (command.sourceId() != null && !command.sourceId().isBlank()) {
-            Headquarters headquarters = findHeadquarters(state, command.sourceId());
-            if (headquarters != null && headquarters.hp() > 0) {
-                return new ProductionSource(
-                        headquarters.id(), headquarters.teamId(), headquarters.position(), null
-                );
-            }
-            Building building = state.buildings().stream()
-                    .filter(item -> item.id().equals(command.sourceId()) && item.hp() > 0)
-                    .findFirst()
-                    .orElse(null);
-            return building == null ? null : new ProductionSource(
-                    building.id(), building.teamId(), building.position(), building.type()
+    private ProductionSource productionSource(MatchState state, SpawnCommand command) {
+        if (command.sourceId() == null || command.sourceId().isBlank()) {
+            return null;
+        }
+        Headquarters headquarters = findHeadquarters(state, command.sourceId());
+        if (headquarters != null && headquarters.hp() > 0) {
+            return new ProductionSource(
+                    headquarters.id(), headquarters.teamId(), headquarters.position(), null
             );
         }
-        if (unitType == UnitType.WORKER) {
-            return state.headquarters().stream()
-                    .filter(item -> item.teamId().equals(command.actorTeamId()) && item.hp() > 0)
-                    .findFirst()
-                    .map(item -> new ProductionSource(item.id(), item.teamId(), item.position(), null))
-                    .orElse(null);
-        }
-        return state.buildings().stream()
-                .filter(item -> item.teamId().equals(command.actorTeamId()))
-                .filter(item -> item.type() == BuildingType.BARRACKS && item.hp() > 0)
+        Building building = state.buildings().stream()
+                .filter(item -> item.id().equals(command.sourceId()) && item.hp() > 0)
                 .findFirst()
-                .map(item -> new ProductionSource(item.id(), item.teamId(), item.position(), item.type()))
                 .orElse(null);
+        return building == null ? null : new ProductionSource(
+                building.id(), building.teamId(), building.position(), building.type()
+        );
     }
 
     private List<Unit> replaceUnit(List<Unit> units, Unit replacement) {

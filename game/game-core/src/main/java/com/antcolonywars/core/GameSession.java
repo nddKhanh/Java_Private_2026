@@ -35,6 +35,15 @@ public final class GameSession {
     }
 
     public BatchApplyResult applyBatch(List<? extends ActionCommand> commands, BatchMode mode) {
+        return applyBatch(commands, mode, -1, null);
+    }
+
+    public BatchApplyResult applyBatch(
+            List<? extends ActionCommand> commands,
+            BatchMode mode,
+            int rejectedIndex,
+            ErrorCode rejectedError
+    ) {
         Objects.requireNonNull(commands, "commands");
         Objects.requireNonNull(mode, "mode");
         MatchState originalState = state;
@@ -43,6 +52,16 @@ public final class GameSession {
         List<ActionCommand> acceptedCommands = new ArrayList<>();
 
         for (int index = 0; index < commands.size(); index++) {
+            if (index == rejectedIndex) {
+                if (mode == BatchMode.ATOMIC) {
+                    return BatchApplyResult.failure(originalState, List.of(), rejectedError, index, 0);
+                }
+                state = workingState;
+                commandLog.addAll(acceptedCommands);
+                return BatchApplyResult.failure(
+                        workingState, events, rejectedError, index, acceptedCommands.size()
+                );
+            }
             ActionCommand command = Objects.requireNonNull(commands.get(index), "command");
             ApplyResult result = engine.apply(workingState, command, rules);
             if (!result.accepted()) {

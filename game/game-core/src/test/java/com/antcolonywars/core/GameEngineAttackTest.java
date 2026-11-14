@@ -129,7 +129,7 @@ class GameEngineAttackTest {
 
         ApplyResult friendly = session.apply(new AttackCommand(
                 "friendly", "BLUE", "worker-blue", Direction.RIGHT));
-        assertEquals(ErrorCode.FRIENDLY_TARGET, friendly.error());
+        assertEquals(ErrorCode.TARGET_NOT_FOUND, friendly.error());
 
         for (int hit = 0; hit < 3; hit++) {
             assertTrue(session.apply(new AttackCommand(
@@ -145,6 +145,43 @@ class GameEngineAttackTest {
         MatchState finished = session.advanceTick().state();
         assertEquals(MatchStatus.FINISHED, finished.status());
         assertEquals("BLUE", finished.winnerTeamId());
+    }
+
+    @Test
+    void attackSkipsAlliedUnitsIncludingAnotherTeamInTheSameFaction() {
+        MatchSetup setup = new MatchSetup(
+                "allied-targeting", "allied-targeting", 7, 4, new RuleSet("allied-targeting", 1, 6),
+                List.of(
+                        new Team("BLUE", "Blue", "blue", "ALLIANCE"),
+                        new Team("CYAN", "Cyan", "cyan", "ALLIANCE"),
+                        new Team("RED", "Red", "red", "SWARM")
+                ),
+                List.of(
+                        new Unit("ranged-blue", "BLUE", "RANGED", new Position(0, 1), 3, Direction.RIGHT),
+                        new Unit("ally-blue", "BLUE", "WORKER", new Position(1, 1), 3, Direction.RIGHT),
+                        new Unit("ally-cyan", "CYAN", "WORKER", new Position(2, 1), 3, Direction.RIGHT),
+                        new Unit("enemy-red", "RED", "WORKER", new Position(4, 1), 3, Direction.LEFT)
+                ),
+                List.of(
+                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
+                        new Headquarters("hq-cyan", "CYAN", new Position(3, 1), 3),
+                        new Headquarters("hq-red", "RED", new Position(6, 3), 3)
+                )
+        );
+        GameSession session = new GameSession(setup);
+
+        ApplyResult attack = session.apply(new AttackCommand(
+                "skip-allies", "BLUE", "ranged-blue", Direction.RIGHT
+        ));
+        for (int tick = 0; tick < 4; tick++) {
+            session.advanceTick();
+        }
+
+        assertTrue(attack.accepted());
+        assertEquals("enemy-red", attack.events().getFirst().targetId());
+        assertEquals(3, unit(session.state(), "ally-blue").hp());
+        assertEquals(3, unit(session.state(), "ally-cyan").hp());
+        assertEquals(2, unit(session.state(), "enemy-red").hp());
     }
 
     @Test
