@@ -1,37 +1,71 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="690" viewBox="0 0 1200 690" role="img" aria-labelledby="title desc">
-  <title id="title">BTVN Buổi 04 — Kế thừa, đa hình và Order</title>
-  <desc id="desc">Book IS-A Product; Order HAS-A Customer và nhiều CartItem</desc>
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/></marker>
-    <marker id="arrowSmall" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000000"/></marker>
-    <marker id="triangle" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1 1 L 11 6 L 1 11 z" fill="#FFFFFF" stroke="#000000" stroke-width="1.3"/></marker>
-    <marker id="diamond" viewBox="0 0 14 10" refX="13" refY="5" markerWidth="12" markerHeight="10" orient="auto"><path d="M 1 5 L 6 1 L 13 5 L 6 9 z" fill="#000000"/></marker>
-  </defs>
-  <style>
-    .title { font: 700 27px Arial, sans-serif; fill: #000000; }
-    .subtitle { font: 14px Arial, sans-serif; fill: #000000; }
-    .class-title { font: 700 16px Arial, sans-serif; fill: #000000; }
-    .member { font: 13px Consolas, monospace; fill: #000000; }
-    .method { fill: #000000; }
-    .edge-label { font: 12px Arial, sans-serif; fill: #000000; }
-    .note { font: 12px Arial, sans-serif; fill: #000000; }
-    .legend { font: 12px Arial, sans-serif; fill: #000000; }
-  </style>
-  <rect width="100%" height="100%" fill="#FFFFFF"/>
-  <text x="40" y="42" class="title">BTVN Buổi 04 — Kế thừa, đa hình và Order</text>
-  <text x="40" y="66" class="subtitle">Book IS-A Product; Order HAS-A Customer và nhiều CartItem</text>
-  <path d="M 195 390 L 195 285" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#triangle)"/><text x="181.0" y="337.5" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90.0 181.0 337.5)" class="edge-label">extends</text>
-<path d="M 465 470 L 330 230" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrowSmall)"/><text x="385.3" y="356.9" text-anchor="middle" dominant-baseline="middle" transform="rotate(60.6 385.3 356.9)" class="edge-label">HAS-A (1)</text>
-<path d="M 865 270 L 745 190" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrowSmall)"/><text x="797.2" y="241.6" text-anchor="middle" dominant-baseline="middle" transform="rotate(33.7 797.2 241.6)" class="edge-label">HAS-A (1)</text>
-<path d="M 865 375 L 745 470" fill="none" stroke="#000000" stroke-width="1.8" marker-start="url(#diamond)"/><text x="813.7" y="433.5" text-anchor="middle" dominant-baseline="middle" transform="rotate(-38.4 813.7 433.5)" class="edge-label">HAS-A (1..*)</text>
-  <g class="class-box"><rect x="60" y="105" width="270" height="182" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 68 105 H 322 Q 330 105 330 113 V 141 H 60 V 113 Q 60 105 68 105" fill="#FFFFFF"/><line x1="60" y1="141" x2="330" y2="141" stroke="#000000" stroke-width="1.5"/><text x="195" y="129" text-anchor="middle" class="class-title">Product</text><text x="72" y="163" class="member">- id: String</text><text x="72" y="183" class="member">- name: String</text><text x="72" y="203" class="member">- price: double</text><text x="72" y="223" class="member">- stock: int</text><line x1="60" y1="233" x2="330" y2="233" stroke="#000000"/><text x="72" y="247" class="member method">+ getDescription(): String</text><text x="72" y="267" class="member method">+ getId(): String</text></g>
-<g class="class-box"><rect x="60" y="390" width="270" height="122" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 68 390 H 322 Q 330 390 330 398 V 426 H 60 V 398 Q 60 390 68 390" fill="#FFFFFF"/><line x1="60" y1="426" x2="330" y2="426" stroke="#000000" stroke-width="1.5"/><text x="195" y="414" text-anchor="middle" class="class-title">Book</text><text x="72" y="448" class="member">- author: String</text><line x1="60" y1="458" x2="330" y2="458" stroke="#000000"/><text x="72" y="472" class="member method">+ getAuthor(): String</text><text x="72" y="492" class="member method">+ getDescription(): String</text></g>
-<g class="class-box"><rect x="465" y="105" width="280" height="142" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 473 105 H 737 Q 745 105 745 113 V 141 H 465 V 113 Q 465 105 473 105" fill="#FFFFFF"/><line x1="465" y1="141" x2="745" y2="141" stroke="#000000" stroke-width="1.5"/><text x="605" y="129" text-anchor="middle" class="class-title">Customer</text><text x="477" y="163" class="member">- id: String</text><text x="477" y="183" class="member">- name: String</text><text x="477" y="203" class="member">- phone: String</text><line x1="465" y1="213" x2="745" y2="213" stroke="#000000"/><text x="477" y="227" class="member method">+ getId(): String</text></g>
-<g class="class-box"><rect x="465" y="390" width="280" height="122" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 473 390 H 737 Q 745 390 745 398 V 426 H 465 V 398 Q 465 390 473 390" fill="#FFFFFF"/><line x1="465" y1="426" x2="745" y2="426" stroke="#000000" stroke-width="1.5"/><text x="605" y="414" text-anchor="middle" class="class-title">CartItem</text><text x="477" y="448" class="member">- product: Product</text><text x="477" y="468" class="member">- quantity: int</text><line x1="465" y1="478" x2="745" y2="478" stroke="#000000"/><text x="477" y="492" class="member method">+ getTotal(): double</text></g>
-<g class="class-box"><rect x="865" y="185" width="280" height="222" rx="8" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/><path d="M 873 185 H 1137 Q 1145 185 1145 193 V 221 H 865 V 193 Q 865 185 873 185" fill="#FFFFFF"/><line x1="865" y1="221" x2="1145" y2="221" stroke="#000000" stroke-width="1.5"/><text x="1005" y="209" text-anchor="middle" class="class-title">Order</text><text x="877" y="243" class="member">- id: String</text><text x="877" y="263" class="member">- customer: Customer</text><text x="877" y="283" class="member">- items: List&lt;CartItem&gt;</text><text x="877" y="303" class="member">- status: String</text><line x1="865" y1="313" x2="1145" y2="313" stroke="#000000"/><text x="877" y="327" class="member method">+ addItem(item: CartItem): void</text><text x="877" y="347" class="member method">+ getTotal(): double</text><text x="877" y="367" class="member method">+ confirm(): void</text><text x="877" y="387" class="member method">+ cancel(): void</text></g>
-  <g><rect x="820" y="510" width="330" height="58" rx="8" fill="#FFFFFF" stroke="#000000" stroke-dasharray="5 4"/><text x="832" y="533" class="note">Status: PENDING → CONFIRMED hoặc CANCELLED</text><text x="832" y="552" class="note">Không cho chuyển lại khi đã rời PENDING.</text></g>
-  <g transform="translate(40 665)">
-    <text class="legend">Tam giác: extends/implements · Hình thoi: HAS-A · Nét đứt: uses (dependency)</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="740" viewBox="0 0 1280 740" role="img" aria-labelledby="title desc">
+<title id="title">BTVN Buổi 04 — Kế thừa và đa hình (HitShop)</title>
+<desc id="desc">Sơ đồ UML không có class HitShop. Book và Cake kế thừa Product. Order có Customer và Product.</desc>
+<defs>
+  <marker id="inherit" markerWidth="13" markerHeight="13" refX="11" refY="6" viewBox="0 0 12 12" orient="auto"><path d="M1,1 L11,6 L1,11 Z" fill="#fff" stroke="#1b1b1b" stroke-width="1.15"/></marker>
+  <marker id="assoc" markerWidth="9" markerHeight="9" refX="8" refY="4.5" viewBox="0 0 9 9" orient="auto"><path d="M1,1 L8,4.5 L1,8 Z" fill="#1b1b1b"/></marker>
+</defs>
+<style>
+  .title {font: 700 32px Arial, Helvetica, sans-serif; fill:#111}
+  .subtitle {font: 16px Arial, Helvetica, sans-serif; fill:#242424}
+  .class-name {font: 700 20px Arial, Helvetica, sans-serif; fill:#151515}
+  .member {font: 16px Consolas, 'Liberation Mono', monospace; fill:#202020}
+  .link {font: 16px Arial, Helvetica, sans-serif; fill:#151515}
+  .legend {font: 14px Arial, Helvetica, sans-serif; fill:#555}
+  .edge {stroke:#222; stroke-width:2.2; fill:none; stroke-linejoin:round; stroke-linecap:round}
+</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="48" y="55" class="title">BTVN Buổi 04 — Kế thừa và đa hình (HitShop)</text>
+<text x="48" y="88" class="subtitle">Book và Cake kế thừa Product; Order HAS-A Customer và Product</text>
+
+<path class="edge" d="M300 520 L428 362" marker-end="url(#inherit)"/>
+<path class="edge" d="M690 520 L616 362" marker-end="url(#inherit)"/>
+<path class="edge" d="M895 460 L703 282" marker-end="url(#assoc)"/>
+<path class="edge" d="M1050 380 L1050 313" marker-end="url(#assoc)"/>
+<text x="326" y="457" class="link" transform="rotate(-48 326 457)">extends (IS-A)</text>
+<text x="662" y="457" class="link" transform="rotate(-62 662 457)">extends (IS-A)</text>
+<text x="766" y="354" class="link" transform="rotate(43 766 354)">HAS-A (1)</text>
+<text x="1066" y="353" class="link">HAS-A (1)</text>
+<rect x="350" y="150" width="353" height="212" rx="7" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<path d="M357 150 H696 Q703 150 703 157 V198 H350 V157 Q350 150 357 150" fill="#f2f3f5"/>
+<path d="M350 198 L703 198" stroke="#222" stroke-width="1.5"/>
+<text x="526.5" y="181" class="class-name" text-anchor="middle">Product</text>
+<text x="368" y="227" class="member">- id: String</text>
+<text x="368" y="253" class="member">- name: String</text>
+<text x="368" y="279" class="member">- price: double</text>
+<text x="368" y="305" class="member">- stock: int</text>
+<path d="M350 320 L703 320" stroke="#222" stroke-width="1.5"/>
+<text x="368" y="347" class="member">+ isExpensive(): boolean</text>
+<rect x="890" y="150" width="300" height="144" rx="7" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<path d="M897 150 H1183 Q1190 150 1190 157 V198 H890 V157 Q890 150 897 150" fill="#f2f3f5"/>
+<path d="M890 198 L1190 198" stroke="#222" stroke-width="1.5"/>
+<text x="1040.0" y="181" class="class-name" text-anchor="middle">Customer</text>
+<text x="908" y="227" class="member">- id: String</text>
+<text x="908" y="253" class="member">- name: String</text>
+<text x="908" y="279" class="member">- phone: String</text>
+<rect x="895" y="380" width="310" height="212" rx="7" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<path d="M902 380 H1198 Q1205 380 1205 387 V428 H895 V387 Q895 380 902 380" fill="#f2f3f5"/>
+<path d="M895 428 L1205 428" stroke="#222" stroke-width="1.5"/>
+<text x="1050.0" y="411" class="class-name" text-anchor="middle">Order</text>
+<text x="913" y="457" class="member">- id: String</text>
+<text x="913" y="483" class="member">- customer: Customer</text>
+<text x="913" y="509" class="member">- product: Product</text>
+<text x="913" y="535" class="member">- quantity: int</text>
+<path d="M895 550 L1205 550" stroke="#222" stroke-width="1.5"/>
+<text x="913" y="577" class="member">+ getTotal(): double</text>
+<rect x="175" y="520" width="255" height="134" rx="7" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<path d="M182 520 H423 Q430 520 430 527 V568 H175 V527 Q175 520 182 520" fill="#f2f3f5"/>
+<path d="M175 568 L430 568" stroke="#222" stroke-width="1.5"/>
+<text x="302.5" y="551" class="class-name" text-anchor="middle">Book</text>
+<text x="193" y="597" class="member">- author: String</text>
+<path d="M175 612 L430 612" stroke="#222" stroke-width="1.5"/>
+<text x="193" y="639" class="member">+ isExpensive(): boolean</text>
+<rect x="560" y="520" width="255" height="134" rx="7" fill="#fff" stroke="#222" stroke-width="1.8"/>
+<path d="M567 520 H808 Q815 520 815 527 V568 H560 V527 Q560 520 567 520" fill="#f2f3f5"/>
+<path d="M560 568 L815 568" stroke="#222" stroke-width="1.5"/>
+<text x="687.5" y="551" class="class-name" text-anchor="middle">Cake</text>
+<text x="578" y="597" class="member">- brand: String</text>
+<path d="M560 612 L815 612" stroke="#222" stroke-width="1.5"/>
+<text x="578" y="639" class="member">+ isExpensive(): boolean</text>
+<text x="48" y="707" class="legend">Tam giác rỗng: kế thừa (IS-A)   •   Mũi tên: quan hệ HAS-A</text>
 </svg>

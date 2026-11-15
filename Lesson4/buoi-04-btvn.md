@@ -1,138 +1,139 @@
-# Bài Tập Về Nhà — Buổi 04
+# 🚀 BTVN BUỔI 04: KẾ THỪA VÀ ĐA HÌNH — HITSHOP
 
-## I. Điểm Bắt Đầu Từ Buổi 03
+## I. Tổng kết buổi trước
 
-Tiếp tục repository `HitShop` bằng JDK 17.
-Giữ `Product`, `Customer`, `CartItem`, `List<CartItem>` và các chức năng thêm, xóa, xem giỏ, tính tổng.
+Ở buổi 3, chúng ta đã làm quen với lập trình hướng đối tượng (OOP) thông qua các kiến thức: **Class, Object, Constructor, `this`, Getter/Setter, HAS-A và Static**.
 
-### 1. Các Ca Cũ Phải Còn Đạt
+Chúng ta đã vận dụng những kiến thức này để xây dựng chương trình **HitShop**, mô phỏng hoạt động quản lý đơn hàng của một cửa hàng.
 
-| Ca | Kết quả cần giữ |
-|---|---|
-| Giỏ rỗng | Báo giỏ trống, tổng bằng `0` |
-| Thêm `P01 × 2`, `P02 × 1` | Có hai CartItem, tổng bằng `350000` |
-| Xóa số thứ tự không tồn tại | Báo không tìm thấy, giỏ không đổi |
+Hệ thống gồm 4 class:
 
-### 2. Cây Thư Mục Đầu Buổi
+- **Product:** Đại diện cho sản phẩm mà cửa hàng kinh doanh.
+- **Customer:** Đại diện cho khách hàng mua sắm tại cửa hàng.
+- **Order:** Đại diện cho một đơn hàng, chứa thông tin khách hàng, sản phẩm và số lượng mua.
+- **HitShop:** Quản lý danh sách đơn hàng và cung cấp các chức năng thêm, xem, sửa, xóa.
 
-```text
-src/
-├── HitShop.java
-└── model/
-    ├── Product.java
-    ├── Customer.java
-    └── CartItem.java
-```
-
-## II. Ba Bài Bắt Buộc
-
-Ba bài dùng chung dữ liệu và source.
-Hoàn thành theo thứ tự; không tạo ba project riêng.
-
-### Bài 1 — Encapsulation Và Trạng Thái Hợp Lệ
-
-Cập nhật `Product`:
-
-- Field private: `String id`, `String name`, `double price`, `int stock`.
-- Constructor nhận đủ bốn giá trị; từ chối `id`/`name` rỗng, `price <= 0`, `stock < 0` bằng `IllegalArgumentException`.
-- Không có `setId()` và `setStock()`.
-- `void setPrice(double price)` chỉ nhận giá dương; lỗi không được làm đổi giá cũ.
-- `void decreaseStock(int quantity)` chỉ nhận `0 < quantity <= stock`; lỗi không được làm đổi stock.
-- Getter chỉ đọc trạng thái hiện tại.
-
-Dữ liệu chuẩn: `P01 / Áo thun / 150000 / 20` và `P02 / Bình nước / 50000 / 10`.
-
-### Bài 2 — Kế Thừa Và Đa Hình
-
-Cập nhật `Product` và tạo `Book`:
-
-- `Product.getDescription(): String` trả tên sản phẩm.
-- `Book extends Product`, thêm field private `String author`.
-- Constructor `Book(String id, String name, double price, int stock, String author)` gọi `super(...)`.
-- `Book.getAuthor(): String` trả tác giả.
-- `Book` override `getDescription()` theo mẫu `Tên sách — tác giả: Tác giả`.
-- Tạo `List<Product>` chứa P01, P02 và Book P03; một vòng lặp gọi `getDescription()` cho mọi phần tử.
-
-Dữ liệu Book: `P03 / Java cơ bản / 120000 / 5 / An Nguyen`.
-
-Không dùng `instanceof`, chuỗi loại sản phẩm hoặc `if/else` để chọn cách mô tả.
-
-### Bài 3 — HAS-A Và Trạng Thái Order
-
-Tạo `Order`:
-
-- Field private: `String id`, `Customer customer`, `List<CartItem> items`, `String status`.
-- Constructor `Order(String id, Customer customer)` tạo list rỗng và status `PENDING`.
-- Getter: `getId()`, `getCustomer()`, `getItems()`, `getStatus()`; `getItems()` không trả `null`.
-- `void addItem(CartItem item)` thêm một dòng hợp lệ.
-- `double getTotal()` cộng `CartItem.getTotal()`.
-- `void confirm()` chỉ chuyển `PENDING → CONFIRMED`.
-- `void cancel()` chỉ chuyển `PENDING → CANCELLED`.
-- Không có `setStatus(String)`.
-
-Customer chuẩn: `C01 / Linh Nguyễn / 0900000001`.
-Order chuẩn: `O01` gồm `P01 × 2`, `P02 × 1`, tổng `350000`.
-
-![Sơ đồ lớp BTVN buổi 04](assets/buoi-04-class-diagram.svg)
-
-## III. Ranh Giới Bài Làm
-
-- Không dùng abstract class, interface, enum, `equals()`/`hashCode()`; các nội dung này thuộc buổi sau.
-- Không tự động trừ stock khi thêm CartItem vào Order.
-- Không viết thêm Cart, OrderService, repository hoặc database.
-- Không dùng downcasting để hoàn thành phần bắt buộc.
-
-## IV. Nộp Bài
-
-Nộp source lên github và commend dưới bài viết
-Giữ nguyên menu giỏ hàng của buổi 3.
-
-## V. Nghiệm Thu Buổi 04
-
-### 1. Đúng 18 Test Case
-
-#### Encapsulation
-
-| Mã | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| `TC04-01` | Tạo P01 hợp lệ | Đủ id, name, price, stock |
-| `TC04-02` | Tạo Product có id/name rỗng | Bị từ chối |
-| `TC04-03` | Tạo Product có price `0` hoặc âm | Bị từ chối |
-| `TC04-04` | Tạo Product có stock âm | Bị từ chối |
-| `TC04-05` | Đổi giá P01 thành `160000`, sau đó thử giá `0` | Giá cuối là `160000` |
-| `TC04-06` | Giảm stock P01 đi `2`, sau đó thử `0`, số âm và vượt tồn | Stock cuối là `18` |
-
-#### Kế Thừa Và Đa Hình
-
-| Mã | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| `TC04-07` | Gọi mô tả P01 | `Áo thun` |
-| `TC04-08` | Tạo Book P03 | Đọc được dữ liệu Product và author |
-| `TC04-09` | Gọi mô tả P03 | `Java cơ bản — tác giả: An Nguyen` |
-| `TC04-10` | Gán Book P03 vào biến `Product` rồi gọi mô tả | Vẫn gọi mô tả của Book |
-| `TC04-11` | Duyệt P01, P02, P03 trong `List<Product>` | In đúng ba mô tả |
-| `TC04-12` | Kiểm tra code hiển thị | Không có `instanceof`/`if` phân loại |
-
-#### HAS-A Và Trạng Thái
-
-| Mã | Thao tác | Kết quả mong đợi |
-|---|---|---|
-| `TC04-13` | Tạo O01 | Items rỗng, total `0`, status `PENDING` |
-| `TC04-14` | Thêm P01 × 2 và P02 × 1 | Hai item, total `350000` |
-| `TC04-15` | `confirm()` O01 | Status `CONFIRMED` |
-| `TC04-16` | `cancel()` O01 sau confirm | Vẫn `CONFIRMED` |
-| `TC04-17` | Hủy một Order mới | `PENDING → CANCELLED` |
-| `TC04-18` | Confirm/hủy lại Order đã `CANCELLED` | Vẫn `CANCELLED` |
-
-### 2. Cây Thư Mục Cuối Buổi
+### Cấu trúc thư mục sau buổi 3
 
 ```text
-src/
-├── HitShop.java
-└── model/
-    ├── Product.java
-    ├── Book.java
-    ├── Customer.java
-    ├── CartItem.java
-    └── Order.java
+HitShop/
+└── src/
+    ├── HitShop.java
+    └── model/
+        ├── Product.java
+        ├── Customer.java
+        └── Order.java
 ```
+
+## II. Giới thiệu bài tập
+
+Ở buổi 4, chúng ta tiếp tục phát triển HitShop thông qua hai kiến thức mới: **Kế thừa (Inheritance)** và **Đa hình (Polymorphism)**.
+
+Cửa hàng không chỉ kinh doanh những sản phẩm thông thường mà còn bán sách và bánh. Mỗi loại sản phẩm có những thông tin đặc trưng và tiêu chí đánh giá giá bán khác nhau.
+
+Nhiệm vụ của chúng ta là mở rộng hệ thống để quản lý các loại sản phẩm này mà vẫn tận dụng được những class đã xây dựng từ buổi trước.
+
+## III. Yêu cầu bài tập
+
+### 1. Cập nhật class `Product.java`
+
+Bổ sung phương thức:
+
+`public boolean isExpensive()`
+
+Phương thức trả về:
+
+- `true` nếu giá sản phẩm **lớn hơn 10.000**.
+- `false` nếu giá sản phẩm **nhỏ hơn hoặc bằng 10.000**.
+
+### 2. Tạo class `Book.java`
+
+- Kế thừa class `Product` bằng từ khóa `extends`.
+- Bổ sung thuộc tính `private String author` để lưu tên tác giả.
+- Xây dựng constructor nhận các thuộc tính của `Product` và thuộc tính `author`, sử dụng `super()` để gọi constructor lớp cha.
+- Bổ sung getter/setter cho `author`.
+- Sử dụng `@Override` để ghi đè phương thức `isExpensive()`: sách chỉ được coi là đắt khi giá **lớn hơn 20.000**.
+
+### 3. Tạo class `Cake.java`
+
+- Kế thừa class `Product` bằng từ khóa `extends`.
+- Bổ sung thuộc tính `private String brand` để lưu thương hiệu bánh.
+- Xây dựng constructor nhận các thuộc tính của `Product` và thuộc tính `brand`, sử dụng `super()` để gọi constructor lớp cha.
+- Bổ sung getter/setter cho `brand`.
+- Sử dụng `@Override` để ghi đè phương thức `isExpensive()`: bánh chỉ được coi là đắt khi giá **lớn hơn 100.000**.
+
+### 4. Cập nhật chức năng `addOrder()` trong `HitShop.java`
+
+Khi thêm đơn hàng, tại bước nhập thông tin sản phẩm, chương trình cần cho phép người dùng lựa chọn loại sản phẩm:
+
+```text
+=== Chọn loại sản phẩm ===
+1. Product - Sản phẩm thông thường
+2. Book - Sách
+3. Cake - Bánh
+```
+
+Sau khi lựa chọn:
+
+- Nhập các thông tin chung của sản phẩm: ID, tên, giá và tồn kho.
+- Nếu chọn Book, yêu cầu nhập thêm `author`.
+- Nếu chọn Cake, yêu cầu nhập thêm `brand`.
+- Khởi tạo object tương ứng với loại sản phẩm được chọn.
+- Sử dụng object vừa tạo để khởi tạo `Order` như trước.
+- Thêm sản phẩm vừa tạo vào danh sách `products`.
+
+**Yêu cầu:** Sử dụng một biến kiểu `Product` để lưu object thuộc một trong ba class `Product`, `Book` hoặc `Cake`.
+
+### 5. Bổ sung chức năng kiểm tra sản phẩm đắt hay không
+
+Thêm chức năng mới vào menu:
+
+`5. Kiểm tra sản phẩm có đắt không`
+
+Khi người dùng lựa chọn:
+
+- Yêu cầu nhập ID sản phẩm.
+- Tìm sản phẩm tương ứng trong danh sách `products`.
+- Gọi phương thức `isExpensive()` của sản phẩm tìm được.
+- In thông báo sản phẩm đắt hoặc không đắt theo kết quả trả về.
+- Nếu không tìm thấy ID, thông báo không tìm thấy sản phẩm.
+
+## IV. Kết quả mong đợi
+
+| Loại sản phẩm | Giá | Kết quả |
+|---|---:|---|
+| Product | 15.000 | Đắt |
+| Product | 10.000 | Không đắt |
+| Book | 15.000 | Không đắt |
+| Book | 25.000 | Đắt |
+| Cake | 100.000 | Không đắt |
+| Cake | 150.000 | Đắt |
+
+### Cấu trúc thư mục sau buổi 4
+
+```text
+HitShop/
+└── src/
+    ├── HitShop.java       (Cập nhật)
+    └── model/
+        ├── Product.java   (Cập nhật)
+        ├── Book.java      (Mới)
+        ├── Cake.java      (Mới)
+        ├── Customer.java
+        └── Order.java
+```
+
+## V. Tổng kết
+
+Sau khi hoàn thành bài tập, học viên cần nắm được:
+
+- **Inheritance:** Sử dụng `extends` để xây dựng class con kế thừa thuộc tính và phương thức từ class cha.
+- **`super()`:** Gọi constructor của class cha khi khởi tạo object lớp con.
+- **Method Overriding:** Sử dụng `@Override` để thay đổi cách thực hiện phương thức được kế thừa.
+- **Polymorphism:** Một biến kiểu `Product` có thể tham chiếu đến nhiều loại object khác nhau, và cùng một lời gọi `isExpensive()` sẽ thực hiện phương thức tương ứng với object thực tế.
+
+### 💡 Một số câu hỏi để suy ngẫm
+
+1. Vì sao `Book` và `Cake` có thể sử dụng những thuộc tính của `Product` mà không cần khai báo lại?
+2. Vì sao khi gọi `isExpensive()` thông qua biến kiểu `Product`, Java vẫn thực hiện đúng phương thức của `Book` hoặc `Cake`?
+3. Nếu sau này HitShop kinh doanh thêm một loại sản phẩm mới với tiêu chí đánh giá giá đắt khác, chúng ta có cần sửa logic kiểm tra giá trong menu không?
