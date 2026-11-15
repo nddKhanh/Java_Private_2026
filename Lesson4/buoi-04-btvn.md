@@ -109,6 +109,8 @@ Khi người dùng lựa chọn:
 | Cake | 100.000 | Không đắt |
 | Cake | 150.000 | Đắt |
 
+![Sơ đồ lớp HitShop buổi 04](assets/buoi-04-class-diagram.svg)
+
 ### Cấu trúc thư mục sau buổi 4
 
 ```text
