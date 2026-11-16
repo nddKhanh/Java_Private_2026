@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/HITShop.iml" filepath="$PROJECT_DIR$/HITShop.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Codebase.iml" filepath="$PROJECT_DIR$/Codebase.iml" />
     </modules>
   </component>
 </project>
