@@ -76,6 +76,10 @@ public class Product {
         Product.count = count;
     }
 
+    public boolean isExpensive() {
+        return price > 10000;
+    }
+
     @Override
     public String toString() {
         return id + " | " + name

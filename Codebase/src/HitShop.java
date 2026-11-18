@@ -1,3 +1,5 @@
+import model.Book;
+import model.Cake;
 import model.Customer;
 import model.Order;
 import model.Product;
@@ -38,6 +40,7 @@ public class HitShop {
             System.out.println("2. Xem danh sách đơn hàng");
             System.out.println("3. Sửa đơn hàng theo ID");
             System.out.println("4. Xóa đơn hàng theo ID");
+            System.out.println("5. Kiểm tra sản phẩm có đắt không");
             System.out.println("0. Thoát");
 
             System.out.print("Chọn chức năng: ");
@@ -56,6 +59,9 @@ public class HitShop {
                 case 4:
                     deleteOrder();
                     break;
+                case 5:
+                    checkExpensive();
+                    break;
                 case 0:
                     System.out.println("Tạm biệt!");
                     return;
@@ -64,7 +70,6 @@ public class HitShop {
             }
         }
     }
-
 
     private static void addOrder() {
         // Nhập ID của Order
@@ -81,6 +86,38 @@ public class HitShop {
         String customerPhone = sc.nextLine();
 
         // Nhập thông tin Product
+        Product product = inputProduct();
+        if (product == null) {
+            return;
+        }
+
+        // Nhập số lượng mua
+        System.out.print("Nhập số lượng mua: ");
+        int quantity = Integer.parseInt(sc.nextLine());
+
+        Customer customer = new Customer(customerId, customerName, customerPhone);
+        Order order = new Order(orderId, customer, product, quantity);
+
+        orders.add(order);
+        customers.add(customer);
+        products.add(product);
+
+        System.out.println("Thêm đơn hàng thành công!");
+    }
+
+    private static Product inputProduct() {
+        System.out.println("=== Chọn loại sản phẩm ===");
+        System.out.println("1. Product - Sản phẩm thông thường");
+        System.out.println("2. Book - Sách");
+        System.out.println("3. Cake - Bánh");
+        System.out.print("Nhập lựa chọn: ");
+        int choice = Integer.parseInt(sc.nextLine());
+
+        if (choice < 1 || choice > 3) {
+            System.out.println("Lựa chọn không hợp lệ!");
+            return null;
+        }
+
         System.out.println("=== Nhập thông tin sản phẩm ===");
         System.out.print("Nhập mã sản phẩm: ");
         String productId = sc.nextLine();
@@ -91,18 +128,42 @@ public class HitShop {
         System.out.print("Nhập tồn kho: ");
         int productStock = Integer.parseInt(sc.nextLine());
 
-        // Nhập số lượng mua
-        System.out.print("Nhập số lượng mua: ");
-        int quantity = Integer.parseInt(sc.nextLine());
+        Product product;
+        switch (choice) {
+            case 2:
+                System.out.print("Nhập tác giả: ");
+                String author = sc.nextLine();
+                product = new Book(productId, productName, productPrice, productStock, author);
+                break;
+            case 3:
+                System.out.print("Nhập thương hiệu: ");
+                String brand = sc.nextLine();
+                product = new Cake(productId, productName, productPrice, productStock, brand);
+                break;
+            default:
+                product = new Product(productId, productName, productPrice, productStock);
+                break;
+        }
 
+        return product;
+    }
 
-        Customer customer = new Customer(customerId, customerName, customerPhone);
-        Product product = new Product(productId, productName, productPrice, productStock);
-        Order order = new Order(orderId, customer, product, quantity);
+    private static void checkExpensive() {
+        System.out.print("Nhập mã sản phẩm: ");
+        String productId = sc.nextLine();
 
-        orders.add(order);
+        for (Product product : products) {
+            if (product.getId().equals(productId)) {
+                if (product.isExpensive()) {
+                    System.out.println("Sản phẩm đắt");
+                } else {
+                    System.out.println("Sản phẩm không đắt");
+                }
+                return;
+            }
+        }
 
-        System.out.println("Thêm đơn hàng thành công!");
+        System.out.println("Không tìm thấy sản phẩm!");
     }
 
     private static void printOrders() {
@@ -162,7 +223,6 @@ public class HitShop {
             case 1:
                 System.out.print("Nhập ID mới: ");
                 String newId = sc.nextLine();
-
                 orderUpdate.setId(newId);
                 break;
 
@@ -176,29 +236,23 @@ public class HitShop {
                 String customerPhone = sc.nextLine();
 
                 Customer customer = new Customer(customerId, customerName, customerPhone);
-
                 orderUpdate.setCustomer(customer);
                 break;
 
             case 3:
-                System.out.println("=== Nhập thông tin sản phẩm ===");
-                System.out.print("Nhập mã sản phẩm: ");
-                String productId = sc.nextLine();
-                System.out.print("Nhập tên sản phẩm: ");
-                String productName = sc.nextLine();
-                System.out.print("Nhập giá sản phẩm: ");
-                double productPrice = Double.parseDouble(sc.nextLine());
-                System.out.print("Nhập tồn kho: ");
-                int productStock = Integer.parseInt(sc.nextLine());
-
-                Product product = new Product(productId, productName, productPrice, productStock);
+                Product product = inputProduct();
+                if (product == null) {
+                    return;
+                }
                 orderUpdate.setProduct(product);
+                if (orderUpdate.getProduct() == product) {
+                    products.add(product);
+                }
                 break;
 
             case 4:
                 System.out.print("Nhập số lượng mua mới: ");
                 int quantity = Integer.parseInt(sc.nextLine());
-
                 orderUpdate.setQuantity(quantity);
                 break;
 
