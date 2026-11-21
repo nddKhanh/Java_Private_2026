@@ -57,7 +57,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected synchronized void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         ClientMessage request;
         try {
             request = objectMapper.readValue(message.getPayload(), ClientMessage.class);

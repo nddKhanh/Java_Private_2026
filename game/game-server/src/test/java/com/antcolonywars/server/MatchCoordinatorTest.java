@@ -30,9 +30,34 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MatchCoordinatorTest {
+    @Test
+    void persistenceFailureDoesNotPublishCandidateState() {
+        MatchPersistence failing = new MatchPersistence() {
+            private MatchState stored;
+            @Override public Optional<MatchState> load(String matchId) { return Optional.ofNullable(stored); }
+            @Override public void save(MatchState state, GameEvent event) {
+                if (event != null) throw new IllegalStateException("injected database failure");
+                stored = state;
+            }
+            @Override public void saveBatch(MatchState state, List<GameEvent> events) {
+                throw new IllegalStateException("injected database failure");
+            }
+            @Override public List<GameEvent> history(String matchId) { return List.of(); }
+        };
+        MatchCoordinator coordinator = new MatchCoordinator(
+                DefaultMatchSetup.create(), null,
+                new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC(), failing
+        );
+        assertThrows(IllegalStateException.class, () -> coordinator.applyBatch(List.of(
+                new WaitCommand("persist-failure", "BLUE", "worker-blue")
+        ), BatchMode.ATOMIC));
+        assertEquals(0, coordinator.state().revision());
+    }
+
     @Test
     void limitsActionsPerBotInEachBatchWithoutRateLimitingSeparateBatches() {
         MatchCoordinator coordinator = new MatchCoordinator(

@@ -3,10 +3,9 @@
 ## 2026-11-21 — Backlog update_fix_v2_part5
 
 - **Trạng thái:** `DOING`.
-- **Đã đạt:** Lobby chỉ trả token của đội hiện tại, pairing không trả token đội, WebSocket của trận động dùng session membership để phân quyền; reconnect có chủ đích đã phân biệt với mất kết nối.
-- **Đã đạt:** Map script chấp nhận khai báo phe; nếu bỏ qua thì chia thành hai phe theo thứ tự đội. Rejoin cùng đội cho phép lấy lại trận đang chạy. Batch WebSocket có giới hạn 256 lệnh và không còn khóa handler toàn cục. Snapshot batch được ghi một lần cùng event trong transaction; Java client được đánh thức ngay khi socket đóng. Sửa quota/API lỗi thời ở docs.
-- **Bằng chứng:** `LobbyFlowIntegrationTest` pass; `mvnw -pl game-server -am test` đã chạy (kết quả đang xác nhận). Commit `c43c94b` đã push lên `develop`.
-- **Chưa kiểm chứng:** Chưa có test cho việc khai báo hai phe, rejoin sau start, lưu batch atomically, giới hạn/đồng thời batch; P1-04 chưa sửa. Load test và kiểm thử thủ công được bỏ qua theo yêu cầu.
+- **Đã đạt:** Lobby chỉ trả token đội hiện tại; pairing không trả token; WebSocket của lobby dùng session membership. Reconnect phân biệt rời chủ động với đứt kết nối. Map script chia đúng hai phe mặc định và cho phép khai báo phe. Thành viên có thể vào lại trận đang chạy. Batch đầu vào giới hạn 256 command. Batch snapshot/event được persist một lần trong transaction. State RAM chỉ commit sau persist thành công. Socket close đánh thức Java client. Sửa quota/API lỗi thời.
+- **Bằng chứng:** `LobbyFlowIntegrationTest`, `MatchCoordinatorTest`, `GameWebSocketIntegrationTest` pass; frontend `npm test` (2 tests) và production build pass. Commit `c43c94b` và `ba2fb94` đã push lên `develop`.
+- **Chưa kiểm chứng:** Chưa áp dụng queue capacity để tạo backpressure, bỏ khóa handler toàn cục (đã giữ serialization để bảo toàn thứ tự), giới hạn bytes WebSocket, hay load test. Chưa có browser visual sign-off. Kiểm thử thủ công được bỏ qua theo yêu cầu.
 
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
