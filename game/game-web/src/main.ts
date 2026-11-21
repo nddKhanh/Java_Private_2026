@@ -244,7 +244,8 @@ function startMatch(matchId: string, token: string): void {
   setText('#arena-title', matchId);
   showScreen('arena');
   const query = new URLSearchParams({ matchId });
-  if (token) query.set('token', token);
+  const credential = sessionToken || token;
+  if (credential) query.set('token', credential);
   const url = `${socketBase}${socketBase.includes('?') ? '&' : '?'}${query.toString()}`;
   gameSocket = new GameSocket(url, setConnection, receiveState);
   gameSocket.connect();

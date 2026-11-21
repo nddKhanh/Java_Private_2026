@@ -57,7 +57,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     }
 
     @Override
-    protected synchronized void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         ClientMessage request;
         try {
             request = objectMapper.readValue(message.getPayload(), ClientMessage.class);
@@ -136,7 +136,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             sendFailure(session, request.commandId(), "UNAUTHORIZED");
             return;
         }
-        if (request.commands() == null || request.commands().isEmpty()) {
+        if (request.commands() == null || request.commands().isEmpty()
+                || request.commands().size() > 256) {
             sendFailure(session, request.commandId(), "INVALID_BATCH");
             return;
         }
@@ -170,8 +171,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 result.state().eventSequence()
         ));
         if (!result.events().isEmpty()) {
-            GameEvent event = result.events().getLast();
-            broadcastState(result.state(), event);
+            result.events().forEach(event -> broadcastState(result.state(), event));
         }
     }
 

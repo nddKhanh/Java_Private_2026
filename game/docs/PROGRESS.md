@@ -1,5 +1,11 @@
 # Tiến độ dự án
 
+## 2026-11-21 — Backlog update_fix_v2_part5
+
+- **Trạng thái:** `DOING`.
+- **Đã đạt:** Bắt đầu sửa token truy cập lobby, reconnect có chủ đích và chỉnh hai mô tả luật/API lỗi thời.
+- **Chưa kiểm chứng:** Còn toàn bộ test tự động và các mục P0/P1/P2 trong `update_fix_v2_part5.md`; chưa commit/push.
+
 Chỉ ghi kết quả đã đạt được và bằng chứng kiểm tra được.
 Không dùng kế hoạch dự kiến như một kết quả đã hoàn thành.
 
