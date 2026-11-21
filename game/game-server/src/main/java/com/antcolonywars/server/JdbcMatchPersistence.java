@@ -36,6 +36,18 @@ public class JdbcMatchPersistence implements MatchPersistence {
     @Override
     @Transactional
     public void save(MatchState state, GameEvent event) {
+        saveSnapshot(state);
+        if (event != null) saveEvent(state, event);
+    }
+
+    @Override
+    @Transactional
+    public void saveBatch(MatchState state, List<GameEvent> events) {
+        saveSnapshot(state);
+        events.forEach(event -> saveEvent(state, event));
+    }
+
+    private void saveSnapshot(MatchState state) {
         String stateJson = write(state);
         int updated = jdbcTemplate.update(
                 "UPDATE match_snapshot SET state_json = ?, updated_at_ms = ? WHERE match_id = ?",
@@ -47,12 +59,13 @@ public class JdbcMatchPersistence implements MatchPersistence {
                     state.matchId(), stateJson, clock.millis()
             );
         }
-        if (event != null) {
-            jdbcTemplate.update(
-                    "INSERT INTO match_event(match_id, event_sequence, event_json, created_at_ms) VALUES (?, ?, ?, ?)",
-                    state.matchId(), event.sequence(), write(event), clock.millis()
-            );
-        }
+    }
+
+    private void saveEvent(MatchState state, GameEvent event) {
+        jdbcTemplate.update(
+                "INSERT INTO match_event(match_id, event_sequence, event_json, created_at_ms) VALUES (?, ?, ?, ?)",
+                state.matchId(), event.sequence(), write(event), clock.millis()
+        );
     }
 
     @Override

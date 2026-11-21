@@ -74,7 +74,7 @@ public final class MatchCoordinator {
 
     public synchronized ApplyResult advanceTick() {
         ApplyResult result = session.advanceTick();
-        result.events().forEach(event -> persistence.save(result.state(), event));
+        if (!result.events().isEmpty()) persistence.saveBatch(result.state(), result.events());
         return result;
     }
 
