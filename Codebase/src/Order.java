@@ -1,5 +1,3 @@
-package model;
-
 public class Order {
     private String id;
     private Customer customer;
@@ -7,6 +5,7 @@ public class Order {
     private int quantity;
 
     public Order(String id, Customer customer, Product product, int quantity) {
+        this.id = id;
         this.customer = customer;
         this.product = product;
         this.quantity = quantity;

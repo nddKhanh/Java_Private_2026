@@ -1,101 +1,156 @@
-# Bài Tập Về Nhà — Buổi 06
+# 🚀 BTVN BUỔI 06: EXCEPTION VÀ ĐỌC/GHI FILE — HITSHOP
 
-## I. Điểm Bắt Đầu Từ Buổi 05
+## I. Tổng kết buổi trước
 
-Giữ PaymentMethod, DeliveryMethod, equality của Product và toàn bộ hành vi Order.
+Sau buổi 5, chương trình **HitShop** có các thành phần:
 
-### 1. Các Ca Cũ Phải Còn Đạt
+- `Product` là abstract class; `GeneralProduct`, `Book` và `Cake` triển khai `isExpensive()`.
+- `ProductService`, `OrderService` và các class triển khai quản lý sản phẩm, đơn hàng.
+- `PaymentService` có hai cách triển khai: `MoMoPaymentService` và `BankPaymentService`.
+- `Product` sử dụng `equals()` và `hashCode()` để so sánh theo `id`.
 
-| Ca | Kết quả cần giữ |
-|---|---|
-| Checkout Cash/Bank | Đúng hai kết quả |
-| Giao Standard/Express | Đúng hai kết quả |
-| Tìm/xóa P01 bằng object cùng id | Hoạt động theo equals() |
-
-### 2. Cây Thư Mục Đầu Buổi
-
-Dùng nguyên cây cuối [BTVN Buổi 05](buoi-05-btvn.md); chưa đổi package trước khi làm phần file.
-
-## II. Bài Bắt Buộc
-
-### 1. OrderValidator
-
-Tạo `OrderValidator.validate(Order order): void`.
-
-Ném `IllegalArgumentException` khi:
-
-- Order là `null`.
-- Order không có item.
-- CartItem có Product `null`.
-- Quantity không dương.
-
-Validation chạy trước khi mở file.
-
-### 2. Định Dạng File
+### Cấu trúc thư mục sau buổi 5
 
 ```text
-ORDER|O01|C01|Linh Nguyễn|PENDING
-ITEM|P01|Áo thun|2|150000.0
-ITEM|P02|Bình nước|1|50000.0
-END
+src/
+├── HitShop.java
+├── Product.java
+├── GeneralProduct.java
+├── Book.java
+├── Cake.java
+├── Customer.java
+├── Order.java
+├── ProductService.java
+├── ProductServiceImpl.java
+├── OrderService.java
+├── OrderServiceImpl.java
+├── PaymentService.java
+├── MoMoPaymentService.java
+└── BankPaymentService.java
 ```
 
-Mỗi ITEM giữ unit price tại lúc lưu.
-Dữ liệu chuẩn không chứa ký tự `|`.
+## II. Giới thiệu bài tập
 
-### 3. OrderFileStore
+Tiếp tục phát triển **HitShop** từ bài tập buổi 5 với ba công việc:
 
-Tạo:
+- Xử lý trường hợp người dùng nhập lựa chọn menu không phải số nguyên.
+- Cập nhật các vị trí kiểm tra dữ liệu và thông báo lỗi bằng Exception.
+- Bổ sung chức năng ghi danh sách đơn hàng ra file và đọc nội dung file.
 
-- `void saveOrder(Order order, Path path) throws IOException`.
-- `List<String> loadLines(Path path) throws IOException`.
-- `double calculateTotal(List<String> lines)`.
+## III. Yêu cầu bài tập
+
+### 1. Xử lý lỗi nhập lựa chọn menu
+
+Cập nhật phần nhập lựa chọn menu trong `HitShop.java`:
+
+- Sử dụng `try/catch` để bắt lỗi khi chuyển dữ liệu nhập thành số nguyên.
+- Khi nhập `abc`, `1.5` hoặc chuỗi không phải số nguyên, in `Lựa chọn phải là số nguyên.`.
+- Sau thông báo lỗi, hiển thị lại menu và cho phép nhập lựa chọn mới.
+- Với số nguyên không thuộc các lựa chọn menu, giữ thông báo `Lựa chọn không hợp lệ.`.
+
+### 2. Cập nhật xử lý lỗi trong các chức năng hiện có
+
+Thay các nhánh kiểm tra và in thông báo lỗi hiện có bằng `throw` tại nơi phát hiện lỗi và `try/catch` tại nơi gọi thao tác.
+
+**Các vị trí cần cập nhật:**
+
+| Trường hợp | Nơi `throw` exception | Nơi `try/catch` và in thông báo |
+|---|---|---|
+| Không tìm thấy sản phẩm theo ID | `ProductServiceImpl.findById(String id)` | `HitShop.java`, tại chức năng kiểm tra sản phẩm có đắt hay không (lựa chọn `5`), bao quanh lời gọi `productService.findById(id)` |
+| Không tìm thấy đơn hàng khi sửa | `OrderServiceImpl.updateOrder(String id)` | `HitShop.java`, tại chức năng sửa đơn hàng (lựa chọn `3`), bao quanh lời gọi `orderService.updateOrder(id)` |
+| Không tìm thấy đơn hàng khi xóa | `OrderServiceImpl.deleteOrder(String id)` | `HitShop.java`, tại chức năng xóa đơn hàng (lựa chọn `4`), bao quanh lời gọi `orderService.deleteOrder(id)` |
+| Dữ liệu không hợp lệ tại các vị trí đã kiểm tra trước đó | Phương thức đang chịu trách nhiệm kiểm tra dữ liệu trong `ProductServiceImpl` hoặc `OrderServiceImpl` | `HitShop.java`, tại chức năng gọi phương thức tương ứng |
 
 Yêu cầu:
 
-- Dùng UTF-8 và try-with-resources.
-- Bài chỉ lưu một Order nên `saveOrder` được ghi đè file.
-- File chưa tồn tại: `loadLines` trả list rỗng.
-- Chỉ in “Lưu thành công” sau khi ghi hoàn tất.
-- `calculateTotal` chỉ tính các dòng ITEM.
+- Giữ `if` để phát hiện điều kiện lỗi và sử dụng `throw` exception phù hợp; bỏ lệnh in thông báo lỗi cũ tại vị trí này.
+- Trong `HitShop.java`, đặt `try/catch` quanh lời gọi của từng chức năng tương ứng. `catch` in thông báo lỗi thay cho vị trí in cũ.
+- Khi xảy ra exception, không thực hiện phần còn lại của thao tác thất bại; sau khi `catch`, chương trình tiếp tục hiển thị menu.
+- Các thao tác hợp lệ giữ nguyên kết quả như buổi 5.
 
-![Sơ đồ lớp BTVN buổi 06](assets/buoi-06-class-diagram.svg)
+### 3. Bổ sung chức năng ghi và đọc file
 
-## III. Mở Rộng Tự Chọn
+Bổ sung hai lựa chọn vào menu HitShop:
 
-Tạo `InvalidOrderException extends RuntimeException` và dùng thay `IllegalArgumentException` trong validator.
-Không viết parser dựng lại Order trong phần bắt buộc.
+```text
+7. Lưu danh sách đơn hàng ra file
+8. Đọc danh sách đơn hàng từ file
+```
 
-## IV. Nộp Bài
+**Ghi file**
 
-Nộp source, `orders.txt` mẫu và output các ca thành công/lỗi.
-Không thay model Order chỉ để đọc file.
+- Khi chọn `7`, ghi danh sách đơn hàng hiện tại vào file `orders.txt` trong thư mục chạy chương trình.
+- Mỗi đơn hàng được ghi trên một dòng, gồm mã đơn hàng, mã khách hàng, mã sản phẩm và số lượng.
+- Mỗi lần lưu, nội dung file được cập nhật theo danh sách đơn hàng hiện tại.
+- Sử dụng UTF-8 và `try-with-resources`.
+- Sau khi ghi thành công, in `Lưu danh sách đơn hàng thành công.`.
+- Nếu ghi thất bại, bắt `IOException` và in `Không thể ghi file.`.
 
-## V. Nghiệm Thu Buổi 06
+Dữ liệu file mẫu:
 
-### 1. Test Case
+```text
+O01|C01|P01|2
+O02|C02|P02|1
+```
+
+**Đọc file**
+
+- Khi chọn `8`, đọc file `orders.txt` và in từng dòng ra console.
+- Sử dụng UTF-8 và `try-with-resources`.
+- Nếu file không tồn tại hoặc không đọc được, hiển thị thông báo lỗi tương ứng.
+
+## IV. Kết quả mong đợi
+
+### Các trường hợp cần kiểm tra
 
 | Mã | Thao tác | Kết quả mong đợi |
 |---|---|---|
-| `TC06-01` | Lưu O01 chuẩn | File đúng khối ORDER/ITEM/END |
-| `TC06-02` | Đọc file chuẩn | Tổng `350000.0` |
-| `TC06-03` | Đọc file chưa tồn tại | List rỗng, báo chưa có dữ liệu |
-| `TC06-04` | Lưu Order `null` hoặc rỗng | Báo lỗi, file cũ không đổi |
-| `TC06-05` | Lưu item có Product null/quantity 0 | Báo lỗi, không ghi file |
-| `TC06-06` | Ghi vào đường dẫn không hợp lệ | Báo lỗi I/O, không báo thành công |
-| `TC06-07` | Chạy lại payment/delivery/equality | Kết quả Buổi 05 không đổi |
+| `TC06-01` | Nhập `abc` tại menu | In `Lựa chọn phải là số nguyên.` và hiển thị lại menu |
+| `TC06-02` | Nhập `1.5` tại menu | In `Lựa chọn phải là số nguyên.` và hiển thị lại menu |
+| `TC06-03` | Nhập `99` tại menu | In `Lựa chọn không hợp lệ.` và hiển thị lại menu |
+| `TC06-04` | Tìm sản phẩm với ID không tồn tại | Bắt exception, in thông báo không tìm thấy sản phẩm |
+| `TC06-05` | Sửa hoặc xóa đơn hàng với ID không tồn tại | Bắt exception, in thông báo không tìm thấy đơn hàng; dữ liệu không đổi |
+| `TC06-06` | Nhập sai rồi thực hiện thao tác hợp lệ | Thao tác hợp lệ vẫn thực hiện được |
+| `TC06-07` | Lưu hai đơn hàng hợp lệ bằng lựa chọn `7` | File `orders.txt` có hai dòng đúng dữ liệu |
+| `TC06-08` | Chọn `8` sau khi lưu | In đúng hai dòng trong file |
+| `TC06-09` | Đọc file không tồn tại | Hiển thị thông báo không tìm thấy file |
+| `TC06-10` | Thực hiện lại thêm/xem/sửa/xóa, kiểm tra giá và thanh toán | Các chức năng buổi 5 hoạt động đúng |
 
-### 2. Cây Thư Mục Cuối Buổi
+### Cấu trúc thư mục sau buổi 6
 
 ```text
-orders.txt
-src/
-├── HitShop.java
-├── model/
-├── payment/
-├── delivery/
-├── validation/
-│   └── OrderValidator.java
-└── storage/
-    └── OrderFileStore.java
+HitShop/
+├── orders.txt
+└── src/
+    ├── HitShop.java             (Cập nhật)
+    ├── Product.java
+    ├── GeneralProduct.java
+    ├── Book.java
+    ├── Cake.java
+    ├── Customer.java
+    ├── Order.java
+    ├── ProductService.java
+    ├── ProductServiceImpl.java  (Cập nhật)
+    ├── OrderService.java
+    ├── OrderServiceImpl.java    (Cập nhật)
+    ├── PaymentService.java
+    ├── MoMoPaymentService.java
+    └── BankPaymentService.java
 ```
+
+## V. Nộp bài
+
+- Source code HitShop sau khi cập nhật.
+- File `orders.txt` có ít nhất hai đơn hàng.
+- Kết quả chạy các trường hợp kiểm tra tại mục IV.
+
+## VI. Nâng cao — Tách chức năng đọc/ghi file
+
+Tạo class `OrderFileStore.java` để quản lý thao tác file.
+
+Yêu cầu:
+
+- Chuyển toàn bộ phần mở, đọc, ghi và đóng file từ `HitShop.java` sang `OrderFileStore.java`.
+- Cung cấp hai phương thức ghi danh sách đơn hàng và đọc các dòng trong file.
+- Các phương thức xử lý menu trong `HitShop` gọi đến `OrderFileStore` thay vì trực tiếp sử dụng `BufferedReader`, `BufferedWriter` hoặc `Files`.
+- Giữ nguyên định dạng `orders.txt` và kết quả của các trường hợp kiểm tra tại mục IV.

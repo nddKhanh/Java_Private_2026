@@ -1,6 +1,6 @@
-package model;
+import java.util.Objects;
 
-public class Product {
+public abstract class Product {
     private String id;
     private String name;
     private double price;
@@ -74,6 +74,25 @@ public class Product {
             return;
         }
         Product.count = count;
+    }
+
+    public abstract boolean isExpensive();
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Product)) {
+            return false;
+        }
+        Product product = (Product) obj;
+        return Objects.equals(id, product.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
     }
 
     @Override
