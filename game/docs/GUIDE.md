@@ -333,7 +333,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 ### Giới hạn khi chơi
 
 - [x] Máy chủ xử lý lần lượt các hành động.
-- [x] Mỗi đội có giới hạn 10 hành động trong một giây theo cấu hình mặc định.
+- [x] Mỗi unit/công trình có giới hạn 10 hành động trong một batch.
 - [x] Hai chương trình cùng điều khiển một đội dùng chung giới hạn này.
 - [x] Chương trình Java tự chờ rồi gửi lại khi bị giới hạn tốc độ.
 - [x] Batch giới hạn 10 hành động cho mỗi unit hoặc công trình và được server xử lý tuần tự.

@@ -94,9 +94,6 @@ public class LobbyService {
         AccountService.Account account = accountService.requireAccount(sessionToken);
         String code = normalizeCode(matchCode);
         LobbyRow lobby = lockLobby(code);
-        if (!"WAITING".equals(lobby.status())) {
-            throw new ApiException(HttpStatus.CONFLICT, "MATCH_ALREADY_STARTED", "The match has already started");
-        }
         String normalizedTeamToken = teamToken == null ? "" : teamToken.trim().toUpperCase(Locale.ROOT);
         TeamRow team = jdbcTemplate.query(
                 "SELECT team_id, display_name, color, team_token FROM game_lobby_team WHERE match_code = ? AND team_token = ?",
@@ -115,6 +112,9 @@ public class LobbyService {
         ).stream().findFirst();
         if (currentTeam.filter(team.teamId()::equals).isPresent()) {
             return viewFor(account, code);
+        }
+        if (!"WAITING".equals(lobby.status())) {
+            throw new ApiException(HttpStatus.CONFLICT, "MATCH_ALREADY_STARTED", "The match has already started");
         }
         Integer memberCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM game_lobby_member WHERE match_code = ? AND team_id = ?",
@@ -163,14 +163,8 @@ public class LobbyService {
         if (!code.matches("[A-Z2-9]{6}")) {
             return null;
         }
-        Optional<String> teamByToken = jdbcTemplate.query(
-                "SELECT team_id FROM game_lobby_team WHERE match_code = ? AND team_token = ?",
-                (resultSet, rowNumber) -> resultSet.getString("team_id"),
-                code, token.trim().toUpperCase(Locale.ROOT)
-        ).stream().findFirst();
-        if (teamByToken.isPresent()) {
-            return teamByToken.get();
-        }
+        // Team tokens are discovery credentials only. WebSocket control is
+        // granted to authenticated accounts that are members of this match.
         return accountService.findAccount(token).flatMap(account -> jdbcTemplate.query(
                 "SELECT team_id FROM game_lobby_member WHERE match_code = ? AND account_id = ?",
                 (resultSet, rowNumber) -> resultSet.getString("team_id"), code, account.id()
@@ -188,10 +182,9 @@ public class LobbyService {
                 (resultSet, rowNumber) -> lobbyRow(resultSet), key
         ).stream().findFirst().orElseThrow(this::pairingNotFound);
         List<PairingTeam> teams = jdbcTemplate.query(
-                "SELECT team_id, display_name, team_token FROM game_lobby_team WHERE match_code = ? ORDER BY team_id",
+                "SELECT team_id, display_name FROM game_lobby_team WHERE match_code = ? ORDER BY team_id",
                 (resultSet, rowNumber) -> new PairingTeam(
-                        resultSet.getString("team_id"), resultSet.getString("display_name"),
-                        resultSet.getString("team_token")
+                        resultSet.getString("team_id"), resultSet.getString("display_name"), ""
                 ),
                 lobby.matchCode()
         );
@@ -211,6 +204,10 @@ public class LobbyService {
         if (!member) {
             throw new ApiException(HttpStatus.FORBIDDEN, "NOT_IN_MATCH", "Join the match before opening its lobby");
         }
+        String memberTeamId = jdbcTemplate.query(
+                "SELECT team_id FROM game_lobby_member WHERE match_code = ? AND account_id = ?",
+                (resultSet, rowNumber) -> resultSet.getString("team_id"), matchCode, account.id()
+        ).getFirst();
         List<TeamView> teams = jdbcTemplate.query(
                 "SELECT team_id, display_name, color, team_token FROM game_lobby_team WHERE match_code = ? ORDER BY team_id",
                 (resultSet, rowNumber) -> {
@@ -225,7 +222,8 @@ public class LobbyService {
                     );
                     return new TeamView(
                             teamId, resultSet.getString("display_name"), resultSet.getString("color"),
-                            resultSet.getString("team_token"), lobby.accountsPerTeam(), members
+                            teamId.equals(memberTeamId) ? resultSet.getString("team_token") : "",
+                            lobby.accountsPerTeam(), members
                     );
                 },
                 matchCode

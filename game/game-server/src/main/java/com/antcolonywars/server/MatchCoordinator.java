@@ -17,7 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 public final class MatchCoordinator {
-    private final GameSession session;
+    private GameSession session;
+    private final MatchSetup setup;
     private final int maxActionsPerBotPerBatch;
     private final int commandQueueCapacity;
     private final MatchPersistence persistence;
@@ -41,6 +42,7 @@ public final class MatchCoordinator {
             Clock clock,
             MatchPersistence persistence
     ) {
+        this.setup = setup;
         session = new GameSession(setup, restoredState);
         maxActionsPerBotPerBatch = limits.maxActionsPerBotPerBatch();
         commandQueueCapacity = limits.commandQueueCapacity();
@@ -61,10 +63,12 @@ public final class MatchCoordinator {
 
     public synchronized BatchApplyResult applyBatch(List<? extends ActionCommand> commands, BatchMode mode) {
         int limitIndex = firstLimitViolation(commands);
-        BatchApplyResult result = session.applyBatch(
+        GameSession candidate = new GameSession(setup, session.state());
+        BatchApplyResult result = candidate.applyBatch(
                 commands, mode, limitIndex, ErrorCode.BATCH_LIMIT_EXCEEDED
         );
         persist(result);
+        if (result.accepted() || result.appliedCount() > 0) session = candidate;
         return result;
     }
 
@@ -73,8 +77,12 @@ public final class MatchCoordinator {
     }
 
     public synchronized ApplyResult advanceTick() {
-        ApplyResult result = session.advanceTick();
-        result.events().forEach(event -> persistence.save(result.state(), event));
+        GameSession candidate = new GameSession(setup, session.state());
+        ApplyResult result = candidate.advanceTick();
+        if (!result.events().isEmpty()) {
+            persistence.saveBatch(result.state(), result.events());
+            session = candidate;
+        }
         return result;
     }
 
@@ -98,6 +106,6 @@ public final class MatchCoordinator {
     }
 
     private void persist(BatchApplyResult result) {
-        result.events().forEach(event -> persistence.save(result.state(), event));
+        if (!result.events().isEmpty()) persistence.saveBatch(result.state(), result.events());
     }
 }

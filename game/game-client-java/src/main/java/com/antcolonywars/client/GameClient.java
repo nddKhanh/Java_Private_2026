@@ -330,7 +330,9 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
     @Override
     public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
         closed = true;
-        failPending(new GameClientException("CONNECTION_CLOSED", "WebSocket closed: " + reason));
+        GameClientException failure = new GameClientException("CONNECTION_CLOSED", "WebSocket closed: " + reason);
+        failPending(failure);
+        recordConnectionFailure(failure);
         return null;
     }
 

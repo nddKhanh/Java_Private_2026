@@ -5,6 +5,7 @@ export type ConnectionStatus = 'connecting' | 'online' | 'offline';
 export class GameSocket {
   private socket: WebSocket | null = null;
   private reconnectTimer: number | null = null;
+  private disposed = false;
 
   constructor(
     private readonly url: string,
@@ -13,6 +14,7 @@ export class GameSocket {
   ) {}
 
   connect(): void {
+    this.disposed = false;
     if (this.socket?.readyState === WebSocket.OPEN || this.socket?.readyState === WebSocket.CONNECTING) {
       return;
     }
@@ -23,11 +25,12 @@ export class GameSocket {
     this.socket.addEventListener('error', () => this.socket?.close());
     this.socket.addEventListener('close', () => {
       this.onStatus('offline');
-      this.scheduleReconnect();
+      if (!this.disposed) this.scheduleReconnect();
     });
   }
 
   disconnect(): void {
+    this.disposed = true;
     if (this.reconnectTimer !== null) {
       window.clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -37,6 +40,7 @@ export class GameSocket {
   }
 
   private receive(raw: unknown): void {
+    if (this.disposed) return;
     if (typeof raw !== 'string') {
       return;
     }

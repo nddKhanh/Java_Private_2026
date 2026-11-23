@@ -49,7 +49,7 @@ MVP chỉ gồm một lát cắt dọc có thể chơi và kiểm thử trực t
 - 10 đội, 5 tài khoản mỗi đội hoặc lobby.
 - Database, đăng ký, đăng nhập và phục hồi sau khi restart.
 - Đạn bay, animation chiến đấu, fog of war hoặc tìm đường.
-- Rate limit 10 hành động mỗi giây và hàng đợi dài.
+- Giới hạn 10 hành động cho mỗi unit hoặc công trình trong một batch; không giới hạn theo giây.
 - Editor Java trên trình duyệt.
 - Upload, biên dịch hoặc chạy source code không tin cậy trên server.
 - Matchmaking, xếp hạng, replay, pixel art hoàn chỉnh hoặc cân bằng game.
@@ -150,7 +150,7 @@ Source code và class file chỉ tồn tại local, không được upload lên 
 
 Project `student-bot-template` cho phép người học viết `public static void main(Bot bot)` trong IntelliJ.
 Lớp `Submit` đọc pairing key và chế độ batch từ `.env`, sau đó gửi source qua HTTP loopback tới Desktop để tự pair, compile và chạy.
-API nhập môn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `idle` và `state`; tên `idle` tránh xung đột với `Object.wait()` dạng `final`.
+API nhập môn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 
 JVM con phải có classpath giới hạn, working directory tạm, giới hạn heap, timeout, giới hạn output và thao tác dừng rõ ràng.
 Các giới hạn này bảo vệ độ ổn định của ứng dụng nhưng không phải sandbox an toàn cho code không tin cậy.

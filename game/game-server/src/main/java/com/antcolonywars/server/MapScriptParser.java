@@ -64,7 +64,15 @@ public final class MapScriptParser {
 
         List<Team> teams = new ArrayList<>();
         for (int index = 1; index <= teamCount; index++) {
-            teams.add(new Team(teamId(index), "Team " + index, COLORS.get(index - 1), teamId(index)));
+            String factionId = text(script.factions() == null || script.factions().size() != teamCount
+                    ? null : script.factions().get(index - 1));
+            if (factionId.isBlank()) {
+                factionId = index <= (teamCount + 1) / 2 ? "FACTION_1" : "FACTION_2";
+            }
+            teams.add(new Team(teamId(index), "Team " + index, COLORS.get(index - 1), factionId));
+        }
+        if (teams.stream().map(Team::factionId).distinct().count() != 2) {
+            throw invalid("teams must belong to exactly two factions");
         }
 
         Set<String> occupied = new HashSet<>();
@@ -173,6 +181,7 @@ public final class MapScriptParser {
             String map,
             Integer teams,
             Integer accountsPerTeam,
+            List<String> factions,
             List<ResourceSpec> resources,
             List<HeadquartersSpec> headquarters,
             List<UnitSpec> units

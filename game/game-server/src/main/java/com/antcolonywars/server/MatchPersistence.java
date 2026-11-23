@@ -11,6 +11,10 @@ public interface MatchPersistence {
 
     void save(MatchState state, GameEvent event);
 
+    default void saveBatch(MatchState state, List<GameEvent> events) {
+        events.forEach(event -> save(state, event));
+    }
+
     List<GameEvent> history(String matchId);
 
     static MatchPersistence none() {
@@ -27,6 +31,10 @@ public interface MatchPersistence {
 
         @Override
         public void save(MatchState state, GameEvent event) {
+        }
+
+        @Override
+        public void saveBatch(MatchState state, List<GameEvent> events) {
         }
 
         @Override

@@ -67,11 +67,10 @@ class LobbyFlowIntegrationTest {
         String matchCode = lobby.path("matchCode").asText();
         String pairingKey = lobby.path("pairingKey").asText();
         String teamOneToken = lobby.path("teams").get(0).path("token").asText();
-        String teamTwoToken = lobby.path("teams").get(1).path("token").asText();
+        String teamTwoToken = "RED";
         assertEquals(6, matchCode.length());
         assertEquals(6, pairingKey.length());
         assertEquals("BLUE", teamOneToken);
-        assertEquals("RED", teamTwoToken);
         assertEquals(1, lobby.path("teams").get(0).path("members").size());
 
         ResponseEntity<String> paired = restTemplate.getForEntity(
@@ -81,7 +80,7 @@ class LobbyFlowIntegrationTest {
         JsonNode pairing = objectMapper.readTree(paired.getBody());
         assertEquals(matchCode, pairing.path("matchCode").asText());
         assertTrue(pairing.path("serverUrl").asText().endsWith("/game"));
-        assertEquals("BLUE", pairing.path("teams").get(0).path("token").asText());
+        assertEquals("", pairing.path("teams").get(0).path("token").asText());
 
         ResponseEntity<String> joined = exchange(
                 "/api/lobbies/join", HttpMethod.POST, secondToken,
@@ -89,7 +88,7 @@ class LobbyFlowIntegrationTest {
         );
         assertEquals(HttpStatus.OK, joined.getStatusCode());
         assertEquals(1, objectMapper.readTree(joined.getBody()).path("teams").get(1).path("members").size());
-        assertEquals("TEAM_2", lobbyService.resolveTeamId(matchCode, teamTwoToken));
+        org.junit.jupiter.api.Assertions.assertNull(lobbyService.resolveTeamId(matchCode, teamTwoToken));
         assertEquals("TEAM_2", lobbyService.resolveTeamId(matchCode, secondToken));
 
         ResponseEntity<String> full = exchange(
@@ -105,6 +104,14 @@ class LobbyFlowIntegrationTest {
         assertEquals(HttpStatus.OK, started.getStatusCode());
         assertEquals("RUNNING", objectMapper.readTree(started.getBody()).path("status").asText());
         assertTrue(matchRegistry.find(matchCode).isPresent());
+        assertEquals(2, matchRegistry.require(matchCode).state().teams().stream()
+                .map(com.antcolonywars.core.Team::factionId).distinct().count());
+        ResponseEntity<String> rejoined = exchange(
+                "/api/lobbies/join", HttpMethod.POST, secondToken,
+                Map.of("matchCode", matchCode, "teamToken", teamTwoToken)
+        );
+        assertEquals(HttpStatus.OK, rejoined.getStatusCode());
+        assertEquals(1, objectMapper.readTree(rejoined.getBody()).path("teams").get(1).path("members").size());
     }
 
     private String registerAndLogin(String username, String password) throws Exception {
