@@ -94,7 +94,7 @@ db.username=java_student
 db.password=JavaDemo_2026!Local
 ```
 
-Các giá trị trên sử dụng tài khoản thực hành cục bộ được tạo ở mục tiếp theo. Nếu sử dụng MySQL trên máy hoặc cổng khác, sửa `db.url` tương ứng. Nếu đã có tài khoản riêng, sửa `db.username` và `db.password`.
+Các giá trị trên sử dụng tài khoản thực hành cục bộ được tạo ở mục tiếp theo. Nếu sử dụng MySQL trên máy hoặc cổng khác, sửa `db.url` tương ứng. Nếu đã có tài khoản riêng, sửa `db.username` và `db.password`. Không đưa mật khẩu thật của môi trường dùng chung hoặc production vào source code.
 
 File `application.properties` lưu cấu hình dưới dạng `key=value`, giúp thay đổi thông tin kết nối mà không phải sửa source Java.
 
@@ -199,10 +199,12 @@ Khi project có thêm nhiều thư viện, việc quản lý thủ công trở n
 
 | Công việc | Làm thủ công | Sử dụng Maven |
 |---|---|---|
-| Thêm thư viện | Tải JAR và thêm thư viện vào project | Khai báo dependency trong pom.xml |
+| Thêm thư viện | Tải JAR và cấu hình classpath | Khai báo dependency trong pom.xml |
 | Đổi phiên bản | Tải và thay JAR | Đổi version trong pom.xml |
 | Build project | Tự cấu hình biên dịch và đóng gói | Sử dụng các lệnh Maven |
 | Chia sẻ project | Người khác phải biết các thư viện cần cài | Dùng cùng pom.xml để Maven giải quyết dependency |
+
+Maven không phải ngôn ngữ lập trình, IDE hay thư viện kết nối database. Maven cũng không tự cài đặt hoặc khởi động MySQL Server.
 
 ### 2. Cấu trúc Maven project
 
@@ -261,7 +263,7 @@ mvn compile exec:java
 | `mvn clean` | Xóa kết quả build cũ |
 | `mvn compile exec:java` | Biên dịch và chạy class Main |
 
-Có thể chạy `mvn clean package` để build lại từ đầu. Sử dụng `mvn compile exec:java` để biên dịch và chạy class Main theo cấu hình ở đầu bài.
+Có thể chạy `mvn clean package` để build lại từ đầu. Sử dụng `mvn compile exec:java` để biên dịch và chạy class Main theo cấu hình ở đầu bài. File JAR thông thường không tự chứa tất cả dependency và không nhất thiết chạy được bằng `java -jar`.
 
 ### Kiểm tra nhanh
 
@@ -356,7 +358,7 @@ try (Connection connection =
 }
 ```
 
-`DriverManager.getConnection(url, username, password)` tìm driver phù hợp và mở kết nối với database. Ba tham số là địa chỉ, tên tài khoản và mật khẩu MySQL.
+`DriverManager.getConnection(url, username, password)` tìm driver phù hợp và mở kết nối với database. Ba tham số là địa chỉ, tên tài khoản và mật khẩu MySQL. Với MySQL Connector/J hiện đại đã có trong classpath, thông thường không cần tự gọi `Class.forName(...)`.
 
 Trong project thực hành, các giá trị này được đọc từ `application.properties` bằng class `DbConnection` ở phần chuẩn bị:
 
@@ -465,7 +467,7 @@ try (Statement statement = connection.createStatement()) {
 | Method | Khi sử dụng | Kết quả trả về |
 |---|---|---|
 | `executeQuery(sql)` | Câu SQL trả về dữ liệu dạng bảng, ví dụ SELECT | ResultSet |
-| `executeUpdate(sql)` | INSERT, UPDATE, DELETE | Số dòng bị tác động |
+| `executeUpdate(sql)` | INSERT, UPDATE, DELETE; có thể dùng cho DDL | Số dòng bị tác động, hoặc 0 với câu lệnh không trả số dòng |
 
 Statement phù hợp với câu SQL cố định không chứa dữ liệu đầu vào cần ghép vào chuỗi SQL.
 
@@ -528,6 +530,8 @@ Khi inputName là `O'Reilly`, giá trị vẫn được truyền như dữ liệ
 | SQL chứa input | Không nên ghép trực tiếp | Bind tham số thay vì ghép chuỗi |
 | Thực thi lặp lại | Gửi lại câu SQL | Có thể dùng lại cùng cấu trúc với giá trị khác |
 
+PreparedStatement có thể giúp tái sử dụng câu SQL; việc chuẩn bị câu lệnh ở phía server và lợi ích hiệu năng còn phụ thuộc driver, cấu hình và database.
+
 PreparedStatement không tự bảo vệ câu SQL nếu lập trình viên vẫn ghép input trực tiếp vào chuỗi trước khi gọi prepareStatement. Dấu `?` chỉ đại diện cho giá trị dữ liệu, không thay thế được tên bảng, tên cột hoặc từ khóa SQL. Nếu cần chọn tên cột động, phải giới hạn lựa chọn bằng danh sách hợp lệ.
 
 ### Kiểm tra nhanh
@@ -573,7 +577,7 @@ while (result.next()) {
 }
 ```
 
-Có thể đọc theo tên cột hoặc vị trí cột (bắt đầu từ 1). Đọc theo tên cột thường rõ ràng hơn. Trong ví dụ này, thuộc tính price của Product sử dụng kiểu double.
+Có thể đọc theo tên cột hoặc vị trí cột (bắt đầu từ 1). Đọc theo tên cột thường rõ ràng hơn. Ví dụ nhập môn giữ giá kiểu double như model Product hiện có; khi cần tính toán tiền chính xác, ưu tiên BigDecimal và `getBigDecimal()`.
 
 ### 3. Đọc một dòng và đọc nhiều dòng
 
@@ -740,6 +744,22 @@ Try-with-resources đóng các tài nguyên khai báo trong cùng khối theo th
 
 Sau mỗi ca, xác định: **câu SQL nào được thực thi, Java nhận kết quả kiểu gì, tài nguyên nào cần đóng và lỗi được xử lý ở đâu?**
 
+## Lỗi thường gặp
+
+| Lỗi | Hậu quả | Cách sửa |
+|---|---|---|
+| Chưa khai báo hoặc reload dependency | Không tìm thấy JDBC driver | Kiểm tra pom.xml và reload Maven |
+| Sai host hoặc port, server chưa chạy | Không kết nối được database | Kiểm tra MySQL Server và JDBC URL |
+| Sai user/password hoặc thiếu quyền | Access denied | Kiểm tra tài khoản và quyền |
+| Sai tên database hoặc bảng | Unknown database/table | Chạy schema đúng database |
+| Ghép input trực tiếp vào SQL | Lỗi cú pháp hoặc SQL Injection | Dùng PreparedStatement và bind giá trị |
+| Bắt đầu vị trí tham số từ 0 | SQLException do sai index | Bắt đầu từ 1 |
+| Dùng executeQuery cho INSERT/UPDATE/DELETE | Không nhận đúng kiểu kết quả | Dùng executeUpdate |
+| Đọc ResultSet trước next() | Con trỏ chưa nằm trên dòng hợp lệ | Gọi next() trước khi đọc |
+| Quên WHERE khi UPDATE/DELETE | Có thể sửa hoặc xóa cả bảng | Kiểm tra điều kiện trước khi thực thi |
+| Quên đóng tài nguyên | Lãng phí hoặc cạn kết nối | Dùng try-with-resources |
+| Bắt SQLException rồi luôn trả false/null | Không phân biệt lỗi SQL với không có dữ liệu | Chuyển lỗi tới nơi xử lý phù hợp |
+
 ## Tổng kết buổi 7
 
 Maven giúp quản lý thư viện và quá trình build. JDBC là API để Java giao tiếp với database thông qua driver. JDBC URL xác định đích kết nối; Connection biểu diễn kết nối đang sử dụng; Statement và PreparedStatement thực thi SQL; ResultSet cho phép đọc kết quả SELECT.
@@ -782,7 +802,7 @@ Mọi câu SQL nhận input phải bind tham số. Sử dụng try-with-resource
 
 **Kết quả mong đợi:** thêm T01 và T02, đánh dấu T01 hoàn thành, xóa T02; bảng còn đúng một dòng T01 với done = true. Tìm T99 trả kết quả không tồn tại.
 
-Thời gian làm khoảng 20 phút. Trọng tâm là hiểu luồng JDBC và sử dụng đúng các thành phần.
+Thời gian làm khoảng 20 phút. Trọng tâm là hiểu luồng JDBC và sử dụng đúng các thành phần; không yêu cầu xây dựng menu hoặc kiến trúc nhiều tầng trên lớp.
 
 ### Code thực hành hoàn chỉnh
 
@@ -1036,3 +1056,7 @@ MySQL hiển thị `done = 1` cho giá trị true. Khi chạy lại bài thực 
 ```sql
 DELETE FROM tasks WHERE id IN ('T01', 'T02');
 ```
+
+## Bài tập về nhà
+
+Hoàn thành [BTVN buổi 07](../BTVN/buoi-07-btvn.md).
