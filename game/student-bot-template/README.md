@@ -1,12 +1,13 @@
 # Project Java mẫu cho học viên
 
 1. Mở riêng thư mục này bằng IntelliJ IDEA và chờ Maven tải dependency.
-2. Điền key trận đấu vào `MATCH_KEY` và ID đội vào `TEAM_ID` trong `.env`.
+2. Sao chép `.env.example` thành `.env`, rồi điền key trận đấu vào `MATCH_KEY`, tài khoản đã vào đội trên web vào `USERNAME` và `PASSWORD`.
+   `.env` nằm trong `.gitignore` nên mật khẩu không bị commit.
 3. Viết chiến thuật tại `Main.main(Bot bot)`.
 4. Mở Desktop Code Studio; không cần bấm Compile hoặc Run tại Desktop.
-5. Chạy `Submit.main()` trong IntelliJ để gửi source, key và đội tới Desktop rồi xem kết quả ngay trong console IntelliJ.
+5. Chạy `Submit.main()` trong IntelliJ để gửi source, key và tài khoản tới Desktop rồi xem kết quả ngay trong console IntelliJ.
 
-Desktop tự pair trong LAN, biên dịch source, tạo batch rồi gửi command đến server.
+Desktop tự pair trong LAN, đăng nhập để nhận token điều khiển của đội mình, biên dịch source, tạo batch rồi gửi command đến server.
 Source Java chỉ được biên dịch trên Desktop và không được gửi đến server game.
 Batch chỉ được gửi khi `Main.main(Bot bot)` kết thúc bình thường; exception giữa chương trình sẽ bỏ các lệnh đang gom.
 

@@ -1,5 +1,14 @@
 # Tiến độ dự án
 
+## 2026-11-25 — Token điều khiển Desktop
+
+- **Trạng thái:** `VERIFIED` bằng test tự động và production build.
+- **Đã đạt:** Desktop đăng nhập khi Pair, chỉ gửi mật khẩu tới server khớp pairing key và nhận token điều khiển riêng cho đội của tài khoản.
+- **Đã đạt:** Token điều khiển chỉ dùng trong trận đó, được thay mới ở mỗi lần Pair; tài khoản chưa vào trận nhận `NOT_IN_MATCH`.
+- **Đã đạt:** Project IntelliJ dùng `USERNAME`/`PASSWORD` trong `.env` thay cho `TEAM_ID`.
+- **Bằng chứng:** `mvnw -q -pl game-server,game-desktop,student-bot-template -am test` và `npm run build` trong `game-web` hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa chạy luồng IntelliJ → Desktop → server bằng GUI thật trên trận tạo từ web.
+
 ## 2026-11-21 — Backlog update_fix_v2_part5
 
 - **Trạng thái:** `DOING`.

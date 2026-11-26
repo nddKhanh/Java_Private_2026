@@ -16,7 +16,7 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - R8.1–R8.3 thêm màn hình chọn trận, mã truy cập, bảng trạng thái trận và phản hồi thắng/thua cho Phaser viewer.
 - R8.4 thêm đăng ký/đăng nhập trên web, tạo trận từ JSON map script, tìm trận bằng mã + token đội và phòng chờ theo slot.
 - R8 LAN cho phép một máy phát server/viewer để nhiều máy cùng Wi-Fi truy cập trực tiếp, không qua dịch vụ trung gian.
-- Desktop pairing cho phép nhập một key sáu ký tự để tự tìm server trong LAN, điền match code và chọn token đội theo màu.
+- Desktop pairing nhận một key sáu ký tự cùng tài khoản để tự tìm server trong LAN, điền match code và nhận token điều khiển riêng của tài khoản.
 - P1 cho phép viết `Main.main(Bot)` trong project IntelliJ mẫu rồi chạy `Submit` để Desktop tự pair, compile, chạy source local và trả kết quả về console IntelliJ.
 - P2 bắt buộc nguồn sản xuất theo HQ/BARRACKS, cho công trình chặn và nhận damage, tower tự bắn tầm 5 và projectile khóa tọa độ đích theo Bresenham.
 
@@ -60,15 +60,15 @@ Hai match `match-default` và `match-training` được tạo từ cùng profile
 
 Trên web, đăng ký bằng username/password hoặc đăng nhập tài khoản đã có.
 Sau đó chọn **Tạo trận** để dùng map script JSON, hoặc **Tìm trận** để nhập mã trận và token đội.
-Phòng chờ hiển thị pairing key riêng của trận cùng token màu của từng đội.
+Phòng chờ hiển thị pairing key riêng của trận cùng token màu của đội mình; token màu chỉ dùng để mời người vào đội.
 
-Trong Desktop Code Studio, nhập pairing key từ phòng chờ rồi nhấn **Pair**.
-Ứng dụng tự tìm server cổng `8080` trong LAN, điền Server và Match code, sau đó cho chọn Team token từ danh sách màu.
-Các trường Server, Match code và Team token vẫn cho phép nhập thủ công khi cần.
+Trong Desktop Code Studio, nhập pairing key từ phòng chờ cùng username và mật khẩu của tài khoản đã vào đội, rồi nhấn **Pair**.
+Ứng dụng tự tìm server cổng `8080` trong LAN, điền Server, Match code và Token điều khiển của tài khoản.
+Các trường Server, Match code và Token vẫn cho phép nhập thủ công khi cần.
 Nhấn `Compile` (`Ctrl+B`) rồi `Run` (`Ctrl+R`) để chạy chương trình mẫu; nhấn `Stop` (`Ctrl+K`) để dừng.
 Quan sát kết quả trên trang bản đồ.
 
-Để viết trong IntelliJ, mở `student-bot-template`, điền `MATCH_KEY` và `TEAM_ID` trong `.env`, sửa `Main.java` rồi chạy `Submit.main()` khi Desktop đang mở.
+Để viết trong IntelliJ, mở `student-bot-template`, sao chép `.env.example` thành `.env` rồi điền `MATCH_KEY`, `USERNAME` và `PASSWORD`, sửa `Main.java` rồi chạy `Submit.main()` khi Desktop đang mở.
 API ngắn dùng `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 
 Nếu chỉ muốn chạy kịch bản có sẵn, dùng lệnh sau thay cho Desktop Code Studio:

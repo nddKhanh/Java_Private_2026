@@ -144,8 +144,8 @@ public final class MyBot implements BotProgram {
 
 `game-desktop` chịu trách nhiệm UI, cấu hình kết nối, biên dịch và điều phối process.
 `game-runner` là entry point tối thiểu chạy class đã biên dịch trong một JVM con và kết nối bằng `game-client-java`.
-URL server, team token và unit ID do desktop truyền vào runner; người dùng không cần ghi credential trong source.
-Với lobby động, server cấp một pairing key để Desktop tự tìm endpoint LAN, điền match code và nạp danh sách token màu.
+URL server, token điều khiển và unit ID do desktop truyền vào runner; người dùng không cần ghi credential trong source.
+Với lobby động, server cấp một pairing key để Desktop tự tìm endpoint LAN, điền match code và cấp token điều khiển cho tài khoản đã vào đội.
 Source code và class file chỉ tồn tại local, không được upload lên game server.
 
 Project `student-bot-template` cho phép người học viết `public static void main(Bot bot)` trong IntelliJ.

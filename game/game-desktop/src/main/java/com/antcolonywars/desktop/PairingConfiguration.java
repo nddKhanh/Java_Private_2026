@@ -1,13 +1,10 @@
 package com.antcolonywars.desktop;
 
-import java.util.List;
-
 public record PairingConfiguration(
         String serverUrl,
         String matchCode,
         String status,
-        List<PairingTeam> teams
+        String teamId,
+        String controlToken
 ) {
-    public record PairingTeam(String teamId, String displayName, String token) {
-    }
 }

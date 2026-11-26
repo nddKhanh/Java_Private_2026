@@ -60,7 +60,7 @@ public final class LobbyController {
         }
     }
 
-    private String bearerToken(String authorization) {
+    static String bearerToken(String authorization) {
         if (authorization == null || !authorization.startsWith("Bearer ") || authorization.length() == 7) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_SESSION", "Bearer session token is required");
         }

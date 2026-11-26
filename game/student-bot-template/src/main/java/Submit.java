@@ -29,7 +29,8 @@ public final class Submit {
     private static void submit() throws Exception {
         Map<String, String> environment = readEnvironment(Path.of(".env"));
         String key = required(environment, "MATCH_KEY");
-        String teamId = required(environment, "TEAM_ID");
+        String username = required(environment, "USERNAME");
+        String password = required(environment, "PASSWORD");
         String mode = environment.getOrDefault("BATCH_MODE", "ATOMIC").trim().toUpperCase();
         String source = Files.readString(Path.of("src", "main", "java", "Main.java"));
 
@@ -37,7 +38,8 @@ public final class Submit {
                 "className", "Main",
                 "source", source,
                 "pairingKey", key,
-                "teamId", teamId,
+                "username", username,
+                "password", password,
                 "batchMode", mode
         ));
         HttpRequest request = HttpRequest.newBuilder(DESKTOP_ENDPOINT)
@@ -67,6 +69,9 @@ public final class Submit {
     }
 
     private static Map<String, String> readEnvironment(Path path) throws Exception {
+        if (!Files.exists(path)) {
+            throw new IllegalArgumentException("Chưa có .env; hãy sao chép .env.example thành .env rồi điền thông tin");
+        }
         Map<String, String> values = new HashMap<>();
         for (String line : Files.readAllLines(path)) {
             String trimmed = line.trim();

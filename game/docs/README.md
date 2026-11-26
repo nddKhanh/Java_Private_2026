@@ -30,7 +30,7 @@ JavaFX editor → Java Compiler API → child JVM → GameBot/GameClient → Web
 ```
 
 Người học cũng có thể mở `student-bot-template` trong IntelliJ, viết `Main.main(Bot)` rồi chạy `Submit`.
-`Submit` đọc pairing key cùng ID đội từ `.env` và gửi source qua HTTP loopback tới Desktop để tự pair đúng token đội, compile và chạy.
+`Submit` đọc pairing key cùng tài khoản từ `.env` và gửi source qua HTTP loopback tới Desktop để tự pair, nhận token điều khiển của tài khoản, compile và chạy.
 Game server chỉ nhận batch command, không nhận source hoặc class Java.
 
 Mỗi lần Run gom các hành động thành một batch; người dùng chọn Atomic để từ chối toàn bộ khi có lỗi hoặc Partial để giữ phần hợp lệ trước lỗi đầu tiên.
@@ -67,7 +67,8 @@ Ví dụ: `http://192.168.1.23:5173/`.
 
 Đăng ký bằng username/password trên web.
 Sau khi đăng nhập, chọn **Tạo trận** để nhập JSON map script hoặc **Tìm trận** để nhập mã trận cùng token đội.
-Phòng chờ hiển thị mã trận, pairing key, token màu từng đội, slot tài khoản và nút bắt đầu dành cho chủ phòng.
+Phòng chờ hiển thị mã trận, pairing key, token màu của đội mình, slot tài khoản và nút bắt đầu dành cho chủ phòng.
+Token màu chỉ dùng để mời người vào đội, không dùng để điều khiển quân.
 
 Terminal thứ ba chạy một bot mẫu:
 
@@ -91,10 +92,10 @@ Sau đó mở terminal thứ ba:
 
 Trong ứng dụng:
 
-1. Với phòng tạo từ web, nhập pairing key sáu ký tự đang hiển thị trong phòng chờ rồi nhấn **Pair**.
-2. Chờ ứng dụng tự điền Server, Match code và danh sách Team token; chọn token màu của đội muốn điều khiển.
+1. Với phòng tạo từ web, nhập pairing key sáu ký tự đang hiển thị trong phòng chờ cùng username và mật khẩu của tài khoản đã vào đội, rồi nhấn **Pair**.
+2. Chờ ứng dụng tự điền Server, Match code và Token điều khiển của tài khoản.
 3. Chọn Atomic hoặc Partial tại ô Batch.
-4. Nếu không dùng pairing, vẫn có thể nhập thủ công WebSocket URL, mã phòng và token đội.
+4. Nếu không dùng pairing, vẫn có thể nhập thủ công WebSocket URL, mã phòng và session token của thành viên trận.
 5. Giữ Bot class là MyBot và source mẫu mặc định.
 6. Nhấn **Compile**; trạng thái phải chuyển thành Compiled.
 7. Nhấn **Run**; Desktop gửi một batch và console hiển thị kết quả hoặc lỗi tiếng Việt.
@@ -105,7 +106,7 @@ Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để St
 Để dùng IntelliJ thay cho editor tích hợp:
 
 1. Mở `student-bot-template` bằng IntelliJ với JDK 21.
-2. Điền `MATCH_KEY`, `TEAM_ID` và `BATCH_MODE` trong `.env`.
+2. Sao chép `.env.example` thành `.env`, rồi điền `MATCH_KEY`, `USERNAME`, `PASSWORD` và `BATCH_MODE`.
 3. Sửa `src/main/java/Main.java`.
 4. Chạy `Submit.main()` trong khi Desktop đang mở và xem toàn bộ kết quả trong console IntelliJ.
 
@@ -123,7 +124,9 @@ Batch đã được server chấp nhận vẫn được giữ sau khi dừng ch�
 REST API hỗ trợ đăng ký qua `POST /api/accounts`, đăng nhập qua `POST /api/sessions`, xem account qua `GET /api/lobby/me` và join team qua `PUT /api/lobby/membership`.
 Web viewer gọi trực tiếp các API này; display name mặc định bằng username nên form đăng ký chỉ cần username/password.
 Lobby động dùng `POST /api/lobbies`, `POST /api/lobbies/join`, `GET /api/lobbies/{matchCode}` và `POST /api/lobbies/{matchCode}/start`.
-Desktop pairing dùng `GET /api/desktop/pairing/{key}` và trả về WebSocket URL, match code, trạng thái cùng danh sách team token.
+Desktop pairing dùng `GET /api/desktop/pairing/{key}` để tìm server và nhận WebSocket URL, match code cùng trạng thái.
+Sau đó Desktop đăng nhập và gọi `POST /api/desktop/pairing/{key}/control` để nhận token điều khiển cho đội của tài khoản; tài khoản chưa vào trận nhận lỗi `NOT_IN_MATCH`.
+Token điều khiển chỉ dùng được trong trận đó và được thay mới ở mỗi lần Pair.
 Mật khẩu được lưu bằng BCrypt; session token trả về cho client chỉ được lưu dưới dạng SHA-256 trong database.
 Sau khi join team, dùng session token ở trường Token của Desktop Code Studio hoặc tham số thứ hai của `GameClient.connect`/`GameBots.connect`.
 Tối đa 5 account có thể join cùng team và dùng chung unit cùng state server-authoritative; account thứ 6 nhận lỗi `TEAM_FULL`.

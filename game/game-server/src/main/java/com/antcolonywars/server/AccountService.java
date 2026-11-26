@@ -234,13 +234,13 @@ public class AccountService {
         return new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "Username or password is invalid");
     }
 
-    private String createToken() {
+    String createToken() {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    private String tokenHash(String token) {
+    String tokenHash(String token) {
         try {
             return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
                     .digest(token.getBytes(StandardCharsets.UTF_8)));

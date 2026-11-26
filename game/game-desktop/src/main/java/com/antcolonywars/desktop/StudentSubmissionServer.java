@@ -88,8 +88,9 @@ final class StudentSubmissionServer implements AutoCloseable {
                 || submission.className() == null || submission.className().isBlank()
                 || submission.source() == null || submission.source().isBlank()
                 || submission.pairingKey() == null || submission.pairingKey().isBlank()
-                || submission.teamId() == null || submission.teamId().isBlank()) {
-            throw new IllegalArgumentException("Thiếu className, source, pairingKey hoặc TEAM_ID");
+                || submission.username() == null || submission.username().isBlank()
+                || submission.password() == null || submission.password().isEmpty()) {
+            throw new IllegalArgumentException("Thiếu className, source, pairingKey, USERNAME hoặc PASSWORD");
         }
     }
 

@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.TextArea;
@@ -41,7 +42,9 @@ public final class CodeStudioApplication extends Application {
     private final TextField pairingKey = new TextField();
     private final TextField serverUrl = new TextField("ws://localhost:8080/game");
     private final TextField matchId = new TextField();
-    private final ComboBox<String> teamToken = new ComboBox<>();
+    private final TextField username = new TextField();
+    private final PasswordField password = new PasswordField();
+    private final TextField teamToken = new TextField();
     private final ComboBox<BatchMode> batchMode = new ComboBox<>();
     private final TextField className = new TextField(DefaultBotSource.CLASS_NAME);
     private final Spinner<Integer> timeoutSeconds = new Spinner<>(1, 300, 15);
@@ -60,8 +63,9 @@ public final class CodeStudioApplication extends Application {
     @Override
     public void start(Stage stage) {
         pairingKey.setPromptText("6-character pairing key");
-        teamToken.setPromptText("Team token");
-        teamToken.setEditable(true);
+        username.setPromptText("Username");
+        password.setPromptText("Password");
+        teamToken.setPromptText("Filled by Pair; demo: blue-token");
         batchMode.getItems().setAll(BatchMode.ATOMIC, BatchMode.PARTIAL);
         batchMode.getSelectionModel().select(BatchMode.ATOMIC);
         matchId.setPromptText("Match code (blank = match-default)");
@@ -76,7 +80,7 @@ public final class CodeStudioApplication extends Application {
         editor.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
         className.textProperty().addListener((observable, oldValue, newValue) -> invalidateCompilation());
         compileButton.setOnAction(event -> compileSource(runGeneration.current()));
-        pairButton.setOnAction(event -> pairWithServer(runGeneration.current(), null));
+        pairButton.setOnAction(event -> pairWithServer(runGeneration.current()));
         runButton.setOnAction(event -> runBot(runGeneration.current()));
         stopButton.setOnAction(event -> stopBot());
 
@@ -123,7 +127,8 @@ public final class CodeStudioApplication extends Application {
     private VBox connectionPanel() {
         HBox pairing = new HBox(
                 8,
-                new Label("Pairing key"), pairingKey, pairButton
+                new Label("Pairing key"), pairingKey,
+                new Label("Account"), username, password, pairButton
         );
         HBox.setHgrow(pairingKey, Priority.ALWAYS);
 
@@ -138,7 +143,7 @@ public final class CodeStudioApplication extends Application {
         HBox match = new HBox(
                 8,
                 new Label("Match code"), matchId,
-                new Label("Team token"), teamToken,
+                new Label("Token"), teamToken,
                 new Label("Batch"), batchMode
         );
         HBox.setHgrow(matchId, Priority.ALWAYS);
@@ -149,22 +154,19 @@ public final class CodeStudioApplication extends Application {
         return new VBox(8, pairing, connection, match, source);
     }
 
-    private void pairWithServer(long generation, String requestedTeamId) {
+    private void pairWithServer(long generation) {
         String key = pairingKey.getText().trim();
+        String user = username.getText().trim();
+        String secret = password.getText();
         pairButton.setDisable(true);
         status.setText("Searching LAN...");
-        CompletableFuture.supplyAsync(() -> pairingClient.find(key), background)
+        CompletableFuture.supplyAsync(() -> pairingClient.find(key, user, secret), background)
                 .whenComplete((result, error) -> Platform.runLater(
-                        () -> finishPairing(generation, requestedTeamId, result, error)
+                        () -> finishPairing(generation, result, error)
                 ));
     }
 
-    private void finishPairing(
-            long generation,
-            String requestedTeamId,
-            PairingConfiguration result,
-            Throwable error
-    ) {
+    private void finishPairing(long generation, PairingConfiguration result, Throwable error) {
         if (!runGeneration.isCurrent(generation)) {
             return;
         }
@@ -179,27 +181,9 @@ public final class CodeStudioApplication extends Application {
         }
         serverUrl.setText(result.serverUrl());
         matchId.setText(result.matchCode());
-        teamToken.getItems().setAll(result.teams().stream().map(PairingConfiguration.PairingTeam::token).toList());
-        teamToken.getSelectionModel().clearSelection();
-        teamToken.getEditor().clear();
-        if (requestedTeamId == null) {
-            teamToken.getSelectionModel().selectFirst();
-        } else {
-            try {
-                teamToken.setValue(teamTokenFor(result, requestedTeamId));
-            } catch (IllegalArgumentException exception) {
-                compileAfterPairing = false;
-                runAfterCompilation = false;
-                status.setText("Pairing failed");
-                appendConsole(exception.getMessage());
-                completeSubmission(generation, false, exception.getMessage());
-                return;
-            }
-        }
+        teamToken.setText(result.controlToken());
         status.setText("Paired");
-        appendConsole(requestedTeamId == null
-                ? "Paired with " + result.matchCode() + ". Select a team token, then compile and run."
-                : "Đã pair trận " + result.matchCode() + " với đội " + requestedTeamId.trim() + ".");
+        appendConsole("Đã pair trận " + result.matchCode() + " với đội " + result.teamId() + ".");
         if (compileAfterPairing) {
             compileAfterPairing = false;
             runAfterCompilation = true;
@@ -218,6 +202,8 @@ public final class CodeStudioApplication extends Application {
             className.setText(submission.className().trim());
             editor.setText(submission.source());
             pairingKey.setText(submission.pairingKey().trim());
+            username.setText(submission.username().trim());
+            password.setText(submission.password());
             try {
                 batchMode.getSelectionModel().select(BatchMode.valueOf(submission.batchMode().trim().toUpperCase()));
             } catch (RuntimeException exception) {
@@ -226,22 +212,9 @@ public final class CodeStudioApplication extends Application {
             compileAfterPairing = true;
             runAfterCompilation = false;
             appendConsole("Đã nhận " + submission.className() + " từ IntelliJ. Đang pair trận đấu...");
-            pairWithServer(generation, submission.teamId().trim());
+            pairWithServer(generation);
         });
         return result;
-    }
-
-    static String teamTokenFor(PairingConfiguration configuration, String teamId) {
-        if (teamId == null || teamId.isBlank()) {
-            throw new IllegalArgumentException("Thiếu TEAM_ID trong .env.");
-        }
-        return configuration.teams().stream()
-                .filter(team -> team.teamId().equals(teamId.trim()))
-                .map(PairingConfiguration.PairingTeam::token)
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy TEAM_ID '" + teamId.trim() + "' trong trận đấu."
-                ));
     }
 
     private VBox bottomPanel() {
@@ -307,10 +280,10 @@ public final class CodeStudioApplication extends Application {
             completeSubmission(generation, false, "Chưa biên dịch được source.");
             return;
         }
-        String selectedTeamToken = teamToken.getEditor().getText().trim();
+        String selectedTeamToken = teamToken.getText().trim();
         if (serverUrl.getText().isBlank() || selectedTeamToken.isBlank()) {
-            appendConsole("Server URL and team token are required.");
-            completeSubmission(generation, false, "Thiếu địa chỉ server hoặc token đội.");
+            appendConsole("Server URL and token are required.");
+            completeSubmission(generation, false, "Thiếu địa chỉ server hoặc token điều khiển.");
             return;
         }
 

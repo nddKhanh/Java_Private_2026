@@ -196,7 +196,7 @@ class DesktopBotIntegrationTest {
         )) {
             submissions.start();
             String body = """
-                    {"className":"Main","source":"class Main {}","pairingKey":"123456","teamId":"BLUE","batchMode":"ATOMIC"}
+                    {"className":"Main","source":"class Main {}","pairingKey":"123456","username":"student","password":"secret","batchMode":"ATOMIC"}
                     """;
             HttpResponse<String> response = HttpClient.newHttpClient().send(
                     HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + submissions.port() + "/submit"))
@@ -245,7 +245,8 @@ class DesktopBotIntegrationTest {
                     "className", "Main",
                     "source", source,
                     "pairingKey", "123456",
-                    "teamId", "BLUE",
+                    "username", "student",
+                    "password", "secret",
                     "batchMode", "ATOMIC"
             ));
 
@@ -268,7 +269,7 @@ class DesktopBotIntegrationTest {
     }
 
     @Test
-    void intellijSubmissionWithoutTeamIdIsRejectedBeforeRunning() throws Exception {
+    void intellijSubmissionWithoutAccountIsRejectedBeforeRunning() throws Exception {
         java.util.concurrent.atomic.AtomicBoolean handled = new java.util.concurrent.atomic.AtomicBoolean();
         try (StudentSubmissionServer submissions = new StudentSubmissionServer(submission -> {
             handled.set(true);
@@ -278,7 +279,7 @@ class DesktopBotIntegrationTest {
         }, 0)) {
             submissions.start();
             String body = """
-                    {"className":"Main","source":"class Main {}","pairingKey":"123456","teamId":"","batchMode":"ATOMIC"}
+                    {"className":"Main","source":"class Main {}","pairingKey":"123456","username":"student","password":"","batchMode":"ATOMIC"}
                     """;
 
             HttpResponse<String> response = HttpClient.newHttpClient().send(
@@ -290,33 +291,8 @@ class DesktopBotIntegrationTest {
             );
 
             assertEquals(400, response.statusCode());
-            assertTrue(response.body().contains("TEAM_ID"));
+            assertTrue(response.body().contains("PASSWORD"));
             assertFalse(handled.get());
-        }
-    }
-
-    @Test
-    void requestedIntellijTeamsUseDifferentTokensInTheSameMatch() {
-        PairingConfiguration configuration = new PairingConfiguration(
-                serverUrl(),
-                "match-default",
-                "OPEN",
-                java.util.List.of(
-                        new PairingConfiguration.PairingTeam("BLUE", "Blue", "blue-token"),
-                        new PairingConfiguration.PairingTeam("RED", "Red", "red-token")
-                )
-        );
-
-        try (GameClient blue = GameClient.connect(
-                serverUrl(), CodeStudioApplication.teamTokenFor(configuration, "BLUE")
-        ); GameClient red = GameClient.connect(
-                serverUrl(), CodeStudioApplication.teamTokenFor(configuration, "RED")
-        )) {
-            blue.waitTurn("worker-blue");
-            red.waitTurn("worker-red");
-
-            assertEquals(2, red.getLatestState().revision());
-            assertEquals(2, red.getLatestState().snapshot().processedCommandIds().size());
         }
     }
 

@@ -80,7 +80,7 @@ class LobbyFlowIntegrationTest {
         JsonNode pairing = objectMapper.readTree(paired.getBody());
         assertEquals(matchCode, pairing.path("matchCode").asText());
         assertTrue(pairing.path("serverUrl").asText().endsWith("/game"));
-        assertEquals("", pairing.path("teams").get(0).path("token").asText());
+        assertTrue(pairing.path("teams").isMissingNode());
 
         ResponseEntity<String> joined = exchange(
                 "/api/lobbies/join", HttpMethod.POST, secondToken,
@@ -90,6 +90,19 @@ class LobbyFlowIntegrationTest {
         assertEquals(1, objectMapper.readTree(joined.getBody()).path("teams").get(1).path("members").size());
         org.junit.jupiter.api.Assertions.assertNull(lobbyService.resolveTeamId(matchCode, teamTwoToken));
         assertEquals("TEAM_2", lobbyService.resolveTeamId(matchCode, secondToken));
+
+        String controlPath = "/api/desktop/pairing/" + pairingKey + "/control";
+        ResponseEntity<String> control = exchange(controlPath, HttpMethod.POST, secondToken, Map.of());
+        assertEquals(HttpStatus.OK, control.getStatusCode());
+        JsonNode desktop = objectMapper.readTree(control.getBody());
+        String controlToken = desktop.path("controlToken").asText();
+        assertEquals("TEAM_2", desktop.path("teamId").asText());
+        assertEquals("TEAM_2", lobbyService.resolveTeamId(matchCode, controlToken));
+        assertEquals(HttpStatus.FORBIDDEN, exchange(controlPath, HttpMethod.POST, thirdToken, Map.of()).getStatusCode());
+        String renewedToken = objectMapper.readTree(exchange(controlPath, HttpMethod.POST, secondToken, Map.of())
+                .getBody()).path("controlToken").asText();
+        org.junit.jupiter.api.Assertions.assertNull(lobbyService.resolveTeamId(matchCode, controlToken));
+        assertEquals("TEAM_2", lobbyService.resolveTeamId(matchCode, renewedToken));
 
         ResponseEntity<String> full = exchange(
                 "/api/lobbies/join", HttpMethod.POST, thirdToken,

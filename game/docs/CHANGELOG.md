@@ -3,6 +3,21 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-25 — Token điều khiển Desktop
+
+### Changed
+
+- Desktop đăng nhập khi Pair và nhận token điều khiển riêng cho tài khoản qua `POST /api/desktop/pairing/{key}/control`.
+- Pairing không còn trả token đội; token màu chỉ dùng để vào đội và lobby chỉ hiển thị token của đội mình.
+- `.env` của project IntelliJ dùng `USERNAME` và `PASSWORD` thay cho `TEAM_ID`; đội lấy theo tài khoản.
+- Project IntelliJ kèm `.env.example`; `.env` chứa mật khẩu được git bỏ qua.
+- Tài liệu mô tả mảng `factions` tùy chọn của map script.
+
+### Verified
+
+- Maven test của server, Desktop và project mẫu cùng frontend production build đều pass.
+- Chưa xác minh luồng IntelliJ → Desktop → server bằng GUI thật trên trận tạo từ web.
+
 ## 2026-11-14 — Sửa Update V2 phần 4
 
 ### Changed

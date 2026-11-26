@@ -57,9 +57,11 @@ Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 
 1. Chọn **Tạo trận**, giữ hoặc sửa JSON mẫu rồi bấm **Tạo phòng chờ**.
 2. Map script dùng `map: "nxn"`, `teams`, `accountsPerTeam` và các mảng `resources`, `headquarters`, `units`.
-3. Gửi pairing key sáu ký tự cho người dùng Desktop; gửi mã trận và token màu cho người tham gia bằng web nếu cần.
+   Mảng `factions` tùy chọn ghi phe cho từng đội theo thứ tự, ví dụ `["FACTION_1", "FACTION_2"]`, và phải có đúng hai phe.
+   Bỏ trống `factions` thì nửa đầu số đội thuộc `FACTION_1`, phần còn lại thuộc `FACTION_2`.
+3. Gửi mã trận và token màu cho người cần vào đội; token màu chỉ dùng để vào đội, không dùng để điều khiển quân.
 4. Người chơi khác chọn **Tìm trận**, nhập đúng hai mã; nếu đội đầy, giao diện báo lỗi.
-5. Chủ phòng bấm **Bắt đầu trận đấu**. Sau khi bắt đầu, dùng token đội trong Desktop Code Studio và thêm `?matchId=MA_TRAN` vào URL server.
+5. Chủ phòng bấm **Bắt đầu trận đấu**. Mỗi người chơi nhập pairing key cùng tài khoản đã vào đội trong Desktop Code Studio để điều khiển quân.
 
 ### Chơi cùng Wi-Fi trong mạng LAN
 
@@ -80,20 +82,23 @@ LAN nhanh hơn đường Internet vì dữ liệu đi thẳng trong mạng nội
 Chờ cửa sổ Desktop Code Studio xuất hiện.
 Giữ cả ba cửa sổ PowerShell hoạt động trong khi chơi; mỗi cửa sổ chạy một lệnh ở trên.
 
-Trong Desktop Code Studio, nhập pairing key đang hiển thị tại phòng chờ rồi nhấn **Pair**.
-Ứng dụng quét các subnet IPv4 local trên cổng `8080`, tự điền Server và Match code, rồi nạp danh sách Team token để chọn.
+Trong Desktop Code Studio, nhập pairing key đang hiển thị tại phòng chờ cùng username và mật khẩu của tài khoản đã vào đội, rồi nhấn **Pair**.
+Ứng dụng quét các subnet IPv4 local trên cổng `8080`, chỉ đăng nhập vào server khớp pairing key, rồi tự điền Server, Match code và Token điều khiển.
+Token điều khiển gắn với tài khoản và trận đó; mỗi lần Pair cấp token mới và token cũ của tài khoản hết hiệu lực.
 Nếu Windows Firewall chặn kết nối, mở TCP `8080` trên máy chủ.
 
 ### Viết bot trong IntelliJ
 
 1. Mở thư mục `student-bot-template` bằng IntelliJ và chọn JDK 21.
-2. Điền pairing key sáu ký tự vào `MATCH_KEY` và ID đội được cấp vào `TEAM_ID` trong file `.env`.
+2. Sao chép `.env.example` thành `.env`, rồi điền pairing key sáu ký tự vào `MATCH_KEY`, username vào `USERNAME` và mật khẩu vào `PASSWORD`.
+   Tài khoản phải vào đội trên web trước; đội được lấy theo tài khoản nên không cần khai ID đội.
+   `.env` nằm trong `.gitignore` nên mật khẩu không bị commit.
 3. Viết chương trình trong `src/main/java/Main.java` với entry point `public static void main(Bot bot)`.
 4. Chạy `Submit.main()` trong IntelliJ khi Desktop Code Studio đang mở.
 5. Theo dõi trạng thái gửi, biên dịch, chạy và kết quả server ngay trong console IntelliJ.
 
 Desktop nhận source qua `127.0.0.1:17321`, tự pair, compile, chạy bot và trả kết quả về lần Run đang chờ.
-Desktop chỉ dùng token khớp chính xác `TEAM_ID`; thiếu hoặc sai ID đội sẽ dừng Run và trả lỗi về console IntelliJ.
+Thiếu tài khoản, sai mật khẩu hoặc tài khoản chưa vào trận sẽ dừng Run và trả lỗi về console IntelliJ.
 Không cần nhấn thêm Compile hoặc Run trong Desktop.
 
 Source chỉ đi từ IntelliJ tới Desktop trên chính máy đang chạy và không được upload lên game server.
@@ -127,7 +132,7 @@ $membership = @{ teamId = "BLUE" } | ConvertTo-Json
 Invoke-RestMethod -Method Put -Uri http://localhost:8080/api/lobby/membership -Headers $headers -ContentType application/json -Body $membership
 ```
 
-Dùng `$session.token` ở trường Token của Desktop Code Studio.
+Dùng `$session.token` ở trường Token của Desktop Code Studio khi kết nối `match-default`.
 Account phải join team trước khi session token được phép điều khiển quân qua WebSocket.
 Có thể tạo tối đa năm account và join cùng BLUE; tất cả account dùng chung state của đội.
 Account thứ sáu bị từ chối với mã `TEAM_FULL`.
@@ -157,10 +162,10 @@ Hai overload `spawn` cũ không có `sourceId` đã deprecated và báo lỗi ng
 
 ### Bước 1 — chọn đội và nhập chương trình
 
-Với trận tạo từ web, ưu tiên nhập pairing key và nhấn **Pair**.
-Chọn một token màu trong ô `Team token`; Server và Match code đã được điền tự động.
+Với trận tạo từ web, nhập pairing key cùng username và mật khẩu rồi nhấn **Pair**.
+Server, Match code và Token điều khiển được điền tự động theo đội của tài khoản.
 Chọn `ATOMIC` để toàn bộ batch chỉ được áp dụng khi mọi hành động hợp lệ, hoặc `PARTIAL` để dừng tại lỗi đầu tiên và giữ các hành động trước đó.
-Luồng thủ công vẫn hỗ trợ `ws://192.168.1.23:8080/game`, mã trận và token đội khi không thể quét LAN.
+Luồng thủ công vẫn hỗ trợ nhập `ws://192.168.1.23:8080/game`, mã trận và session token của thành viên trận khi không thể quét LAN.
 Với `match-default`, để trống Match code và dùng demo token `blue-token` hoặc `red-token`.
 Giữ tên lớp là `MyBot`.
 Thay nội dung ô soạn thảo bằng chương trình sau để thử trên trận mới:
@@ -348,7 +353,9 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Reconnect nhận lại snapshot mới nhất; `matchId` tách biệt giữa các match.
 - [x] Snapshot cùng event history được ghi vào H2 qua Flyway migration.
 - [x] State đã lưu được nạp lại và tiếp tục revision, processed command cùng simulation state.
-- [~] Demo token cũ vẫn dùng được; chưa có giao diện đăng nhập trong Desktop Code Studio.
+- [x] Desktop đăng nhập khi Pair và nhận token điều khiển riêng cho tài khoản trong trận.
+- [x] Token màu của đội chỉ dùng để vào đội; lobby chỉ hiển thị token của đội mình.
+- [~] Demo token `blue-token`/`red-token` vẫn dùng được cho `match-default`.
 
 ## 6. Những khả năng chưa có
 

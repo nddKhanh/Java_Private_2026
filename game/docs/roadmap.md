@@ -443,7 +443,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 **Trạng thái:** `VERIFIED` bằng test tự động.
 
 - Project `student-bot-template` dùng JDK 21, `.env` và entry point `Main.main(Bot)`.
-- `Submit` chuyển source, pairing key và `TEAM_ID` qua HTTP loopback; Desktop tự pair đúng token đội, compile, chạy trong JVM con và trả kết quả về console IntelliJ.
+- `Submit` chuyển source, pairing key và tài khoản qua HTTP loopback; Desktop tự pair, nhận token điều khiển của tài khoản, compile, chạy trong JVM con và trả kết quả về console IntelliJ.
 - API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`; API đầy đủ yêu cầu `sourceId`, còn overload thiếu nguồn đã deprecated và báo lỗi sớm.
 - Batch chỉ được gửi khi chương trình kết thúc bình thường; exception hoặc Stop loại bỏ batch chưa gửi.
 - Console IntelliJ nhận lỗi có số lệnh, ID chủ thể, hành động và nguyên nhân tiếng Việt.
@@ -592,7 +592,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 ## R8 — Trải nghiệm và phát hành
 
 - **Đã triển khai R8.1–R8.4 và LAN:** viewer responsive, đăng ký/đăng nhập, tạo trận từ JSON map script, tìm bằng mã + token đội, phòng chờ theo slot và nối WebSocket theo match động.
-- **Đã triển khai Desktop pairing:** mỗi lobby có key riêng; Desktop tự tìm server LAN, điền match và cho chọn token màu.
+- **Đã triển khai Desktop pairing:** mỗi lobby có key riêng; Desktop tự tìm server LAN, đăng nhập rồi điền match và token điều khiển của tài khoản.
 - Pixel art, animation, tutorial trong trận, replay và log chi tiết vẫn còn phía sau.
 - Cân bằng HP, damage, chi phí, map và thời lượng trận.
 - Danh sách phòng công khai, matchmaking tự động, xếp hạng và vận hành production nếu sản phẩm cần.

@@ -163,8 +163,14 @@ public class LobbyService {
         if (!code.matches("[A-Z2-9]{6}")) {
             return null;
         }
-        // Team tokens are discovery credentials only. WebSocket control is
-        // granted to authenticated accounts that are members of this match.
+        // Team tokens only join a lobby; control needs a Desktop control token or a member session.
+        Optional<String> controlledTeam = jdbcTemplate.query(
+                "SELECT team_id FROM game_lobby_member WHERE match_code = ? AND control_token_hash = ?",
+                (resultSet, rowNumber) -> resultSet.getString("team_id"), code, accountService.tokenHash(token.trim())
+        ).stream().findFirst();
+        if (controlledTeam.isPresent()) {
+            return controlledTeam.get();
+        }
         return accountService.findAccount(token).flatMap(account -> jdbcTemplate.query(
                 "SELECT team_id FROM game_lobby_member WHERE match_code = ? AND account_id = ?",
                 (resultSet, rowNumber) -> resultSet.getString("team_id"), code, account.id()
@@ -172,27 +178,43 @@ public class LobbyService {
     }
 
     public PairingView pair(String pairingKey, String serverHost, int serverPort) {
+        LobbyRow lobby = lobbyByPairingKey(pairingKey);
+        String host = serverHost.contains(":") ? "[" + serverHost + "]" : serverHost;
+        return new PairingView(
+                "ws://" + host + ":" + serverPort + "/game",
+                lobby.matchCode(), lobby.status()
+        );
+    }
+
+    /** Issues a new control token for the caller's team; earlier tokens of this account stop working. */
+    @Transactional
+    public DesktopControl desktopControl(String sessionToken, String pairingKey) {
+        AccountService.Account account = accountService.requireAccount(sessionToken);
+        LobbyRow lobby = lobbyByPairingKey(pairingKey);
+        String teamId = jdbcTemplate.query(
+                "SELECT team_id FROM game_lobby_member WHERE match_code = ? AND account_id = ?",
+                (resultSet, rowNumber) -> resultSet.getString("team_id"), lobby.matchCode(), account.id()
+        ).stream().findFirst().orElseThrow(() -> new ApiException(
+                HttpStatus.FORBIDDEN, "NOT_IN_MATCH", "Join the match before pairing Desktop"
+        ));
+        String controlToken = accountService.createToken();
+        jdbcTemplate.update(
+                "UPDATE game_lobby_member SET control_token_hash = ? WHERE match_code = ? AND account_id = ?",
+                accountService.tokenHash(controlToken), lobby.matchCode(), account.id()
+        );
+        return new DesktopControl(lobby.matchCode(), teamId, controlToken);
+    }
+
+    private LobbyRow lobbyByPairingKey(String pairingKey) {
         String key = pairingKey == null ? "" : pairingKey.trim().toUpperCase(Locale.ROOT);
         if (!key.matches("[A-Z2-9]{6}")) {
             throw pairingNotFound();
         }
-        LobbyRow lobby = jdbcTemplate.query(
+        return jdbcTemplate.query(
                 "SELECT match_code, pairing_key, owner_account_id, setup_json, status, accounts_per_team "
                         + "FROM game_lobby WHERE pairing_key = ?",
                 (resultSet, rowNumber) -> lobbyRow(resultSet), key
         ).stream().findFirst().orElseThrow(this::pairingNotFound);
-        List<PairingTeam> teams = jdbcTemplate.query(
-                "SELECT team_id, display_name FROM game_lobby_team WHERE match_code = ? ORDER BY team_id",
-                (resultSet, rowNumber) -> new PairingTeam(
-                        resultSet.getString("team_id"), resultSet.getString("display_name"), ""
-                ),
-                lobby.matchCode()
-        );
-        String host = serverHost.contains(":") ? "[" + serverHost + "]" : serverHost;
-        return new PairingView(
-                "ws://" + host + ":" + serverPort + "/game",
-                lobby.matchCode(), lobby.status(), teams
-        );
     }
 
     private LobbyView viewFor(AccountService.Account account, String matchCode) {
@@ -352,11 +374,9 @@ public class LobbyService {
     ) {
     }
 
-    public record PairingTeam(String teamId, String displayName, String token) {
+    public record PairingView(String serverUrl, String matchCode, String status) {
     }
 
-    public record PairingView(
-            String serverUrl, String matchCode, String status, List<PairingTeam> teams
-    ) {
+    public record DesktopControl(String matchCode, String teamId, String controlToken) {
     }
 }
