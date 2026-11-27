@@ -181,10 +181,15 @@ Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy c
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
-Map, rules, match list, team, faction, màu, token demo, unit, HQ, resource node, building, giới hạn batch, tick interval, session lifetime và HP spawn đều có thể đổi mà không sửa Phaser renderer.
+Map, match list, team, faction, màu, token demo, unit, HQ, resource node, building, giới hạn batch, tick interval và session lifetime đều có thể đổi mà không sửa Phaser renderer.
+Thông số cân bằng nằm riêng trong `game-server/src/main/resources/game-rules.yml`, mỗi biến có chú thích.
+Đổi giá trị thì tăng `version` trong file đó; trận đã lưu theo phiên bản cũ sẽ được tạo lại từ đầu.
 
 Profile mặc định dùng bản đồ 50×50, mỗi đội khởi đầu 100 gỗ và 100 thịt, và giới hạn 10 hành động cho mỗi unit hoặc công trình được điều khiển trong một batch.
-Khối `starter-pack` khai báo quân, mỏ và công trình mà mỗi đội nhận quanh HQ theo độ lệch so với HQ; độ lệch tự đảo chiều ở nửa xa của bản đồ để hướng vào trong.
+Danh sách `headquarters` để trống thì HQ tự đặt: phe đầu ở mép trái, phe sau ở mép phải, đội đầu tiên của mỗi phe ở hai góc đối nhau và các đội còn lại cách đều dọc mép.
+Khối `starter-pack` khai báo quân, mỏ và công trình mà mỗi đội nhận quanh HQ.
+Mỏ và công trình đặt theo độ lệch so với HQ, tự đảo chiều ở nửa xa của bản đồ để hướng vào trong.
+Quân không khai `dx`/`dy` xuất hiện ở một ô trống ngẫu nhiên sát HQ; cùng một trận luôn cho cùng vị trí.
 
 Token mặc định chỉ dùng cho demo local:
 

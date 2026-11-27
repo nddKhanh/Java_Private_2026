@@ -42,11 +42,32 @@ class GameWebSocketIntegrationTest {
     }
 
     @Test
+    void sendsTeamStockOnlyToItsOwnTeamEvenAmongAllies() throws Exception {
+        SocketClient viewer = connect(null);
+        SocketClient blue = connect("blue-token");
+        JsonNode viewerTeams = viewer.awaitType("STATE_UPDATED").path("state").path("teams");
+        JsonNode blueTeams = blue.awaitType("STATE_UPDATED").path("state").path("teams");
+
+        for (JsonNode team : blueTeams) {
+            boolean own = team.path("id").asText().equals("BLUE");
+            assertEquals(own, team.has("wood"), team.path("id").asText());
+            assertEquals(own, team.has("meat"), team.path("id").asText());
+        }
+        for (JsonNode team : viewerTeams) {
+            assertFalse(team.has("wood") || team.has("meat"));
+        }
+
+        viewer.close();
+        blue.close();
+    }
+
+    @Test
     void broadcastsAcceptedMoveToControllerAndViewerAtSameRevision() throws Exception {
         SocketClient viewer = connect(null);
         SocketClient blue = connect("blue-token");
         assertEquals(0, viewer.awaitType("STATE_UPDATED").path("revision").asLong());
-        assertEquals(0, blue.awaitType("STATE_UPDATED").path("revision").asLong());
+        JsonNode initial = blue.awaitType("STATE_UPDATED");
+        assertEquals(0, initial.path("revision").asLong());
 
         blue.send(command("move-1", "MOVE", Map.of("direction", "RIGHT")));
 
@@ -58,7 +79,7 @@ class GameWebSocketIntegrationTest {
         assertEquals(1, result.path("revision").asLong());
         assertEquals(1, blueState.path("revision").asLong());
         assertEquals(blueState.path("revision").asLong(), viewerState.path("revision").asLong());
-        assertEquals(2, unitX(viewerState, "worker-blue"));
+        assertEquals(unitX(initial, "worker-blue") + 1, unitX(viewerState, "worker-blue"));
 
         viewer.close();
         blue.close();
@@ -203,13 +224,7 @@ class GameWebSocketIntegrationTest {
     @Test
     void spawnsNamedUnitAndControlsItByGlobalId() throws Exception {
         SocketClient blue = connect("blue-token");
-        blue.awaitType("STATE_UPDATED");
-        int moveIndex = 0;
-        for (String direction : new String[]{"RIGHT", "DOWN", "DOWN"}) {
-            blue.send(command("spawn-ore-" + moveIndex++, "MOVE", Map.of("direction", direction)));
-            assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
-            blue.awaitType("STATE_UPDATED");
-        }
+        walkToWoodNode(blue, blue.awaitType("STATE_UPDATED"));
         blue.send(command("spawn-harvest", "HARVEST", Map.of()));
         assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
         blue.awaitType("STATE_UPDATED");
@@ -241,14 +256,7 @@ class GameWebSocketIntegrationTest {
     @Test
     void harvestsAndBuildsWithServerAuthoritativeResources() throws Exception {
         SocketClient blue = connect("blue-token");
-        blue.awaitType("STATE_UPDATED");
-        int moveIndex = 0;
-        for (String direction : new String[]{"RIGHT", "DOWN", "DOWN"}) {
-            blue.send(command("move-ore-" + moveIndex++, "MOVE", Map.of("direction", direction)));
-            JsonNode moveResult = blue.awaitType("COMMAND_RESULT");
-            assertTrue(moveResult.path("ok").asBoolean(), moveResult.toString());
-            blue.awaitType("STATE_UPDATED");
-        }
+        walkToWoodNode(blue, blue.awaitType("STATE_UPDATED"));
 
         blue.send(command("harvest-1", "HARVEST", Map.of()));
         assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
@@ -308,6 +316,21 @@ class GameWebSocketIntegrationTest {
         message.put("commandId", commandId);
         message.put("action", action);
         return message;
+    }
+
+    /** The starter worker spawns next to hq-blue (0, 0); walking right then down reaches wood-blue at (2, 2). */
+    private void walkToWoodNode(SocketClient blue, JsonNode state) throws Exception {
+        JsonNode position = unit(state, "worker-blue").path("position");
+        List<String> steps = new java.util.ArrayList<>();
+        for (int x = position.path("x").asInt(); x < 2; x++) steps.add("RIGHT");
+        for (int y = position.path("y").asInt(); y < 2; y++) steps.add("DOWN");
+        int index = 0;
+        for (String direction : steps) {
+            blue.send(command("walk-" + index++, "MOVE", Map.of("direction", direction)));
+            JsonNode moveResult = blue.awaitType("COMMAND_RESULT");
+            assertTrue(moveResult.path("ok").asBoolean(), moveResult.toString());
+            blue.awaitType("STATE_UPDATED");
+        }
     }
 
     private int unitX(JsonNode envelope, String unitId) {

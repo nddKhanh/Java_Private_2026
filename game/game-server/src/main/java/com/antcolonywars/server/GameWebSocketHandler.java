@@ -18,7 +18,9 @@ import com.antcolonywars.core.SpawnCommand;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.socket.CloseStatus;
@@ -323,8 +325,16 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         broadcastState(result.state(), result.events());
     }
 
+    /** Every connection sees the stock of its own team only; other teams, allies included, lose wood and meat. */
     private void sendState(WebSocketSession session, MatchState state, List<GameEvent> events) throws IOException {
-        send(session, StateUpdatedMessage.from(state, events));
+        ObjectNode payload = objectMapper.valueToTree(StateUpdatedMessage.from(state, events));
+        Object viewerTeamId = session.getAttributes().get(TokenHandshakeInterceptor.TEAM_ID_ATTRIBUTE);
+        for (JsonNode team : payload.path("state").path("teams")) {
+            if (team instanceof ObjectNode node && !node.path("id").asText().equals(viewerTeamId)) {
+                node.remove(List.of("wood", "meat"));
+            }
+        }
+        send(session, payload);
     }
 
     private void send(WebSocketSession session, Object payload) throws IOException {

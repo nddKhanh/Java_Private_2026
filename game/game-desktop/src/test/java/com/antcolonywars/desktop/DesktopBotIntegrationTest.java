@@ -26,7 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(
         classes = GameServerApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "spring.datasource.url=jdbc:h2:mem:desktop-integration"
+        properties = {
+                "spring.datasource.url=jdbc:h2:mem:desktop-integration",
+                // Pins the starter worker next to its headquarters so scripted moves stay deterministic.
+                "game.profile.starter-pack.units[0].type=WORKER",
+                "game.profile.starter-pack.units[0].dx=1",
+                "game.profile.starter-pack.units[0].dy=0"
+        }
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class DesktopBotIntegrationTest {

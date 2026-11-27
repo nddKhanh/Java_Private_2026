@@ -2,11 +2,13 @@ package com.antcolonywars.server;
 
 import com.antcolonywars.core.Direction;
 import com.antcolonywars.core.Headquarters;
+import com.antcolonywars.core.HeadquartersLayout;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.MatchFactory;
 import com.antcolonywars.core.Position;
 import com.antcolonywars.core.ResourceNode;
 import com.antcolonywars.core.ResourceType;
+import com.antcolonywars.core.RuleSet;
 import com.antcolonywars.core.StarterPack;
 import com.antcolonywars.core.Team;
 import com.antcolonywars.core.Unit;
@@ -79,20 +81,30 @@ public final class MapScriptParser {
             throw invalid("teams must belong to exactly two factions");
         }
 
+        RuleSet rules = template.rules();
         Set<String> occupied = new HashSet<>();
-        Set<Integer> headquartersTeams = new HashSet<>();
         List<Headquarters> headquarters = new ArrayList<>();
-        int hqIndex = 0;
-        for (HeadquartersSpec spec : list(script.headquarters())) {
-            validateTeam(spec.team(), teamCount);
-            if (!headquartersTeams.add(spec.team())) {
-                throw invalid("Each team must have exactly one headquarters");
+        if (list(script.headquarters()).isEmpty()) {
+            headquarters.addAll(HeadquartersLayout.place(
+                    teams, size, size, rules.headquartersHp(), team -> "hq-" + teamNumber(team.id())
+            ));
+            headquarters.forEach(hq -> occupied.add(hq.position().x() + ":" + hq.position().y()));
+        } else {
+            Set<Integer> headquartersTeams = new HashSet<>();
+            int hqIndex = 0;
+            for (HeadquartersSpec spec : script.headquarters()) {
+                validateTeam(spec.team(), teamCount);
+                if (!headquartersTeams.add(spec.team())) {
+                    throw invalid("Each team must have exactly one headquarters");
+                }
+                Position position = position(spec.x(), spec.y(), size, occupied);
+                headquarters.add(new Headquarters(
+                        "hq-" + (++hqIndex), teamId(spec.team()), position, rules.headquartersHp()
+                ));
             }
-            Position position = position(spec.x(), spec.y(), size, occupied);
-            headquarters.add(new Headquarters("hq-" + (++hqIndex), teamId(spec.team()), position, 3));
-        }
-        if (headquartersTeams.size() != teamCount) {
-            throw invalid("headquarters must contain one entry for every team");
+            if (headquartersTeams.size() != teamCount) {
+                throw invalid("headquarters must contain one entry for every team, or be left out");
+            }
         }
 
         List<Unit> units = new ArrayList<>();
@@ -109,8 +121,10 @@ public final class MapScriptParser {
                 throw invalid("Unsupported unit type: " + type);
             }
             Direction facing = position.x() < size / 2 ? Direction.RIGHT : Direction.LEFT;
+            RuleSet.UnitStats stats = rules.unit(type);
             units.add(new Unit(
-                    "unit-" + (++unitIndex), "Unit " + unitIndex, teamId(spec.team()), type, position, 3, facing
+                    "unit-" + (++unitIndex), "Unit " + unitIndex, teamId(spec.team()), type, position,
+                    stats.hp(), facing, stats.size(), stats.size()
             ));
         }
 
@@ -136,7 +150,7 @@ public final class MapScriptParser {
         MatchSetup setup;
         try {
             setup = starterPack.applyTo(new MatchSetup(
-                    "custom-" + matchCode, matchCode, size, size, template.rules(),
+                    "custom-" + matchCode, matchCode, size, size, rules,
                     teams, units, headquarters, resources, List.of()
             ));
             MatchFactory.create(setup);
@@ -164,6 +178,10 @@ public final class MapScriptParser {
 
     private String teamId(int number) {
         return "TEAM_" + number;
+    }
+
+    private String teamNumber(String teamId) {
+        return teamId.substring("TEAM_".length());
     }
 
     private int value(Integer number) {

@@ -3,6 +3,24 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-27 — Thông số tập trung, vị trí HQ và ẩn kho đối thủ
+
+### Changed
+
+- Thông số cân bằng chuyển sang `game-rules.yml`, có bảng riêng cho từng loại quân, công trình, tháp và HQ; phiên bản luật lên `r8-1`.
+- HQ tự đặt ở góc và dọc mép bản đồ; map script được phép bỏ trống `headquarters`.
+- Quân thợ khởi đầu xuất hiện ở ô trống ngẫu nhiên sát HQ.
+- Demo bot đọc vị trí thật của quân thợ; `WinningScenario` hạ quân địch chắn đường trước khi đánh HQ.
+
+### Fixed
+
+- Mỗi kết nối chỉ nhận kho gỗ và thịt của đội mình, kể cả với đồng minh.
+- Lỗi đặt gói khởi tạo nêu rõ đội và ô bị trùng hoặc nằm ngoài bản đồ.
+
+### Verified
+
+- `mvnw test`, `npm test` và frontend production build đều pass; `ResourceBuilderBot`, `ReinforcementBot` và `WinningScenario` chạy thành công trên server thật.
+
 ## 2026-11-27 — Viewer hình người và lực lượng theo đội
 
 ### Changed

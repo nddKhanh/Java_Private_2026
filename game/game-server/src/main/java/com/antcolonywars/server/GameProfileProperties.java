@@ -1,10 +1,14 @@
 package com.antcolonywars.server;
 
+import com.antcolonywars.core.BuildingType;
 import com.antcolonywars.core.ResourceType;
+import com.antcolonywars.core.RuleSet;
 import com.antcolonywars.core.StarterPack;
+import com.antcolonywars.core.UnitType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
+import java.util.Map;
 
 @ConfigurationProperties("game.profile")
 public record GameProfileProperties(
@@ -28,6 +32,7 @@ public record GameProfileProperties(
                 .distinct()
                 .toList();
         units = units == null ? List.of() : units;
+        headquarters = headquarters == null ? List.of() : headquarters;
         resources = resources == null ? List.of() : resources;
         buildings = buildings == null ? List.of() : buildings;
         starterPack = starterPack == null ? StarterPack.empty() : starterPack;
@@ -43,26 +48,33 @@ public record GameProfileProperties(
     public record Board(int width, int height) {
     }
 
+    /** Balance values loaded from game-rules.yml. */
     public record Rules(
             String version,
-            int attackDamage,
-            int attackRange,
             int maxUnitsPerTeam,
-            int spawnedUnitHp,
-            int startingWood,
-            int startingMeat,
-            int harvestAmount,
-            int harvestRange,
-            int barracksCost,
-            int towerCost,
-            int wallCost,
-            int buildingHp,
-            int workerCost,
-            int meleeCost,
-            int rangedCost,
-            int siegeMeatCost,
-            int siegeWoodCost
+            Economy economy,
+            HeadquartersRules headquarters,
+            Map<UnitType, RuleSet.UnitStats> units,
+            Map<BuildingType, RuleSet.BuildingStats> buildings,
+            Tower tower
     ) {
+        public RuleSet toRuleSet(int tickMillis) {
+            return new RuleSet(
+                    version, maxUnitsPerTeam, economy.startingWood(), economy.startingMeat(),
+                    economy.harvestAmount(), economy.harvestRange(), headquarters.hp(), units, buildings,
+                    new RuleSet.TowerStats(tower.damage(), tower.range(),
+                            Math.max(1, (int) Math.ceil(tower.cooldownMillis() / (double) tickMillis)))
+            );
+        }
+    }
+
+    public record Economy(int startingWood, int startingMeat, int harvestAmount, int harvestRange) {
+    }
+
+    public record HeadquartersRules(int hp) {
+    }
+
+    public record Tower(int damage, int range, int cooldownMillis) {
     }
 
     public record TeamProfile(String id, String displayName, String color, String token, String factionId) {
@@ -75,18 +87,17 @@ public record GameProfileProperties(
             String type,
             int x,
             int y,
-            int hp,
             String facing
     ) {
     }
 
-    public record HeadquartersProfile(String id, String teamId, int x, int y, int hp) {
+    public record HeadquartersProfile(String id, String teamId, int x, int y) {
     }
 
     public record ResourceProfile(String id, ResourceType type, int x, int y, int amount) {
     }
 
-    public record BuildingProfile(String id, String teamId, String type, int x, int y, int hp) {
+    public record BuildingProfile(String id, String teamId, String type, int x, int y) {
     }
 
     public String teamIdForToken(String token) {

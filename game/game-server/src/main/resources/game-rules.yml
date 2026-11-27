@@ -1,0 +1,82 @@
+# Balance values of every match. Restart the server after editing.
+# Bump `version` whenever a value changes: saved matches built on another version are discarded and start fresh.
+game:
+  profile:
+    rules:
+      # Rules version stored with every saved match.
+      version: r8-1
+      # Living units one team may own at the same time.
+      max-units-per-team: 50
+
+      economy:
+        # Wood every team owns when the match starts.
+        starting-wood: 100
+        # Meat every team owns when the match starts.
+        starting-meat: 100
+        # Resource gained by one HARVEST command.
+        harvest-amount: 3
+        # Max distance between a worker and a resource node to harvest it; 0 means standing on the node.
+        harvest-range: 0
+
+      headquarters:
+        # Hit points of every headquarters; a team is out when its headquarters reaches 0.
+        hp: 3
+
+      # Stats per unit type.
+      # hp: hit points of a newly spawned unit.
+      # damage: damage dealt by one ATTACK projectile.
+      # range: max distance (in cells) an ATTACK can reach.
+      # meat-cost / wood-cost: resources paid when the unit is spawned.
+      # size: side of the square footprint in cells (2 means 2x2).
+      units:
+        WORKER:
+          hp: 3
+          damage: 1
+          range: 1
+          meat-cost: 1
+          wood-cost: 0
+          size: 1
+        MELEE:
+          hp: 3
+          damage: 1
+          range: 1
+          meat-cost: 2
+          wood-cost: 0
+          size: 1
+        RANGED:
+          hp: 3
+          damage: 1
+          range: 2
+          meat-cost: 3
+          wood-cost: 0
+          size: 1
+        SIEGE:
+          hp: 3
+          damage: 2
+          range: 1
+          meat-cost: 3
+          wood-cost: 3
+          size: 2
+
+      # Stats per building type.
+      # hp: hit points of a newly built building.
+      # wood-cost: wood paid when the building is built.
+      buildings:
+        BARRACKS:
+          hp: 5
+          wood-cost: 3
+        TOWER:
+          hp: 5
+          wood-cost: 2
+        WALL:
+          hp: 5
+          wood-cost: 1
+
+      # Automatic fire of every TOWER.
+      tower:
+        # Damage of one tower shot.
+        damage: 1
+        # Max distance (in cells) to the target a tower shoots at.
+        range: 5
+        # Time between two shots of the same tower, rounded up to whole simulation ticks.
+        cooldown-millis: 1000

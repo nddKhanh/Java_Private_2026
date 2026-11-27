@@ -3,6 +3,8 @@ server:
   port: ${GAME_SERVER_PORT:8080}
 
 spring:
+  config:
+    import: classpath:game-rules.yml
   datasource:
     url: ${GAME_DB_URL:jdbc:h2:file:./data/ant-colony-wars}
     username: ${GAME_DB_USERNAME:sa}
@@ -24,25 +26,6 @@ game:
     board:
       width: 50
       height: 50
-    rules:
-      version: r7-1
-      attack-damage: 1
-      attack-range: 1
-      max-units-per-team: 50
-      spawned-unit-hp: 3
-      starting-wood: 100
-      starting-meat: 100
-      harvest-amount: 3
-      harvest-range: 0
-      barracks-cost: 3
-      tower-cost: 2
-      wall-cost: 1
-      building-hp: 5
-      worker-cost: 1
-      melee-cost: 2
-      ranged-cost: 3
-      siege-meat-cost: 3
-      siege-wood-cost: 3
     teams:
       - id: BLUE
         display-name: Blue
@@ -95,57 +78,8 @@ game:
         token: maroon-token
         faction-id: SWARM
     units: []
-    headquarters:
-      - id: hq-blue
-        team-id: BLUE
-        x: 0
-        y: 0
-        hp: 3
-      - id: hq-red
-        team-id: RED
-        x: 49
-        y: 49
-        hp: 3
-      - id: hq-cyan
-        team-id: CYAN
-        x: 0
-        y: 12
-        hp: 3
-      - id: hq-green
-        team-id: GREEN
-        x: 0
-        y: 24
-        hp: 3
-      - id: hq-teal
-        team-id: TEAL
-        x: 0
-        y: 36
-        hp: 3
-      - id: hq-navy
-        team-id: NAVY
-        x: 0
-        y: 49
-        hp: 3
-      - id: hq-orange
-        team-id: ORANGE
-        x: 49
-        y: 0
-        hp: 3
-      - id: hq-yellow
-        team-id: YELLOW
-        x: 49
-        y: 12
-        hp: 3
-      - id: hq-magenta
-        team-id: MAGENTA
-        x: 49
-        y: 24
-        hp: 3
-      - id: hq-maroon
-        team-id: MAROON
-        x: 49
-        y: 36
-        hp: 3
+    # Empty list: headquarters are placed on the map corners and edges.
+    headquarters: []
     resources: []
     buildings: []
     limits:
@@ -153,11 +87,10 @@ game:
       command-queue-capacity: 32
       tick-millis: 250
     # Placed around every headquarters; offsets point inward on the far half of each axis.
+    # Units take a random free cell next to their headquarters.
     starter-pack:
       units:
         - type: WORKER
-          dx: 1
-          dy: 0
       resources:
         - type: WOOD
           dx: 2

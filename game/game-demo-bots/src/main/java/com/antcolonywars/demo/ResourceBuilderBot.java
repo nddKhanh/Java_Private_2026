@@ -12,9 +12,7 @@ public final class ResourceBuilderBot {
     public static void main(String[] args) {
         try (GameBot bot = GameBots.connect(DemoConfig.serverUrl(), DemoConfig.blueToken())) {
             bot.selectUnit("worker-blue");
-            bot.move(Direction.RIGHT);
-            bot.move(Direction.DOWN);
-            bot.move(Direction.DOWN);
+            DemoConfig.walkTo(bot, "worker-blue", 2, 2);
             bot.harvest();
             bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
             System.out.printf("Built a barracks at revision %d.%n", bot.getLatestState().revision());

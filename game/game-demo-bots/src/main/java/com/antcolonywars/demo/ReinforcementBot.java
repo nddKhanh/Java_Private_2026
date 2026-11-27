@@ -12,9 +12,7 @@ public final class ReinforcementBot {
     public static void main(String[] args) {
         try (GameBot bot = GameBots.connect(DemoConfig.serverUrl(), DemoConfig.blueToken())) {
             bot.selectUnit("worker-blue");
-            bot.move(Direction.RIGHT);
-            bot.move(Direction.DOWN);
-            bot.move(Direction.DOWN);
+            DemoConfig.walkTo(bot, "worker-blue", 2, 2);
             bot.harvest();
             bot.spawn("hq-blue", "worker-blue-2", "Blue Worker 2", UnitType.WORKER, Direction.DOWN);
             bot.selectUnit("worker-blue-2");

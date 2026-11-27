@@ -19,8 +19,9 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - Desktop pairing nhận một key sáu ký tự cùng tài khoản để tự tìm server trong LAN, điền match code và nhận token điều khiển riêng của tài khoản.
 - P1 cho phép viết `Main.main(Bot)` trong project IntelliJ mẫu rồi chạy `Submit` để Desktop tự pair, compile, chạy source local và trả kết quả về console IntelliJ.
 - P2 bắt buộc nguồn sản xuất theo HQ/BARRACKS, cho công trình chặn và nhận damage, tower tự bắn tầm 5 và projectile khóa tọa độ đích theo Bresenham.
-- Tài nguyên gồm gỗ và thịt: quân tốn thịt, công trình tốn gỗ, SIEGE tốn cả hai; viewer hiện kho của từng đội.
-- Mỗi đội nhận một gói khởi tạo quanh HQ gồm quân thợ, mỏ gỗ, mỏ thịt và công trình mặc định nếu có.
+- Tài nguyên gồm gỗ và thịt: quân tốn thịt, công trình tốn gỗ, SIEGE tốn cả hai; mỗi đội chỉ nhận kho của chính đội mình, kể cả với đồng minh.
+- HQ tự đặt ở góc và dọc mép bản đồ; mỗi đội nhận một quân thợ ở ô ngẫu nhiên sát HQ cùng mỏ gỗ và mỏ thịt.
+- Thông số cân bằng (HP, sát thương, tầm, giá, tháp, kinh tế) nằm trong `game-server/src/main/resources/game-rules.yml`.
 
 ## Kiến trúc
 
