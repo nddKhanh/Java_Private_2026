@@ -7,8 +7,9 @@ export interface Team {
   id: string;
   displayName: string;
   color: string;
-  wood: number;
-  meat: number;
+  /** Present only for the viewer's own team. */
+  wood?: number;
+  meat?: number;
 }
 
 export interface Unit {

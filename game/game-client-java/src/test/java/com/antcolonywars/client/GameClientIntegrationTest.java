@@ -36,7 +36,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(
         classes = GameServerApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "spring.datasource.url=jdbc:h2:mem:client-integration"
+        properties = {
+                "spring.datasource.url=jdbc:h2:mem:client-integration",
+                // Pins the starter worker next to its headquarters so scripted moves stay deterministic.
+                "game.profile.starter-pack.units[0].type=WORKER",
+                "game.profile.starter-pack.units[0].dx=1",
+                "game.profile.starter-pack.units[0].dy=0"
+        }
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class GameClientIntegrationTest {
@@ -113,7 +119,7 @@ class GameClientIntegrationTest {
             assertTrue(state.revision() >= 62);
             assertTrue(state.snapshot().simulationTick() >= 1);
             assertEquals(0, state.snapshot().headquarters().stream()
-                    .filter(headquarters -> headquarters.id().equals("hq-orange"))
+                    .filter(headquarters -> headquarters.id().equals("hq-maroon"))
                     .findFirst()
                     .orElseThrow()
                     .hp());

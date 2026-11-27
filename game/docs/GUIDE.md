@@ -56,8 +56,9 @@ Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 ### Tạo và tìm trận trên web
 
 1. Chọn **Tạo trận**, giữ hoặc sửa JSON mẫu rồi bấm **Tạo phòng chờ**.
-2. Map script dùng `map: "nxn"` (từ 6x6 đến 50x50), `teams`, `accountsPerTeam`, mảng `headquarters` và các mảng tùy chọn `resources`, `units`.
-   Mỗi đội tự nhận gói khởi tạo quanh HQ, nên chỉ cần khai báo HQ; `resources` thêm mỏ chung với `type` là `WOOD` hoặc `MEAT`.
+2. Map script dùng `map: "nxn"` (từ 6x6 đến 50x50), `teams`, `accountsPerTeam` và các mảng tùy chọn `headquarters`, `resources`, `units`.
+   Bỏ trống `headquarters` thì server tự đặt HQ ở góc và dọc mép bản đồ; mỗi đội tự nhận gói khởi tạo quanh HQ.
+   `resources` thêm mỏ chung với `type` là `WOOD` hoặc `MEAT`.
    Mảng `factions` tùy chọn ghi phe cho từng đội theo thứ tự, ví dụ `["FACTION_1", "FACTION_2"]`, và phải có đúng hai phe.
    Bỏ trống `factions` thì nửa đầu số đội thuộc `FACTION_1`, phần còn lại thuộc `FACTION_2`.
 3. Gửi mã trận và token màu cho người cần vào đội; token màu chỉ dùng để vào đội, không dùng để điều khiển quân.
@@ -192,7 +193,8 @@ public final class MyBot implements BotProgram {
 1. Nhấn `Compile` (`Ctrl+B`); nếu có lỗi, sửa theo dòng và cột được thông báo.
 2. Nhấn `Run` (`Ctrl+R`) sau khi biên dịch thành công.
 3. Desktop gom các hành động của lần Run thành một batch rồi gửi đến server.
-4. Mở trang bản đồ: quân xanh đi từ `(1, 0)` sang `(2, 0)` rồi đứng chờ.
+4. Mở trang bản đồ: quân xanh đi sang phải một ô rồi đứng chờ.
+   Quân thợ khởi đầu ở một ô ngẫu nhiên sát HQ, nên đọc vị trí từ `state()` trước khi tính đường đi.
 5. Nhấn `Stop` (`Ctrl+K`) khi cần dừng chương trình đang chạy.
 
 Mỗi bot hoặc công trình sản xuất có tối đa 10 hành động trong một batch; thao tác chọn chỉ đổi đối tượng đang chọn nên không tính hạn mức.
@@ -284,6 +286,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Xem nhà chính của 10 đội và điểm sinh lực còn lại.
 - [x] Xem điểm tài nguyên cùng số lượng còn lại.
 - [x] Xem số gỗ và thịt hiện có của đội mình trong mục Lực lượng.
+- [x] Không nhận được kho gỗ và thịt của đội khác, kể cả đồng minh.
 - [x] Xem BARRACKS, TOWER và WALL trên bản đồ.
 - [x] Theo dõi số lần thay đổi trạng thái của trận đấu.
 - [x] Theo dõi đội thắng khi toàn bộ HQ của phe đối phương bị phá hủy.

@@ -85,7 +85,7 @@ public final class GameSession {
     }
 
     public ApplyResult advanceTick() {
-        if (!engine.hasSimulationWork(state)) {
+        if (!engine.hasSimulationWork(state, rules)) {
             return ApplyResult.success(state, List.of());
         }
         return apply(new TickCommand("system:tick:" + (state.simulationTick() + 1)));

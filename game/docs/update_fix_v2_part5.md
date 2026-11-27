@@ -23,16 +23,9 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 
 ### B-01. Cân bằng chiến đấu
 
-- **Đánh không có hồi chiêu:** mỗi ATTACK tạo ngay một viên đạn; 10 ATTACK trong một batch gây 10 sát thương cùng lúc.
-  Cần chốt thời gian hồi đánh cho từng loại quân (đề xuất 1 giây như TOWER).
-- **HQ quá yếu:** HQ có 3 HP (`application.yml`, viết cứng trong `MapScriptParser`), một quân đứng cạnh bắn 3 phát là thắng.
-  Cần chốt HP của HQ (đề xuất 20–30) và đưa giá trị vào profile thay vì viết cứng.
-- **Tốc độ di chuyển không giới hạn:** mỗi batch cho 10 bước và số batch mỗi giây không giới hạn, trong khi đạn bay 1 ô mỗi 250 ms nên né đạn quá dễ.
-  Cần chốt có giới hạn số ô mỗi giây cho từng quân hay không.
-- **Chỉ số theo loại quân:** mọi quân có 3 HP; SIEGE chỉ hơn 1 sát thương, RANGED chỉ hơn 1 tầm.
-  Cần chốt bảng HP, sát thương, tầm cho WORKER/MELEE/RANGED/SIEGE.
-- **Công trình:** mọi loại có 5 HP; TOWER có sát thương 1, tầm 5, hồi 1 giây viết cứng trong `GameEngine`.
-  Cần chốt HP từng loại và đưa thông số TOWER vào profile.
+- **Giá trị còn là số thử nghiệm:** mọi thông số đã nằm trong `game-server/src/main/resources/game-rules.yml`, nhưng HQ chỉ có 3 HP, mọi quân 3 HP, mọi công trình 5 HP; SIEGE chỉ hơn 1 sát thương, RANGED chỉ hơn 1 tầm.
+  Cần chốt bảng HP, sát thương, tầm cho từng loại quân, HP từng loại công trình và HP của HQ.
+- **Đánh không hồi chiêu, đi không giới hạn tốc độ:** hết khi làm B-05, vì mỗi bot chỉ chạy một lệnh mỗi nhịp 250 ms.
 
 ### B-02. Cân bằng kinh tế
 
@@ -43,20 +36,17 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - **Giới hạn quân:** 50 quân × 10 đội trên bản đồ 50×50 dễ kín chỗ.
   Cần chốt giới hạn quân mỗi đội cho bản đồ này.
 
-### B-03. Gói khởi tạo đội còn thiếu
+### B-05. Hàng chờ lệnh cho từng bot
 
-- **Chưa có công trình mặc định:** gói hỗ trợ `buildings` nhưng mặc định để trống; cần chốt có BARRACKS, TOWER hay WALL sẵn không.
-- **Chưa có quân chiến đấu khởi đầu:** gói chỉ có một WORKER.
-- **Không có mỏ chung giữa bản đồ:** `resources` của profile mặc định để trống, các đội không có lý do tranh chấp.
-- **Map script không tùy biến được gói:** trận tạo trên web luôn dùng gói của server; cần chốt có cho map script ghi đè gói không.
-- **Mọi đội nhận gói giống hệt nhau:** chưa có gói riêng theo đội hoặc theo phe.
-- **Lỗi đặt gói khó hiểu:** gói đè lên HQ khác hoặc ra ngoài bản đồ chỉ báo lỗi chung `INVALID_MAP_SCRIPT` hoặc làm server không khởi động.
-
-### B-04. Server gửi thông tin của mọi đội cho mọi người xem
-
-- **Hiện trạng:** mục Lực lượng trên viewer chỉ hiện đội của người xem, nhưng `STATE_UPDATED` vẫn chứa kho gỗ/thịt, HP và quân của tất cả các đội.
-- **Hậu quả:** người chơi đọc được kho và lực lượng của đối thủ qua WebSocket hoặc `bot.state()`.
-- **Cần chốt:** có lọc snapshot theo đội của từng kết nối không, và đội đối phương còn thấy gì (vị trí quân trên bản đồ, HP, kho tài nguyên).
+- **Mục tiêu:** mỗi nhịp 250 ms, mỗi unit hoặc công trình chỉ chạy một lệnh; lần Run chỉ nối thêm lệnh vào cuối hàng chờ của từng bot.
+- **Đã chốt:**
+  - Bỏ Atomic/Partial; lệnh lỗi lúc tới lượt chạy thì xóa các lệnh còn lại của đúng bot đó trong đúng lần gửi đó, lệnh của lần gửi khác và của bot khác giữ nguyên.
+  - Bỏ giới hạn 10 hành động mỗi bot mỗi batch; chống spam bằng giới hạn độ dài hàng chờ mỗi bot và giữ giới hạn 256 lệnh mỗi lần gửi, cả hai đặt trong `game-rules.yml`.
+  - Bấm vào unit hoặc công trình của đội mình thì cột phải hiện hàng chờ của nó thay cho Lực lượng, chỉ có nút xóa toàn bộ lệnh.
+  - Mọi thành viên cùng đội được xóa hàng chờ; đồng minh khác đội thì không; hàng chờ chỉ gửi cho thành viên cùng đội.
+  - Không thêm hồi chiêu riêng cho quân.
+- **Cần chốt:** `bot.state()` là state lúc bắt đầu Run, trong khi bot có thể còn lệnh cũ trong hàng chờ.
+  Đề xuất trả kèm hàng chờ của từng bot trong state của đội mình, Run không tự chờ hàng chờ chạy hết.
 
 ## C. Rủi ro triển khai — Chỉ ưu tiên nếu chạy trên máy chung/public
 

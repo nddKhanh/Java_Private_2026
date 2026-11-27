@@ -86,7 +86,8 @@ public final class GameEngine {
         if (!cost.affordableBy(team)) {
             return ApplyResult.failure(state, ErrorCode.INSUFFICIENT_RESOURCES);
         }
-        int footprint = UnitType.SIEGE.name().equals(command.unitType()) ? 2 : 1;
+        RuleSet.UnitStats stats = rules.unit(unitType);
+        int footprint = stats.size();
         Position destination = adjacentPosition(
                 source.position(), 1, 1, footprint, footprint, command.direction()
         );
@@ -101,7 +102,7 @@ public final class GameEngine {
         List<Unit> units = new ArrayList<>(state.units());
         units.add(new Unit(
                 command.unitId(), displayName, command.actorTeamId(), command.unitType(), destination,
-                rules.spawnedUnitHp(), command.direction(), footprint, footprint
+                stats.hp(), command.direction(), footprint, footprint
         ));
         List<Team> teams = replaceTeam(state.teams(), team.spend(cost));
         return accept(state, units, state.retiredUnitIds(), state.headquarters(), state.status(),
@@ -148,7 +149,8 @@ public final class GameEngine {
             return ApplyResult.failure(state, ErrorCode.INVALID_BUILD_POSITION);
         }
         Building building = new Building(
-                command.buildingId(), actor.teamId(), command.buildingType(), destination, rules.buildingHp()
+                command.buildingId(), actor.teamId(), command.buildingType(), destination,
+                rules.building(command.buildingType()).hp()
         );
         List<Building> buildings = new ArrayList<>(state.buildings());
         buildings.add(building);
@@ -310,35 +312,35 @@ public final class GameEngine {
                 state.teams(), remaining, winnerTeamId, command, null);
     }
 
-    boolean hasSimulationWork(MatchState state) {
+    boolean hasSimulationWork(MatchState state, RuleSet rules) {
         return !state.projectiles().isEmpty() || state.buildings().stream()
                 .filter(building -> building.hp() > 0 && building.type() == BuildingType.TOWER)
-                .anyMatch(tower -> closestTowerTarget(state, tower) != null);
+                .anyMatch(tower -> closestTowerTarget(state, tower, rules.tower().range()) != null);
     }
 
     private List<Projectile> towerProjectiles(MatchState state, TickCommand command, RuleSet rules) {
         List<Projectile> projectiles = new ArrayList<>();
-        if (state.simulationTick() % rules.towerCooldownTicks() != 0) {
+        if (state.simulationTick() % rules.tower().cooldownTicks() != 0) {
             return projectiles;
         }
         for (Building tower : state.buildings()) {
             if (tower.hp() == 0 || tower.type() != BuildingType.TOWER) {
                 continue;
             }
-            AttackTarget target = closestTowerTarget(state, tower);
+            AttackTarget target = closestTowerTarget(state, tower, rules.tower().range());
             if (target == null) {
                 continue;
             }
             Position targetCell = closestCell(target.cells(), tower.position());
             projectiles.add(new Projectile(
                     "projectile:tower:" + tower.id() + ":" + command.commandId(),
-                    tower.teamId(), tower.id(), target.id(), tower.position(), targetCell, 1
+                    tower.teamId(), tower.id(), target.id(), tower.position(), targetCell, rules.tower().damage()
             ));
         }
         return projectiles;
     }
 
-    private AttackTarget closestTowerTarget(MatchState state, Building tower) {
+    private AttackTarget closestTowerTarget(MatchState state, Building tower, int range) {
         List<AttackTarget> targets = new ArrayList<>();
         state.units().stream()
                 .filter(unit -> unit.hp() > 0 && !sameFaction(state, tower.teamId(), unit.teamId()))
@@ -359,7 +361,7 @@ public final class GameEngine {
                         tower.position().manhattanDistance(building.position())
                 )));
         return targets.stream()
-                .filter(target -> target.distance() <= 5)
+                .filter(target -> target.distance() <= range)
                 .min(java.util.Comparator.comparingInt(AttackTarget::distance).thenComparing(AttackTarget::id))
                 .orElse(null);
     }

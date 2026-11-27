@@ -4,6 +4,7 @@ import com.antcolonywars.core.Direction;
 import com.antcolonywars.core.Building;
 import com.antcolonywars.core.BuildingType;
 import com.antcolonywars.core.Headquarters;
+import com.antcolonywars.core.HeadquartersLayout;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.Position;
 import com.antcolonywars.core.RuleSet;
@@ -19,6 +20,8 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.time.Clock;
+import java.util.List;
+import java.util.Locale;
 
 @Configuration
 @EnableConfigurationProperties(GameProfileProperties.class)
@@ -30,56 +33,44 @@ public class GameServerConfiguration {
 
     @Bean
     public MatchSetup matchSetup(GameProfileProperties profile, StarterPack starterPack) {
+        RuleSet rules = profile.rules().toRuleSet(profile.limits().tickMillis());
+        List<Team> teams = profile.teams().stream()
+                .map(team -> new Team(team.id(), team.displayName(), team.color(), team.factionId()))
+                .toList();
+        List<Headquarters> headquarters = profile.headquarters().isEmpty()
+                ? HeadquartersLayout.place(teams, profile.board().width(), profile.board().height(),
+                        rules.headquartersHp(), team -> "hq-" + team.id().toLowerCase(Locale.ROOT))
+                : profile.headquarters().stream()
+                        .map(item -> new Headquarters(
+                                item.id(), item.teamId(), new Position(item.x(), item.y()), rules.headquartersHp()
+                        ))
+                        .toList();
         return starterPack.applyTo(new MatchSetup(
                 profile.setupId(),
                 profile.matchId(),
                 profile.board().width(),
                 profile.board().height(),
-                new RuleSet(
-                        profile.rules().version(),
-                        profile.rules().attackDamage(),
-                        profile.rules().attackRange(),
-                        profile.rules().maxUnitsPerTeam(),
-                        profile.rules().spawnedUnitHp(),
-                        profile.rules().startingWood(),
-                        profile.rules().startingMeat(),
-                        profile.rules().harvestAmount(),
-                        profile.rules().harvestRange(),
-                        profile.rules().barracksCost(),
-                        profile.rules().towerCost(),
-                        profile.rules().wallCost(),
-                        profile.rules().buildingHp(),
-                        Math.max(1, (int) Math.ceil(1000.0 / profile.limits().tickMillis())),
-                        profile.rules().workerCost(),
-                        profile.rules().meleeCost(),
-                        profile.rules().rangedCost(),
-                        profile.rules().siegeMeatCost(),
-                        profile.rules().siegeWoodCost()
-                ),
-                profile.teams().stream()
-                        .map(team -> new Team(team.id(), team.displayName(), team.color(), team.factionId()))
-                        .toList(),
+                rules,
+                teams,
                 profile.units().stream()
-                        .map(unit -> new Unit(
-                                unit.id(),
-                                unit.displayName() == null || unit.displayName().isBlank()
-                                        ? unit.id()
-                                        : unit.displayName(),
-                                unit.teamId(),
-                                unit.type(),
-                                new Position(unit.x(), unit.y()),
-                                unit.hp(),
-                                Direction.valueOf(unit.facing())
-                        ))
+                        .map(unit -> {
+                            RuleSet.UnitStats stats = rules.unit(unit.type());
+                            return new Unit(
+                                    unit.id(),
+                                    unit.displayName() == null || unit.displayName().isBlank()
+                                            ? unit.id()
+                                            : unit.displayName(),
+                                    unit.teamId(),
+                                    unit.type(),
+                                    new Position(unit.x(), unit.y()),
+                                    stats.hp(),
+                                    Direction.valueOf(unit.facing()),
+                                    stats.size(),
+                                    stats.size()
+                            );
+                        })
                         .toList(),
-                profile.headquarters().stream()
-                        .map(headquarters -> new Headquarters(
-                                headquarters.id(),
-                                headquarters.teamId(),
-                                new Position(headquarters.x(), headquarters.y()),
-                                headquarters.hp()
-                        ))
-                        .toList(),
+                headquarters,
                 profile.resources().stream()
                         .map(resource -> new com.antcolonywars.core.ResourceNode(
                                 resource.id(), resource.type(), new Position(resource.x(), resource.y()),
@@ -87,10 +78,13 @@ public class GameServerConfiguration {
                         ))
                         .toList(),
                 profile.buildings().stream()
-                        .map(building -> new Building(
-                                building.id(), building.teamId(), BuildingType.valueOf(building.type()),
-                                new Position(building.x(), building.y()), building.hp()
-                        ))
+                        .map(building -> {
+                            BuildingType type = BuildingType.valueOf(building.type());
+                            return new Building(
+                                    building.id(), building.teamId(), type,
+                                    new Position(building.x(), building.y()), rules.building(type).hp()
+                            );
+                        })
                         .toList()
         ));
     }

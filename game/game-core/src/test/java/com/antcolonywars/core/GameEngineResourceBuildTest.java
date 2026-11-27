@@ -102,9 +102,9 @@ class GameEngineResourceBuildTest {
         StarterPack pack = new StarterPack(
                 List.of(new StarterPack.PackResource(ResourceType.MEAT, 0, 2, 50)),
                 List.of(new StarterPack.PackBuilding(BuildingType.TOWER, 2, 0)),
-                List.of(new StarterPack.PackUnit(UnitType.WORKER, 1, 0))
+                List.of(new StarterPack.PackUnit(UnitType.WORKER, null, null))
         );
-        MatchSetup setup = pack.applyTo(new MatchSetup(
+        MatchSetup base = new MatchSetup(
                 "pack", "pack", 10, 10, RuleSet.mvp(),
                 List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
                 List.of(),
@@ -112,11 +112,14 @@ class GameEngineResourceBuildTest {
                         new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
                         new Headquarters("hq-red", "RED", new Position(9, 9), 3)
                 )
-        ));
-        MatchState state = MatchFactory.create(setup);
+        );
+        MatchState state = MatchFactory.create(pack.applyTo(base));
 
-        assertEquals(new Position(1, 0), unitAt(state, "worker-blue"));
-        assertEquals(new Position(8, 9), unitAt(state, "worker-red"));
+        Position blueWorker = unitAt(state, "worker-blue");
+        Position redWorker = unitAt(state, "worker-red");
+        assertEquals(1, Math.max(blueWorker.x(), blueWorker.y()));
+        assertEquals(1, Math.max(9 - redWorker.x(), 9 - redWorker.y()));
+        assertEquals(blueWorker, unitAt(MatchFactory.create(pack.applyTo(base)), "worker-blue"));
         assertEquals(new Position(9, 7), resource(state, "meat-red").position());
         assertEquals(new Position(7, 9), building(state, "home-tower-red").position());
     }

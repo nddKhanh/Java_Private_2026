@@ -10,3 +10,4 @@ dist/
 *.log
 data/
 student-bot-template/.env
+.local/

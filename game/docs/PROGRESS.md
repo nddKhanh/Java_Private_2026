@@ -1,5 +1,14 @@
 # Tiến độ dự án
 
+## 2026-11-27 — Thông số tập trung, vị trí HQ và ẩn kho đối thủ
+
+- **Trạng thái:** `VERIFIED` bằng test tự động, production build và chạy bot mẫu trên server thật.
+- **Đã đạt:** Mọi thông số cân bằng nằm trong `game-rules.yml`, mỗi biến có chú thích; giá trị giữ như trước.
+- **Đã đạt:** HQ tự đặt ở góc và dọc mép bản đồ cho profile lẫn map script bỏ trống `headquarters`; quân thợ khởi đầu ở ô ngẫu nhiên sát HQ.
+- **Đã đạt:** `STATE_UPDATED` chỉ chứa kho gỗ và thịt của đội người xem; vị trí và HP mọi đội vẫn hiển thị.
+- **Bằng chứng:** `mvnw test`, `npm test` và `npm run build` hoàn tất với exit code 0; `WinningScenario` cho BLUE thắng ở revision 154; state đọc bằng token BLUE không có kho của CYAN và GREEN.
+- **Chưa kiểm chứng:** Chưa xem trực quan vị trí HQ và quân thợ mới trên trình duyệt.
+
 ## 2026-11-27 — Viewer hình người và lực lượng theo đội
 
 - **Trạng thái:** `VERIFIED` bằng `npm test`, production build và Maven test của server.
@@ -7,7 +16,7 @@
 - **Đã đạt:** WORKER, MELEE và RANGED vẽ thành hình người cầm cuốc, kiếm hoặc cung; SIEGE giữ hình xe 2×2.
 - **Đã đạt:** Mục Lực lượng chỉ hiện đội của người xem.
 - **Đã đạt:** Trận tạo trên web được dựng lại từ map script khi bản lưu theo luật cũ không đọc được; trận không còn hợp lệ bị bỏ qua thay vì làm server dừng.
-- **Chưa kiểm chứng:** Chưa xem trực quan bản đồ 50×50 sau khi sửa; server vẫn gửi thông tin mọi đội (BACKLOG B-04).
+- **Chưa kiểm chứng:** Chưa xem trực quan bản đồ 50×50 sau khi sửa; server vẫn gửi thông tin mọi đội.
 
 ## 2026-11-27 — Gỗ, thịt và gói khởi tạo đội
 
