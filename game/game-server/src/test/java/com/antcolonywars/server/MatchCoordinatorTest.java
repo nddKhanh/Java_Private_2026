@@ -1,25 +1,18 @@
 package com.antcolonywars.server;
 
-import com.antcolonywars.core.ApplyResult;
 import com.antcolonywars.core.AttackCommand;
-import com.antcolonywars.core.BatchApplyResult;
-import com.antcolonywars.core.BatchMode;
-import com.antcolonywars.core.Building;
-import com.antcolonywars.core.BuildingType;
 import com.antcolonywars.core.DefaultMatchSetup;
 import com.antcolonywars.core.Direction;
-import com.antcolonywars.core.ErrorCode;
 import com.antcolonywars.core.Headquarters;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.Position;
+import com.antcolonywars.core.QueueTickResult;
 import com.antcolonywars.core.RuleSet;
-import com.antcolonywars.core.SpawnCommand;
 import com.antcolonywars.core.Team;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
 import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.MatchState;
-import com.antcolonywars.core.MoveCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -34,8 +27,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MatchCoordinatorTest {
+    private static final GameProfileProperties.Limits LIMITS = new GameProfileProperties.Limits(250);
+
     @Test
-    void persistenceFailureDoesNotPublishCandidateState() {
+    void persistenceFailureKeepsStateAndQueueUnchanged() {
         MatchPersistence failing = new MatchPersistence() {
             private MatchState stored;
             @Override public Optional<MatchState> load(String matchId) { return Optional.ofNullable(stored); }
@@ -49,134 +44,57 @@ class MatchCoordinatorTest {
             @Override public List<GameEvent> history(String matchId) { return List.of(); }
         };
         MatchCoordinator coordinator = new MatchCoordinator(
-                DefaultMatchSetup.create(), null,
-                new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC(), failing
+                DefaultMatchSetup.create(), null, LIMITS, Clock.systemUTC(), failing
         );
-        assertThrows(IllegalStateException.class, () -> coordinator.applyBatch(List.of(
-                new WaitCommand("persist-failure", "BLUE", "worker-blue")
-        ), BatchMode.ATOMIC));
+        coordinator.enqueue("BLUE", "batch", List.of(new WaitCommand("persist-failure", "BLUE", "worker-blue")));
+
+        assertThrows(IllegalStateException.class, coordinator::advanceTick);
         assertEquals(0, coordinator.state().revision());
+        assertEquals(1, coordinator.pendingCommands("BLUE").get("worker-blue").size());
     }
 
     @Test
-    void limitsActionsPerBotInEachBatchWithoutRateLimitingSeparateBatches() {
-        MatchCoordinator coordinator = new MatchCoordinator(
-                DefaultMatchSetup.create(), new GameProfileProperties.Limits(2, 4, 250), Clock.systemUTC());
+    void queuesWithoutChangingStateAndRunsOneCommandPerTick() {
+        MatchCoordinator coordinator = new MatchCoordinator(DefaultMatchSetup.create(), LIMITS, Clock.systemUTC());
 
-        BatchApplyResult atomic = coordinator.applyBatch(List.of(
-                new WaitCommand("atomic-1", "BLUE", "worker-blue"),
-                new WaitCommand("atomic-2", "BLUE", "worker-blue"),
-                new WaitCommand("atomic-3", "BLUE", "worker-blue")
-        ), BatchMode.ATOMIC);
-        assertEquals(ErrorCode.BATCH_LIMIT_EXCEEDED, atomic.error());
-        assertEquals(0, atomic.state().revision());
+        MatchCoordinator.EnqueueResult queued = coordinator.enqueue("BLUE", "batch", List.of(
+                new WaitCommand("wait-1", "BLUE", "worker-blue"),
+                new WaitCommand("wait-2", "BLUE", "worker-blue")
+        ));
 
-        BatchApplyResult partial = coordinator.applyBatch(List.of(
-                new WaitCommand("partial-1", "BLUE", "worker-blue"),
-                new WaitCommand("partial-2", "BLUE", "worker-blue"),
-                new WaitCommand("partial-3", "BLUE", "worker-blue")
-        ), BatchMode.PARTIAL);
-        assertEquals(ErrorCode.BATCH_LIMIT_EXCEEDED, partial.error());
-        assertEquals(2, partial.appliedCount());
-        assertEquals(2, partial.state().revision());
-
-        assertTrue(coordinator.apply(new WaitCommand("next-1", "BLUE", "worker-blue")).accepted());
-        assertTrue(coordinator.apply(new WaitCommand("next-2", "BLUE", "worker-blue")).accepted());
-        assertTrue(coordinator.apply(new WaitCommand("next-3", "BLUE", "worker-blue")).accepted());
-        assertEquals(5, coordinator.state().revision());
-        assertEquals(4, coordinator.commandQueueCapacity());
+        assertEquals(2, queued.queuedCount());
+        assertEquals(0, coordinator.state().revision());
+        coordinator.advanceTick();
+        assertEquals(1, coordinator.state().revision());
+        coordinator.advanceTick();
+        assertEquals(2, coordinator.state().revision());
+        assertTrue(coordinator.pendingCommands("BLUE").isEmpty());
     }
 
     @Test
-    void countsSpawnAgainstItsSelectedBuildingWithoutMixingOtherSubjects() {
-        MatchSetup setup = new MatchSetup(
-                "building-limit", "building-limit", 7, 5, RuleSet.mvp(),
-                List.of(new Team("BLUE", "Blue", "blue"), new Team("RED", "Red", "red")),
-                List.of(new Unit("worker-blue", "BLUE", "WORKER", new Position(5, 4), 3, Direction.LEFT)),
-                List.of(
-                        new Headquarters("hq-blue", "BLUE", new Position(0, 0), 3),
-                        new Headquarters("hq-red", "RED", new Position(6, 4), 3)
-                ),
-                List.of(),
-                List.of(
-                        new Building("barracks-a", "BLUE", BuildingType.BARRACKS, new Position(1, 1), 5),
-                        new Building("barracks-b", "BLUE", BuildingType.BARRACKS, new Position(4, 1), 5)
-                )
-        );
-        GameProfileProperties.Limits limits = new GameProfileProperties.Limits(2, 16, 250);
-        MatchCoordinator limited = new MatchCoordinator(setup, limits, Clock.systemUTC());
-
-        BatchApplyResult partial = limited.applyBatch(List.of(
-                spawn("spawn-a-1", "barracks-a", "melee-a-1", Direction.RIGHT),
-                spawn("spawn-a-2", "barracks-a", "melee-a-2", Direction.DOWN),
-                spawn("spawn-a-3", "barracks-a", "melee-a-3", Direction.UP)
-        ), BatchMode.PARTIAL);
-
-        assertEquals(ErrorCode.BATCH_LIMIT_EXCEEDED, partial.error());
-        assertEquals(2, partial.failedIndex());
-        assertEquals(2, partial.appliedCount());
-
-        MatchCoordinator independent = new MatchCoordinator(setup, limits, Clock.systemUTC());
-        BatchApplyResult mixed = independent.applyBatch(List.of(
-                new WaitCommand("worker-1", "BLUE", "worker-blue"),
-                new WaitCommand("worker-2", "BLUE", "worker-blue"),
-                spawn("spawn-a", "barracks-a", "melee-a", Direction.RIGHT),
-                spawn("spawn-b", "barracks-b", "melee-b", Direction.LEFT)
-        ), BatchMode.ATOMIC);
-
-        assertTrue(mixed.accepted());
-        assertEquals(4, mixed.appliedCount());
-    }
-
-    @Test
-    void rejectsSpawnWithoutSourceBeforeDifferentUnitIdsCanBypassTheLimit() {
-        MatchCoordinator coordinator = new MatchCoordinator(
-                DefaultMatchSetup.create(), new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC()
-        );
-        List<SpawnCommand> commands = java.util.stream.IntStream.rangeClosed(1, 11)
-                .mapToObj(index -> new SpawnCommand(
-                        "missing-source-" + index, "BLUE", "worker-new-" + index,
-                        "Worker " + index, "WORKER", Direction.DOWN
-                ))
+    void refusesABotsShareWhenItsQueueWouldOverflow() {
+        MatchCoordinator coordinator = new MatchCoordinator(DefaultMatchSetup.create(), LIMITS, Clock.systemUTC());
+        List<WaitCommand> tooMany = java.util.stream.IntStream.rangeClosed(1, 41)
+                .mapToObj(index -> new WaitCommand("wait-" + index, "BLUE", "worker-blue"))
                 .toList();
 
-        BatchApplyResult atomic = coordinator.applyBatch(commands, BatchMode.ATOMIC);
-        BatchApplyResult partial = coordinator.applyBatch(commands, BatchMode.PARTIAL);
+        MatchCoordinator.EnqueueResult result = coordinator.enqueue("BLUE", "flood", tooMany);
 
-        assertEquals(ErrorCode.PRODUCTION_SOURCE_NOT_FOUND, atomic.error());
-        assertEquals(0, atomic.failedIndex());
-        assertEquals(0, atomic.appliedCount());
-        assertEquals(ErrorCode.PRODUCTION_SOURCE_NOT_FOUND, partial.error());
-        assertEquals(0, partial.failedIndex());
-        assertEquals(0, partial.appliedCount());
+        assertEquals(0, result.queuedCount());
+        assertEquals(List.of("worker-blue"), result.refusedSubjects());
+        assertTrue(coordinator.pendingCommands("BLUE").isEmpty());
     }
 
     @Test
-    void reportsTheFirstGameRuleFailureBeforeALaterBatchLimit() {
-        List<com.antcolonywars.core.ActionCommand> commands = new java.util.ArrayList<>();
-        commands.add(new MoveCommand("outside", "BLUE", "worker-blue", Direction.UP));
-        for (int index = 1; index <= 10; index++) {
-            commands.add(new WaitCommand("wait-" + index, "BLUE", "worker-blue"));
-        }
-        GameProfileProperties.Limits limits = new GameProfileProperties.Limits(10, 32, 250);
+    void clearsOnlyTheRequestingTeamsQueue() {
+        MatchCoordinator coordinator = new MatchCoordinator(DefaultMatchSetup.create(), LIMITS, Clock.systemUTC());
+        coordinator.enqueue("BLUE", "blue", List.of(new WaitCommand("blue-wait", "BLUE", "worker-blue")));
+        coordinator.enqueue("RED", "red", List.of(new WaitCommand("red-wait", "RED", "worker-red")));
 
-        BatchApplyResult atomic = new MatchCoordinator(
-                DefaultMatchSetup.create(), limits, Clock.systemUTC()
-        ).applyBatch(commands, BatchMode.ATOMIC);
-        BatchApplyResult partial = new MatchCoordinator(
-                DefaultMatchSetup.create(), limits, Clock.systemUTC()
-        ).applyBatch(commands, BatchMode.PARTIAL);
-
-        assertEquals(ErrorCode.OUT_OF_BOUNDS, atomic.error());
-        assertEquals(0, atomic.failedIndex());
-        assertEquals(0, atomic.appliedCount());
-        assertEquals(ErrorCode.OUT_OF_BOUNDS, partial.error());
-        assertEquals(0, partial.failedIndex());
-        assertEquals(0, partial.appliedCount());
-    }
-
-    private SpawnCommand spawn(String commandId, String sourceId, String unitId, Direction direction) {
-        return new SpawnCommand(commandId, "BLUE", sourceId, unitId, unitId, "MELEE", direction);
+        assertEquals(0, coordinator.clearQueue("RED", "worker-blue"));
+        assertEquals(1, coordinator.clearQueue("BLUE", "worker-blue"));
+        assertTrue(coordinator.pendingCommands("BLUE").isEmpty());
+        assertEquals(1, coordinator.pendingCommands("RED").get("worker-red").size());
     }
 
     @Test
@@ -193,15 +111,13 @@ class MatchCoordinatorTest {
                         new Headquarters("hq-red", "RED", new Position(4, 4), 3)
                 )
         );
-        MatchCoordinator coordinator = new MatchCoordinator(
-                setup, new GameProfileProperties.Limits(1, 4, 250), Clock.systemUTC()
-        );
+        MatchCoordinator coordinator = new MatchCoordinator(setup, LIMITS, Clock.systemUTC());
         GameWebSocketHandler handler = new GameWebSocketHandler(coordinator, new ObjectMapper());
         SimulationTicker ticker = new SimulationTicker(coordinator, handler);
 
-        assertTrue(coordinator.apply(
+        coordinator.enqueue("BLUE", "attack", List.of(
                 new AttackCommand("attack-1", "BLUE", "worker-blue", Direction.RIGHT)
-        ).accepted());
+        ));
         ticker.tick();
 
         assertEquals(1, coordinator.state().simulationTick());
@@ -214,21 +130,21 @@ class MatchCoordinatorTest {
     void restoresThePersistedSnapshotAndContinuesItsRevision() {
         MatchSetup setup = DefaultMatchSetup.create();
         RecordingPersistence persistence = new RecordingPersistence();
-        MatchCoordinator first = new MatchCoordinator(
-                setup, null, new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC(), persistence
-        );
-        assertTrue(first.apply(new WaitCommand("wait-before-restart", "BLUE", "worker-blue")).accepted());
+        MatchCoordinator first = new MatchCoordinator(setup, null, LIMITS, Clock.systemUTC(), persistence);
+        first.enqueue("BLUE", "before", List.of(new WaitCommand("wait-before-restart", "BLUE", "worker-blue")));
+        first.advanceTick();
 
         MatchCoordinator restored = new MatchCoordinator(
                 setup,
                 persistence.load(setup.matchId()).orElseThrow(),
-                new GameProfileProperties.Limits(10, 32, 250),
+                LIMITS,
                 Clock.systemUTC(),
                 persistence
         );
-        ApplyResult next = restored.apply(new WaitCommand("wait-after-restart", "BLUE", "worker-blue"));
+        restored.enqueue("BLUE", "after", List.of(new WaitCommand("wait-after-restart", "BLUE", "worker-blue")));
+        QueueTickResult next = restored.advanceTick();
 
-        assertTrue(next.accepted());
+        assertTrue(next.rejections().isEmpty());
         assertEquals(2, next.state().revision());
         assertEquals(2, persistence.history(setup.matchId()).size());
     }
@@ -238,7 +154,7 @@ class MatchCoordinatorTest {
         MatchRegistry registry = new MatchRegistry(
                 DefaultMatchSetup.create(),
                 List.of("load-one", "load-two"),
-                new GameProfileProperties.Limits(10, 32, 250),
+                LIMITS,
                 Clock.systemUTC(),
                 MatchPersistence.none()
         );

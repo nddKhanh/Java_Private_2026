@@ -15,14 +15,14 @@ class GameProfilePropertiesTest {
                 "custom-match",
                 List.of("custom-match"),
                 new GameProfileProperties.Board(4, 4),
-                new GameProfileProperties.Rules("custom-1", 5, null, null, java.util.Map.of(), java.util.Map.of(), null),
+                new GameProfileProperties.Rules("custom-1", 5, null, null, java.util.Map.of(), java.util.Map.of(), null, null),
                 List.of(new GameProfileProperties.TeamProfile(
                         "GREEN", "Green", "#00ff00", "custom-token", "CUSTOM")),
                 List.of(),
                 List.of(),
                 List.of(),
                 List.of(),
-                new GameProfileProperties.Limits(10, 32, 250),
+                new GameProfileProperties.Limits(250),
                 null
         );
 

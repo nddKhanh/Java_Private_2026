@@ -49,7 +49,7 @@ MVP chỉ gồm một lát cắt dọc có thể chơi và kiểm thử trực t
 - 10 đội, 5 tài khoản mỗi đội hoặc lobby.
 - Database, đăng ký, đăng nhập và phục hồi sau khi restart.
 - Đạn bay, animation chiến đấu, fog of war hoặc tìm đường.
-- Giới hạn 10 hành động cho mỗi unit hoặc công trình trong một batch; không giới hạn theo giây.
+- Mỗi bot chạy một lệnh mỗi nhịp 250 ms; lệnh khác nằm trong hàng chờ riêng của bot.
 - Editor Java trên trình duyệt.
 - Upload, biên dịch hoặc chạy source code không tin cậy trên server.
 - Matchmaking, xếp hạng, replay, pixel art hoàn chỉnh hoặc cân bằng game.
@@ -149,7 +149,7 @@ Với lobby động, server cấp một pairing key để Desktop tự tìm endp
 Source code và class file chỉ tồn tại local, không được upload lên game server.
 
 Project `student-bot-template` cho phép người học viết `public static void main(Bot bot)` trong IntelliJ.
-Lớp `Submit` đọc pairing key và chế độ batch từ `.env`, sau đó gửi source qua HTTP loopback tới Desktop để tự pair, compile và chạy.
+Lớp `Submit` đọc pairing key và tài khoản từ `.env`, sau đó gửi source qua HTTP loopback tới Desktop để tự pair, compile và chạy.
 API nhập môn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 
 JVM con phải có classpath giới hạn, working directory tạm, giới hạn heap, timeout, giới hạn output và thao tác dừng rõ ràng.
@@ -272,7 +272,7 @@ Server phát cho các client đang theo dõi trận:
 }
 ```
 
-MVP phát một snapshot đầy đủ sau mỗi command hoặc batch thành công, kèm `events` theo thứ tự.
+Server phát một snapshot đầy đủ sau mỗi nhịp có thay đổi, kèm `events` theo thứ tự; hàng chờ và lệnh bị từ chối chỉ gửi cho đội sở hữu.
 Snapshot phải serialize được và event phải có thứ tự để sau này hỗ trợ replay hoặc client simulation.
 Chỉ chuyển sang delta event khi state lớn hơn và có benchmark chứng minh cần thiết.
 
@@ -286,7 +286,7 @@ Giao diện MVP chỉ cần:
 - HP của hai HQ và hai đơn vị.
 - Trạng thái trận và đội thắng.
 - `revision` hiện tại.
-- Log năm command gần nhất.
+- Nhật ký tám lệnh gần nhất.
 - Trạng thái kết nối WebSocket.
 
 Phaser không tự tính kết quả di chuyển hoặc chiến đấu.
@@ -360,7 +360,7 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 2. Đơn vị bị hạ được xóa khỏi snapshot để giải phóng ô và quota.
 3. R2 đã bổ sung resource node, stockpile, khai thác và xây BARRACKS/TOWER/WALL qua schema 3.
 4. R3 đã bổ sung các loại MELEE/RANGED/SIEGE và combat profile cơ bản.
-5. P0 batch đã thay rate limit theo team bằng tối đa 10 hành động/bot/lần Run với chế độ Atomic hoặc Partial.
+5. R4 thay giới hạn theo batch bằng hàng chờ lệnh của từng bot, mỗi nhịp chạy một lệnh mỗi bot.
 6. R4.1 đã bổ sung footprint 2×2 cho SIEGE, projectile và simulation tick cấu hình được.
 7. R5 đã bổ sung account, lobby membership, session token, H2/Flyway và restart recovery.
 8. R6 đã thêm 10 đội chia 2 phe, hai match, tối đa 50 đơn vị mỗi đội, 5 account/team và load gate tick/reconnect.

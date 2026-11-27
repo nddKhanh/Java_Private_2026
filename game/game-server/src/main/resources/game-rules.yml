@@ -72,6 +72,13 @@ game:
           hp: 5
           wood-cost: 1
 
+      # Command queues: every bot runs one queued command per simulation tick.
+      commands:
+        # Pending commands one bot may hold; a batch that would exceed it is refused for that bot.
+        max-per-bot: 40
+        # Commands accepted in one batch sent by a player.
+        max-per-batch: 256
+
       # Automatic fire of every TOWER.
       tower:
         # Damage of one tower shot.

@@ -1,5 +1,14 @@
 # Tiến độ dự án
 
+## 2026-11-27 — Hàng chờ lệnh cho từng bot
+
+- **Trạng thái:** `VERIFIED` bằng test tự động, production build, bot mẫu trên server thật và Chrome chạy ẩn.
+- **Đã đạt:** Mỗi bot chạy một lệnh mỗi nhịp 250 ms từ hàng chờ riêng; Run chỉ nối lệnh; lệnh lỗi bỏ phần còn lại của cùng bot trong cùng lần gửi.
+- **Đã đạt:** Giới hạn 40 lệnh chờ mỗi bot và 256 lệnh mỗi lần gửi; hàng chờ được xóa khi trận kết thúc.
+- **Đã đạt:** Viewer hiện và xóa hàng chờ của bot được chọn, tô màu cam lệnh bị từ chối, hiện đúng kho đội mình và vẽ lại bản đồ khi đổi trận.
+- **Bằng chứng:** `mvnw test`, `npm test` và `npm run build` hoàn tất với exit code 0; `WinningScenario` cho BLUE thắng ở revision 154; người dùng chạy chương trình khai thác, xây, xuất quân, tấn công và thắng trên viewer.
+- **Chưa kiểm chứng:** Hàng chờ không giữ qua lần khởi động lại server; chưa thử nhiều máy cùng gửi lệnh cho một bot.
+
 ## 2026-11-27 — Thông số tập trung, vị trí HQ và ẩn kho đối thủ
 
 - **Trạng thái:** `VERIFIED` bằng test tự động, production build và chạy bot mẫu trên server thật.

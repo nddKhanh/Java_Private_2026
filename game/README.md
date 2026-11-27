@@ -8,8 +8,9 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - Chức năng hiện có gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE.
 - SPAWN hỗ trợ WORKER, MELEE, RANGED và SIEGE; ATTACK nhận mã quân cùng hướng và quét mục tiêu đầu tiên đến hết tầm đánh.
 - Server là nguồn sự thật duy nhất cho vị trí, HP, damage, resource, building, revision và winner.
-- P0 batch giới hạn 10 hành động cho mỗi unit hoặc công trình trong một lần Run, hỗ trợ Atomic hoặc Partial và không giới hạn theo giây.
-- Lỗi chuyển đổi và lỗi luật chơi đều giữ đúng thứ tự Atomic/Partial; console nêu lệnh, ID chủ thể, hành động và nguyên nhân.
+- Mỗi unit, HQ và công trình có hàng chờ lệnh riêng trên server; mỗi nhịp 250 ms mỗi bot chạy đúng một lệnh.
+- Mỗi lần Run chỉ nối lệnh vào cuối hàng chờ; lệnh lỗi khi tới lượt sẽ bỏ các lệnh còn lại của đúng bot đó trong đúng lần gửi đó.
+- Bấm vào bot của đội mình trên viewer để xem hàng chờ và xóa toàn bộ lệnh đang chờ; lệnh bị từ chối hiện màu cam trong nhật ký.
 - R4.1 thêm footprint 2×2 cho SIEGE, projectile và nhịp mô phỏng mặc định 250 ms.
 - R5 thêm account, đăng nhập, lobby team, session token và H2/Flyway để phục hồi state cùng lịch sử trận sau khi khởi động lại.
 - R6 hoàn thiện 10 đội/2 phe, hai match độc lập, tối đa 5 account cùng đội và reconnect theo snapshot mới nhất.
@@ -116,3 +117,4 @@ Sau khi cập nhật, chạy `git diff --check` và ghi commit bằng tiếng An
 - HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE/RANGED/SIEGE; đạn xuyên đồng minh nhưng va chạm đối tượng địch, còn mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
 - Viewer phân biệt từng loại unit và công trình bằng silhouette riêng, đồng thời hiển thị ID thực tế trên bản đồ.
 - Desktop Code Studio chỉ nên chạy source do người dùng tin cậy.
+- Hàng chờ lệnh chỉ nằm trong bộ nhớ server; khởi động lại server thì các lệnh đang chờ mất, state trận vẫn được phục hồi.

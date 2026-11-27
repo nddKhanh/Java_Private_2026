@@ -1,8 +1,18 @@
 import Phaser from 'phaser';
 import type { MatchState, Team } from './types';
 
+/** Board geometry of the last render, used to turn a click into a map cell. */
+interface BoardLayout {
+  originX: number;
+  originY: number;
+  cellSize: number;
+}
+
 export class BattleScene extends Phaser.Scene {
   private latestState: MatchState | null = null;
+  private layout: BoardLayout | null = null;
+  private selectedId: string | null = null;
+  private selectListener: (id: string | null) => void = () => {};
 
   constructor() {
     super('battle');
@@ -13,6 +23,46 @@ export class BattleScene extends Phaser.Scene {
     if (this.latestState) {
       this.renderSnapshot(this.latestState);
     }
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => this.selectAt(pointer.worldX, pointer.worldY));
+  }
+
+  /** Called with the unit, headquarters or building id under a click, or null when the click hits empty ground. */
+  onSelect(listener: (id: string | null) => void): void {
+    this.selectListener = listener;
+  }
+
+  setSelected(id: string | null): void {
+    this.selectedId = id;
+    if (this.latestState && this.scene.isActive()) {
+      this.renderSnapshot(this.latestState);
+    }
+  }
+
+  private selectAt(worldX: number, worldY: number): void {
+    const state = this.latestState;
+    const layout = this.layout;
+    if (!state || !layout) return;
+    const x = Math.floor((worldX - layout.originX) / layout.cellSize);
+    const y = Math.floor((worldY - layout.originY) / layout.cellSize);
+    const unit = state.units.find((item) => item.hp > 0 && x >= item.position.x && x < item.position.x + item.width
+      && y >= item.position.y && y < item.position.y + item.height);
+    const headquarters = state.headquarters.find((item) => item.hp > 0 && item.position.x === x && item.position.y === y);
+    const building = state.buildings.find((item) => item.hp > 0 && item.position.x === x && item.position.y === y);
+    this.selectListener(unit?.id ?? headquarters?.id ?? building?.id ?? null);
+  }
+
+  private drawSelection(state: MatchState, originX: number, originY: number, cellSize: number): void {
+    if (!this.selectedId) return;
+    const unit = state.units.find((item) => item.id === this.selectedId);
+    const fixed = state.headquarters.find((item) => item.id === this.selectedId)
+      ?? state.buildings.find((item) => item.id === this.selectedId);
+    const position = unit?.position ?? fixed?.position;
+    if (!position) return;
+    const width = unit?.width ?? 1;
+    const height = unit?.height ?? 1;
+    const outline = this.add.graphics().setDepth(30);
+    outline.lineStyle(Math.max(2, cellSize * 0.08), 0xfacc15, 1);
+    outline.strokeRect(originX + position.x * cellSize, originY + position.y * cellSize, width * cellSize, height * cellSize);
   }
 
   updateSnapshot(state: MatchState): void {
@@ -46,6 +96,7 @@ export class BattleScene extends Phaser.Scene {
     const boardHeight = cellSize * state.mapHeight;
     const originX = (canvasWidth - boardWidth) / 2;
     const originY = (canvasHeight - boardHeight) / 2;
+    this.layout = { originX, originY, cellSize };
     // Small cells hide ID labels until the entity is hovered.
     const compact = cellSize < 28;
 
@@ -162,6 +213,7 @@ export class BattleScene extends Phaser.Scene {
         compact,
       );
     }
+    this.drawSelection(state, originX, originY, cellSize);
   }
 
   /** Stick figure in team color; WORKER holds a pickaxe, MELEE a sword, RANGED a bow. */

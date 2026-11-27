@@ -31,7 +31,6 @@ public final class Submit {
         String key = required(environment, "MATCH_KEY");
         String username = required(environment, "USERNAME");
         String password = required(environment, "PASSWORD");
-        String mode = environment.getOrDefault("BATCH_MODE", "ATOMIC").trim().toUpperCase();
         String source = Files.readString(Path.of("src", "main", "java", "Main.java"));
 
         byte[] body = new ObjectMapper().writeValueAsBytes(Map.of(
@@ -39,8 +38,7 @@ public final class Submit {
                 "source", source,
                 "pairingKey", key,
                 "username", username,
-                "password", password,
-                "batchMode", mode
+                "password", password
         ));
         HttpRequest request = HttpRequest.newBuilder(DESKTOP_ENDPOINT)
                 .timeout(Duration.ofSeconds(150))

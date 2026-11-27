@@ -1,6 +1,6 @@
 package com.antcolonywars.server;
 
-import com.antcolonywars.core.ApplyResult;
+import com.antcolonywars.core.QueueTickResult;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.MatchState;
 
@@ -86,10 +86,10 @@ public final class MatchRegistry {
         return coordinator;
     }
 
-    public List<ApplyResult> advanceTicks() {
+    public List<QueueTickResult> advanceTicks() {
         return coordinators.entrySet().stream().map(entry -> {
             long started = System.nanoTime();
-            ApplyResult result = entry.getValue().advanceTick();
+            QueueTickResult result = entry.getValue().advanceTick();
             long elapsedMicros = Math.max(0, (System.nanoTime() - started) / 1_000);
             tickMetrics.compute(entry.getKey(), (ignored, current) -> new TickMetrics(
                     elapsedMicros,

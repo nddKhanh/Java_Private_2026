@@ -83,8 +83,7 @@ game:
     resources: []
     buildings: []
     limits:
-      max-actions-per-bot-per-batch: 10
-      command-queue-capacity: 32
+      # Simulation tick: every bot runs at most one queued command per tick.
       tick-millis: 250
     # Placed around every headquarters; offsets point inward on the far half of each axis.
     # Units take a random free cell next to their headquarters.

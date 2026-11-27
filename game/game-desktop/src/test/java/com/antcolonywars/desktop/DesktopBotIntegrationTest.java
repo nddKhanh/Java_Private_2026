@@ -1,8 +1,8 @@
 package com.antcolonywars.desktop;
 
-import com.antcolonywars.core.BatchMode;
 
 import com.antcolonywars.client.GameClient;
+import com.antcolonywars.client.GameState;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.server.GameServerApplication;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "spring.datasource.url=jdbc:h2:mem:desktop-integration",
+                "game.profile.limits.tick-millis=50",
                 // Pins the starter worker next to its headquarters so scripted moves stay deterministic.
                 "game.profile.starter-pack.units[0].type=WORKER",
                 "game.profile.starter-pack.units[0].dx=1",
@@ -53,14 +54,14 @@ class DesktopBotIntegrationTest {
             assertTrue(result.successful(), result.standardError());
             assertTrue(result.standardOutput().contains("moves-complete"));
             try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
-                int x = observer.getLatestState().snapshot().units().stream()
+                GameState state = awaitRevision(observer, 3);
+                int x = state.snapshot().units().stream()
                         .filter(unit -> unit.id().equals("worker-blue"))
                         .map(Unit::position)
                         .mapToInt(position -> position.x())
                         .findFirst()
                         .orElseThrow();
                 assertEquals(4, x);
-                assertEquals(3, observer.getLatestState().revision());
             }
         }
     }
@@ -93,8 +94,7 @@ class DesktopBotIntegrationTest {
 
             assertTrue(result.successful(), result.standardError());
             try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
-                assertEquals(6, observer.getLatestState().revision());
-                assertEquals(0, observer.getLatestState().snapshot().units().stream()
+                assertEquals(0, awaitRevision(observer, 6).snapshot().units().stream()
                         .filter(unit -> unit.id().equals("worker-blue-2"))
                         .findFirst().orElseThrow().position().x());
             }
@@ -257,8 +257,7 @@ class DesktopBotIntegrationTest {
                     "source", source,
                     "pairingKey", "123456",
                     "username", "student",
-                    "password", "secret",
-                    "batchMode", "ATOMIC"
+                    "password", "secret"
             ));
 
             HttpResponse<String> response = HttpClient.newHttpClient().send(
@@ -270,9 +269,9 @@ class DesktopBotIntegrationTest {
             );
 
             assertEquals(200, response.statusCode());
-            assertTrue(response.body().contains("Batch đã được server chấp nhận"));
+            assertTrue(response.body().contains("Đã xếp 1 lệnh vào hàng chờ"), response.body());
             try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
-                assertEquals(2, observer.getLatestState().snapshot().units().stream()
+                assertEquals(2, awaitRevision(observer, 1).snapshot().units().stream()
                         .filter(unit -> unit.id().equals("worker-blue"))
                         .findFirst().orElseThrow().position().x());
             }
@@ -307,6 +306,19 @@ class DesktopBotIntegrationTest {
         }
     }
 
+    /** Queued commands run one per tick after the bot process ends, so observers wait for their revision. */
+    private static GameState awaitRevision(GameClient observer, long revision) throws InterruptedException {
+        long deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+        while (System.nanoTime() < deadline) {
+            GameState state = observer.getLatestState();
+            if (state.revision() >= revision) {
+                return state;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("Timed out waiting for revision " + revision);
+    }
+
     private BotRunRequest request(BotCompilation compilation, String token, Duration timeout) {
         return request(compilation, token, "", timeout);
     }
@@ -318,7 +330,6 @@ class DesktopBotIntegrationTest {
                 serverUrl(),
                 matchId,
                 token,
-                BatchMode.ATOMIC,
                 timeout,
                 64,
                 16 * 1024

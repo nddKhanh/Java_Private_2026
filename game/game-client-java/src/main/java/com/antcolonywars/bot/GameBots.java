@@ -3,10 +3,10 @@ package com.antcolonywars.bot;
 import com.antcolonywars.client.Direction;
 import com.antcolonywars.client.BuildingType;
 import com.antcolonywars.client.BatchAction;
+import com.antcolonywars.client.BatchReceipt;
 import com.antcolonywars.client.GameClient;
 import com.antcolonywars.client.GameState;
 import com.antcolonywars.core.UnitType;
-import com.antcolonywars.core.BatchMode;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -36,10 +36,9 @@ public final class GameBots {
             String serverUrl,
             String accessToken,
             String matchId,
-            Duration timeout,
-            BatchMode mode
+            Duration timeout
     ) {
-        return new BatchingGameBot(GameClient.connect(serverUrl, accessToken, matchId, timeout), mode);
+        return new BatchingGameBot(GameClient.connect(serverUrl, accessToken, matchId, timeout));
     }
 
     private static final class ClientGameBot implements GameBot {
@@ -142,14 +141,12 @@ public final class GameBots {
 
     private static final class BatchingGameBot implements BatchGameBot {
         private final GameClient client;
-        private final BatchMode mode;
         private final List<BatchAction> actions = new ArrayList<>();
         private final GameState batchSnapshot;
         private String selectedUnitId;
 
-        private BatchingGameBot(GameClient client, BatchMode mode) {
+        private BatchingGameBot(GameClient client) {
             this.client = client;
-            this.mode = mode;
             this.batchSnapshot = client.getLatestState();
         }
 
@@ -243,13 +240,10 @@ public final class GameBots {
         }
 
         @Override
-        public GameState submitBatch() {
-            if (actions.isEmpty()) {
-                return client.getLatestState();
-            }
+        public BatchReceipt submitBatch() {
             List<BatchAction> submitted = List.copyOf(actions);
             actions.clear();
-            return client.submitBatch(submitted, mode);
+            return client.submitBatch(submitted);
         }
 
         @Override

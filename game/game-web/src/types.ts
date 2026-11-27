@@ -86,14 +86,39 @@ export interface GameEvent {
   targetId: string | null;
 }
 
+/** One pending command in a bot's queue; target is the new unit or building id when there is one. */
+export interface QueuedCommand {
+  commandId: string;
+  action: string;
+  direction: string | null;
+  type: string | null;
+  target: string | null;
+}
+
+/** A command of the viewer's team that failed on its turn; droppedCount counts the later commands removed with it. */
+export interface CommandRejection {
+  batchId: string | null;
+  commandId: string;
+  subjectId: string;
+  action: string | null;
+  error: string;
+  errorMessage: string | null;
+  droppedCount: number;
+}
+
 export interface StateUpdatedMessage {
   type: 'STATE_UPDATED';
   schemaVersion: number;
   matchId: string;
   revision: number;
   sequence: number;
+  /** The team this connection plays for, or null for a spectator. */
+  viewerTeamId: string | null;
   state: MatchState;
   events: GameEvent[];
+  /** Pending commands of the viewer's own bots, keyed by bot id. */
+  queues: Record<string, QueuedCommand[]>;
+  rejections: CommandRejection[];
 }
 
 export interface MatchRuntime {

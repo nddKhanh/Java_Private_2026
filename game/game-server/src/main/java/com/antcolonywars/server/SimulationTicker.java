@@ -1,6 +1,6 @@
 package com.antcolonywars.server;
 
-import com.antcolonywars.core.ApplyResult;
+import com.antcolonywars.core.QueueTickResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -22,7 +22,7 @@ public final class SimulationTicker {
 
     @Scheduled(fixedRateString = "${game.profile.limits.tick-millis:250}")
     public void tick() {
-        for (ApplyResult result : matchRegistry.advanceTicks()) {
+        for (QueueTickResult result : matchRegistry.advanceTicks()) {
             webSocketHandler.broadcastSimulationUpdate(result);
         }
     }
