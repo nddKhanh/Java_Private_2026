@@ -30,14 +30,10 @@ class LobbyFlowIntegrationTest {
               "map": "8x8",
               "teams": 2,
               "accountsPerTeam": 1,
-              "resources": [{"x": 3, "y": 3, "amount": 10}],
+              "resources": [{"x": 3, "y": 3, "amount": 10, "type": "MEAT"}],
               "headquarters": [
                 {"team": 1, "x": 0, "y": 0},
                 {"team": 2, "x": 7, "y": 7}
-              ],
-              "units": [
-                {"team": 1, "x": 1, "y": 0, "type": "WORKER"},
-                {"team": 2, "x": 6, "y": 7, "type": "WORKER"}
               ]
             }
             """;

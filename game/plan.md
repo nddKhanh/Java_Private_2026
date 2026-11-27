@@ -352,7 +352,7 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 ### Lobby web và trận động
 
 - Người chơi đăng ký/đăng nhập bằng username/password trước khi tạo hoặc tìm trận.
-- Trận tùy chỉnh được mô tả bằng JSON map script với kích thước vuông, tài nguyên, HQ, lính, số đội và capacity tài khoản/đội.
+- Trận tùy chỉnh được mô tả bằng JSON map script với kích thước vuông, HQ, số đội, capacity tài khoản/đội, mỏ gỗ/thịt và lính bổ sung; gói khởi tạo đội đặt sẵn quanh mỗi HQ.
 - Server sinh mã trận, pairing key và token màu cho từng đội, giữ phòng chờ trong H2 và chỉ đăng ký match vào simulation khi chủ phòng bắt đầu.
 - Tham gia trận dùng mã trận + token đội; kiểm tra capacity được thực hiện transactionally trên server.
 
@@ -370,5 +370,5 @@ Một người vừa học vừa làm 15–20 giờ mỗi tuần nên dự kiế
 
 Tinh thần của MVP là chứng minh chu trình **Java program → WebSocket → server xử lý → state đổi → Phaser hiển thị → trận kết thúc** với số thành phần ít nhất có thể.
 SPAWN phải chỉ rõ hoặc suy ra nguồn sản xuất hợp lệ: HQ chỉ tạo WORKER, BARRACKS chỉ tạo MELEE, RANGED và SIEGE.
-Projectile khóa tọa độ mục tiêu lúc khai hỏa, đi theo các ô Bresenham, bị công trình chặn và không tìm đường vòng.
+Projectile khóa tọa độ mục tiêu lúc khai hỏa, đi từng ô ngang hoặc dọc theo đường Bresenham, bị công trình chặn và không tìm đường vòng.
 Công trình nhận damage và bị xóa ở HP 0; TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô theo simulation tick.

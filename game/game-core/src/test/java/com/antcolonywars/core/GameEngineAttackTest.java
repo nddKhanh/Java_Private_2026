@@ -226,7 +226,7 @@ class GameEngineAttackTest {
     }
 
     @Test
-    void towerAutomaticallyFiresWithinFiveCellsAndUsesDiagonalBresenhamCell() {
+    void towerAutomaticallyFiresWithinFiveCellsAlongAFourConnectedPath() {
         MatchSetup base = combatSetup(
                 new Position(4, 0), new Position(3, 3), RuleSet.mvp(), new Position(5, 5)
         );
@@ -240,8 +240,9 @@ class GameEngineAttackTest {
         );
         GameSession session = new GameSession(setup);
 
-        session.advanceTick();
-        session.advanceTick();
+        for (int index = 0; index < 4; index++) {
+            session.advanceTick();
+        }
         MatchState tick = session.advanceTick().state();
 
         assertEquals(5, tick.buildings().stream()
@@ -365,6 +366,33 @@ class GameEngineAttackTest {
                 .filter(building -> building.teamId().equals("BLUE") || building.teamId().equals("CYAN"))
                 .allMatch(building -> building.hp() == 5));
         assertTrue(unit(current, "enemy-red").hp() < 3);
+    }
+
+    @Test
+    void projectilePathNeverStepsDiagonally() {
+        Projectile projectile = new Projectile(
+                "diagonal", "BLUE", "worker-blue", "worker-red", new Position(0, 0), new Position(2, 3), 1
+        );
+
+        for (int index = 1; index < projectile.path().size(); index++) {
+            assertEquals(1, projectile.path().get(index - 1).manhattanDistance(projectile.path().get(index)));
+        }
+        assertEquals(new Position(2, 3), projectile.path().getLast());
+    }
+
+    @Test
+    void unitMovingIntoEnemyProjectileIsHit() {
+        GameSession session = new GameSession(combatSetup(
+                new Position(1, 1), new Position(4, 1), new RuleSet("range", 1, 3), new Position(4, 4)
+        ));
+        session.apply(new AttackCommand("shot", "BLUE", "worker-blue", Direction.RIGHT));
+        session.advanceTick();
+
+        session.apply(new MoveCommand("dodge-1", "RED", "worker-red", Direction.LEFT));
+        ApplyResult swapped = session.apply(new MoveCommand("dodge-2", "RED", "worker-red", Direction.LEFT));
+
+        assertEquals(2, unit(swapped.state(), "worker-red").hp());
+        assertTrue(swapped.state().projectiles().isEmpty());
     }
 
     private MatchSetup combatSetup(Position blue, Position red) {

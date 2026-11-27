@@ -7,7 +7,8 @@ export interface Team {
   id: string;
   displayName: string;
   color: string;
-  resources: number;
+  wood: number;
+  meat: number;
 }
 
 export interface Unit {
@@ -31,6 +32,7 @@ export interface Headquarters {
 
 export interface ResourceNode {
   id: string;
+  type: 'WOOD' | 'MEAT';
   position: Position;
   amount: number;
 }

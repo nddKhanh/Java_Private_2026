@@ -18,7 +18,7 @@ Server là nguồn sự thật duy nhất cho movement, damage, HP và winner.
 Phaser chỉ render snapshot và không tự tính gameplay.
 Bot có thể spawn `WORKER`, `MELEE`, `RANGED`, `SIEGE`; lệnh attack nhận mã quân và hướng, rồi server chọn mục tiêu đầu tiên trong tầm trên đường bắn.
 HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE, RANGED và SIEGE.
-Projectile giữ tọa độ đích lúc khai hỏa, đi theo Bresenham, bị công trình chặn và không đuổi theo mục tiêu.
+Projectile giữ tọa độ đích lúc khai hỏa, đi từng ô ngang hoặc dọc theo đường thẳng, bị công trình chặn và không đuổi theo mục tiêu.
 TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô.
 Web viewer có đăng ký/đăng nhập, tạo/tìm trận, phòng chờ theo đội, cùng bảng trạng thái revision, tick, lực lượng và kết quả trận.
 Khi chạy `start-web.ps1`, viewer mở trên mọi địa chỉ mạng để các máy cùng Wi-Fi truy cập bằng IPv4 của máy chủ.
@@ -183,7 +183,8 @@ Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy c
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
 Map, rules, match list, team, faction, màu, token demo, unit, HQ, resource node, building, giới hạn batch, tick interval, session lifetime và HP spawn đều có thể đổi mà không sửa Phaser renderer.
 
-Profile mặc định giới hạn 10 hành động cho mỗi unit hoặc công trình được điều khiển trong một batch.
+Profile mặc định dùng bản đồ 50×50, mỗi đội khởi đầu 100 gỗ và 100 thịt, và giới hạn 10 hành động cho mỗi unit hoặc công trình được điều khiển trong một batch.
+Khối `starter-pack` khai báo quân, mỏ và công trình mà mỗi đội nhận quanh HQ theo độ lệch so với HQ; độ lệch tự đảo chiều ở nửa xa của bản đồ để hướng vào trong.
 
 Token mặc định chỉ dùng cho demo local:
 
@@ -207,7 +208,7 @@ Không dùng các token này cho môi trường public hoặc production.
 - Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server xử lý batch tuần tự theo chế độ Atomic hoặc Partial.
 - Lỗi chuyển đổi command và lỗi luật chơi cùng giữ đúng vị trí lỗi; log client nêu ID chủ thể và hành động tương ứng.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
-- Spawn tạo unit ở ô kề nguồn sản xuất; HQ chỉ tạo WORKER và BARRACKS chỉ tạo quân chiến đấu; chi phí spawn chưa được áp dụng.
+- Spawn tạo unit ở ô kề nguồn sản xuất, trừ thịt theo loại quân và trừ thêm gỗ với SIEGE; HQ chỉ tạo WORKER và BARRACKS chỉ tạo quân chiến đấu.
 - Resource node, harvest và building đã có; công trình chặn/nhận damage, bị phá hủy ở HP 0 và mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
 - Projectile bỏ qua đối tượng cùng phe và viewer dùng silhouette riêng kèm ID thực tế cho mọi unit, HQ và building.
 - Account, lobby membership, session, snapshot và event history được lưu bằng H2/Flyway; file database mặc định nằm trong `game-server/data/`.

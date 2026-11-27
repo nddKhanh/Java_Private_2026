@@ -1,5 +1,24 @@
 # Tiến độ dự án
 
+## 2026-11-27 — Gỗ, thịt và gói khởi tạo đội
+
+- **Trạng thái:** `VERIFIED` bằng test tự động, production build và chạy bot mẫu trên server thật.
+- **Đã đạt:** Tài nguyên tách thành gỗ và thịt; quân tốn thịt, công trình tốn gỗ, SIEGE tốn cả hai; mỗi đội khởi đầu 100 gỗ và 100 thịt.
+- **Đã đạt:** Gói khởi tạo đặt quân thợ, mỏ gỗ, mỏ thịt và công trình mặc định quanh mỗi HQ, áp dụng cho profile lẫn map script.
+- **Đã đạt:** Bản đồ mặc định 50×50; map script cho phép tới 50x50; snapshot cũ khác bản đồ hoặc phiên bản luật được bỏ để trận bắt đầu mới.
+- **Đã đạt:** Viewer hiện gỗ và thịt của từng đội và tô màu riêng cho từng loại mỏ.
+- **Bằng chứng:** `mvnw -q test`, `npm test` và `npm run build` hoàn tất với exit code 0; `WinningScenario`, `ReinforcementBot` và `ResourceBuilderBot` chạy thành công.
+- **Chưa kiểm chứng:** Chưa xem trực quan bản đồ 50×50 trên trình duyệt; các nhãn tối thiểu có thể chồng nhau khi ô nhỏ.
+
+## 2026-11-27 — Giá quân, xây trên mỏ và đạn xuyên
+
+- **Trạng thái:** `VERIFIED` bằng test tự động.
+- **Đã đạt:** Spawn trừ tài nguyên theo loại quân, mặc định WORKER 1, MELEE 2, RANGED 3, SIEGE 5.
+- **Đã đạt:** Không xây được công trình lên điểm tài nguyên.
+- **Đã đạt:** Đạn đi từng ô ngang hoặc dọc nên không lọt khe chéo; quân địch bước vào ô có đạn thì bị trúng.
+- **Bằng chứng:** `mvnw -q test` hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa xem trực quan đường đạn mới trên trình duyệt; bản đồ mặc định chỉ có một điểm tài nguyên 10 đơn vị cho 10 đội.
+
 ## 2026-11-27 — Giới hạn batch theo profile
 
 - **Trạng thái:** `VERIFIED` bằng test tự động.

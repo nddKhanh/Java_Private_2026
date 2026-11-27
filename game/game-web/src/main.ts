@@ -9,16 +9,12 @@ const SAMPLE_MAP = `{
   "teams": 2,
   "accountsPerTeam": 2,
   "resources": [
-    { "x": 5, "y": 5, "amount": 20 },
-    { "x": 6, "y": 6, "amount": 20 }
+    { "x": 5, "y": 5, "amount": 20, "type": "WOOD" },
+    { "x": 6, "y": 6, "amount": 20, "type": "MEAT" }
   ],
   "headquarters": [
     { "team": 1, "x": 0, "y": 0 },
     { "team": 2, "x": 11, "y": 11 }
-  ],
-  "units": [
-    { "team": 1, "x": 1, "y": 0, "type": "WORKER" },
-    { "team": 2, "x": 10, "y": 11, "type": "WORKER" }
   ]
 }`;
 
@@ -289,7 +285,7 @@ function updatePanel(state: MatchState): void {
   forces.innerHTML = state.teams.map((team) => {
     const headquarters = state.headquarters.find((item) => item.teamId === team.id);
     const units = state.units.filter((unit) => unit.teamId === team.id);
-    return `<article class="team-card" style="--team-color:${safeColor(team.color)}"><div class="team-heading"><span class="team-swatch"></span><strong>${escapeHtml(team.displayName)}</strong><small>${team.resources} res</small></div><div class="force-stat"><span>HQ</span><strong>${headquarters?.hp ?? 0} HP</strong></div>${units.map((unit) => `<div class="force-stat"><span>${escapeHtml(unit.displayName)}</span><strong>${unit.hp} HP</strong></div>`).join('')}</article>`;
+    return `<article class="team-card" style="--team-color:${safeColor(team.color)}"><div class="team-heading"><span class="team-swatch"></span><strong>${escapeHtml(team.displayName)}</strong><small>Gỗ ${team.wood} · Thịt ${team.meat}</small></div><div class="force-stat"><span>HQ</span><strong>${headquarters?.hp ?? 0} HP</strong></div>${units.map((unit) => `<div class="force-stat"><span>${escapeHtml(unit.displayName)}</span><strong>${unit.hp} HP</strong></div>`).join('')}</article>`;
   }).join('');
 }
 

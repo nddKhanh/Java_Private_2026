@@ -56,7 +56,8 @@ Mở `http://127.0.0.1:5173/` và chờ dòng trạng thái trực tuyến.
 ### Tạo và tìm trận trên web
 
 1. Chọn **Tạo trận**, giữ hoặc sửa JSON mẫu rồi bấm **Tạo phòng chờ**.
-2. Map script dùng `map: "nxn"`, `teams`, `accountsPerTeam` và các mảng `resources`, `headquarters`, `units`.
+2. Map script dùng `map: "nxn"` (từ 6x6 đến 50x50), `teams`, `accountsPerTeam`, mảng `headquarters` và các mảng tùy chọn `resources`, `units`.
+   Mỗi đội tự nhận gói khởi tạo quanh HQ, nên chỉ cần khai báo HQ; `resources` thêm mỏ chung với `type` là `WOOD` hoặc `MEAT`.
    Mảng `factions` tùy chọn ghi phe cho từng đội theo thứ tự, ví dụ `["FACTION_1", "FACTION_2"]`, và phải có đúng hai phe.
    Bỏ trống `factions` thì nửa đầu số đội thuộc `FACTION_1`, phần còn lại thuộc `FACTION_2`.
 3. Gửi mã trận và token màu cho người cần vào đội; token màu chỉ dùng để vào đội, không dùng để điều khiển quân.
@@ -218,11 +219,13 @@ Mỗi dòng là một ví dụ riêng; cần đưa quân tới vị trí phù h�
 | Đứng chờ | `bot.waitTurn();` | Giữ nguyên vị trí. |
 | Tấn công | `bot.attack("ranged-blue-1", Direction.RIGHT);` | Quét sang phải đến hết tầm; mục tiêu đầu tiên trên đường bắn nhận projectile. |
 | Chờ đạn chạm mục tiêu | `bot.awaitSimulationIdle();` | Chờ toàn bộ projectile hiện tại kết thúc trước khi đọc HP hoặc winner. |
-| Tạo quân | `bot.spawn("barracks-blue", "ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);` | HQ chỉ tạo `WORKER`; BARRACKS tạo `MELEE`, `RANGED`, `SIEGE`; vùng xuất quân phải trống. |
-| Khai thác | `bot.harvest();` | Mặc định đứng tại điểm tài nguyên còn trữ lượng. |
-| Xây doanh trại | `bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);` | Ô bên phải trống; mặc định tốn 3 tài nguyên. |
-| Xây tháp | `bot.build("tower-blue", BuildingType.TOWER, Direction.DOWN);` | Ô bên dưới trống; mặc định tốn 2 tài nguyên. |
-| Xây tường | `bot.build("wall-blue", BuildingType.WALL, Direction.LEFT);` | Ô bên trái trống; mặc định tốn 1 tài nguyên. |
+| Tạo quân | `bot.spawn("barracks-blue", "ranged-blue-1", "Linh danh xa", UnitType.RANGED, Direction.DOWN);` | HQ chỉ tạo `WORKER`; BARRACKS tạo `MELEE`, `RANGED`, `SIEGE`; vùng xuất quân phải trống; mặc định WORKER/MELEE/RANGED tốn 1/2/3 thịt, SIEGE tốn 3 thịt và 3 gỗ. |
+| Khai thác | `bot.harvest();` | Mặc định đứng tại điểm tài nguyên còn trữ lượng; nhận gỗ hoặc thịt theo loại điểm. |
+| Xây doanh trại | `bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);` | Ô bên phải trống; mặc định tốn 3 gỗ. |
+| Xây tháp | `bot.build("tower-blue", BuildingType.TOWER, Direction.DOWN);` | Ô bên dưới trống; mặc định tốn 2 gỗ. |
+| Xây tường | `bot.build("wall-blue", BuildingType.WALL, Direction.LEFT);` | Ô bên trái trống; mặc định tốn 1 gỗ. |
+
+Không xây được công trình lên điểm tài nguyên.
 
 Đổi `Direction.RIGHT` thành `UP`, `DOWN` hoặc `LEFT` để đi lên, xuống hoặc trái.
 Sau khi tạo quân mới, gọi `bot.selectUnit("worker-blue-2");` để điều khiển quân đó.
@@ -246,7 +249,9 @@ bot.attack(Direction.RIGHT);
 Đổi `UnitType.RANGED` thành `MELEE` (cận chiến), `SIEGE` (công thành) hoặc `WORKER` (quân thợ).
 Nếu đã gọi `bot.selectUnit("ranged-blue-1")`, có thể viết ngắn `bot.attack(Direction.RIGHT)`.
 Nếu không có mục tiêu trên đường bắn trong tầm, server trả `TARGET_NOT_FOUND`; nếu đồng minh đứng trước, server trả `FRIENDLY_TARGET`.
-Đạn giữ tọa độ của mục tiêu tại lúc khai hỏa, đi theo đường Bresenham và không đổi hướng khi mục tiêu di chuyển.
+Đạn giữ tọa độ của mục tiêu tại lúc khai hỏa, đi từng ô ngang hoặc dọc bám theo đường thẳng tới đích và không đổi hướng khi mục tiêu di chuyển.
+Đạn không đi chéo nên không lọt qua khe giữa hai công trình đặt chéo nhau.
+Quân địch bước vào ô đạn đang bay cũng bị trúng đạn.
 Công trình trên đường bay chặn đạn và nhận sát thương; công trình biến mất khi HP về 0.
 TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô và mỗi tháp khai hỏa tối đa một lần mỗi giây.
 Projectile xuyên qua unit, HQ và building cùng phe mà không gây sát thương hoặc dừng lại.
@@ -265,7 +270,7 @@ Nếu muốn thử nhanh mà không viết Java, mở một cửa sổ PowerShel
 | `BlueBot` | Quân xanh di chuyển. |
 | `RedBot` | Quân đỏ di chuyển. |
 | `WinningScenario` | Đội xanh hạ đủ năm HQ phe SWARM và thắng. |
-| `ReinforcementBot` | Tạo quân mới rồi điều khiển quân đó. |
+| `ReinforcementBot` | Khai thác tài nguyên, tạo quân mới rồi điều khiển quân đó. |
 | `ResourceBuilderBot` | Quân tới điểm tài nguyên, khai thác và xây doanh trại. |
 
 Khởi động lại máy chủ trước mỗi kịch bản độc lập.
@@ -278,7 +283,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Xem vị trí, tên, loại quân và HP của từng quân.
 - [x] Xem nhà chính của 10 đội và điểm sinh lực còn lại.
 - [x] Xem điểm tài nguyên cùng số lượng còn lại.
-- [x] Xem số tài nguyên hiện có của mỗi đội.
+- [x] Xem số gỗ và thịt hiện có của mỗi đội.
 - [x] Xem BARRACKS, TOWER và WALL trên bản đồ.
 - [x] Theo dõi số lần thay đổi trạng thái của trận đấu.
 - [x] Theo dõi đội thắng khi toàn bộ HQ của phe đối phương bị phá hủy.

@@ -19,6 +19,8 @@ Ant Colony Wars là game chiến thuật 2D trong đó chương trình Java gử
 - Desktop pairing nhận một key sáu ký tự cùng tài khoản để tự tìm server trong LAN, điền match code và nhận token điều khiển riêng của tài khoản.
 - P1 cho phép viết `Main.main(Bot)` trong project IntelliJ mẫu rồi chạy `Submit` để Desktop tự pair, compile, chạy source local và trả kết quả về console IntelliJ.
 - P2 bắt buộc nguồn sản xuất theo HQ/BARRACKS, cho công trình chặn và nhận damage, tower tự bắn tầm 5 và projectile khóa tọa độ đích theo Bresenham.
+- Tài nguyên gồm gỗ và thịt: quân tốn thịt, công trình tốn gỗ, SIEGE tốn cả hai; viewer hiện kho của từng đội.
+- Mỗi đội nhận một gói khởi tạo quanh HQ gồm quân thợ, mỏ gỗ, mỏ thịt và công trình mặc định nếu có.
 
 ## Kiến trúc
 
@@ -55,7 +57,7 @@ Mở ba cửa sổ PowerShell tại thư mục gốc, chạy mỗi lệnh dướ
 Máy chủ mở viewer tại `http://127.0.0.1:5173/`; các máy cùng Wi-Fi mở `http://IP_MAY_CHU:5173/`.
 Ví dụ: `http://192.168.1.23:5173/`.
 Token demo mặc định là `blue-token` và `red-token`.
-Profile mặc định có 10 đội thuộc 2 phe, tối đa 50 đơn vị mỗi đội và tối đa 5 account cùng điều khiển một đội.
+Profile mặc định có bản đồ 50×50, 10 đội thuộc 2 phe, mỗi đội khởi đầu 100 gỗ và 100 thịt, tối đa 50 đơn vị mỗi đội và tối đa 5 account cùng điều khiển một đội.
 Hai match `match-default` và `match-training` được tạo từ cùng profile; Java client chọn match bằng overload `GameClient.connect(url, token, matchId)`.
 
 Trên web, đăng ký bằng username/password hoặc đăng nhập tài khoản đã có.

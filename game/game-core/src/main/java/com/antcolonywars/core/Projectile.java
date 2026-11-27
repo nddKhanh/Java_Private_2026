@@ -76,11 +76,16 @@ public record Projectile(
                 return result;
             }
             int doubled = error * 2;
-            if (doubled > -dy) {
+            boolean stepX = doubled > -dy;
+            boolean stepY = doubled < dx;
+            if (stepX) {
                 error -= dy;
                 x += sx;
             }
-            if (doubled < dx) {
+            if (stepX && stepY) {
+                result.add(new Position(x, y));
+            }
+            if (stepY) {
                 error += dx;
                 y += sy;
             }

@@ -7,6 +7,7 @@ import com.antcolonywars.core.Headquarters;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.Position;
 import com.antcolonywars.core.RuleSet;
+import com.antcolonywars.core.StarterPack;
 import com.antcolonywars.core.Team;
 import com.antcolonywars.core.Unit;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -23,8 +24,13 @@ import java.time.Clock;
 @EnableConfigurationProperties(GameProfileProperties.class)
 public class GameServerConfiguration {
     @Bean
-    public MatchSetup matchSetup(GameProfileProperties profile) {
-        return new MatchSetup(
+    public StarterPack starterPack(GameProfileProperties profile) {
+        return profile.starterPack();
+    }
+
+    @Bean
+    public MatchSetup matchSetup(GameProfileProperties profile, StarterPack starterPack) {
+        return starterPack.applyTo(new MatchSetup(
                 profile.setupId(),
                 profile.matchId(),
                 profile.board().width(),
@@ -35,14 +41,20 @@ public class GameServerConfiguration {
                         profile.rules().attackRange(),
                         profile.rules().maxUnitsPerTeam(),
                         profile.rules().spawnedUnitHp(),
-                        profile.rules().startingResources(),
+                        profile.rules().startingWood(),
+                        profile.rules().startingMeat(),
                         profile.rules().harvestAmount(),
                         profile.rules().harvestRange(),
                         profile.rules().barracksCost(),
                         profile.rules().towerCost(),
                         profile.rules().wallCost(),
                         profile.rules().buildingHp(),
-                        Math.max(1, (int) Math.ceil(1000.0 / profile.limits().tickMillis()))
+                        Math.max(1, (int) Math.ceil(1000.0 / profile.limits().tickMillis())),
+                        profile.rules().workerCost(),
+                        profile.rules().meleeCost(),
+                        profile.rules().rangedCost(),
+                        profile.rules().siegeMeatCost(),
+                        profile.rules().siegeWoodCost()
                 ),
                 profile.teams().stream()
                         .map(team -> new Team(team.id(), team.displayName(), team.color(), team.factionId()))
@@ -70,7 +82,8 @@ public class GameServerConfiguration {
                         .toList(),
                 profile.resources().stream()
                         .map(resource -> new com.antcolonywars.core.ResourceNode(
-                                resource.id(), new Position(resource.x(), resource.y()), resource.amount()
+                                resource.id(), resource.type(), new Position(resource.x(), resource.y()),
+                                resource.amount()
                         ))
                         .toList(),
                 profile.buildings().stream()
@@ -79,7 +92,7 @@ public class GameServerConfiguration {
                                 new Position(building.x(), building.y()), building.hp()
                         ))
                         .toList()
-        );
+        ));
     }
 
     @Bean

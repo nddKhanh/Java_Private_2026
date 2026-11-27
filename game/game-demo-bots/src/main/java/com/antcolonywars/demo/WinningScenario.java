@@ -10,27 +10,22 @@ public final class WinningScenario {
 
     public static void main(String[] args) {
         try (GameClient bot = GameClient.connect(DemoConfig.serverUrl(), DemoConfig.blueToken())) {
-            move(bot, Direction.RIGHT, 6);
             move(bot, Direction.DOWN, 6);
+            move(bot, Direction.RIGHT, 48);
+            move(bot, Direction.UP, 5);
+            destroy(bot, Direction.UP);
+
+            move(bot, Direction.DOWN, 10);
             destroy(bot, Direction.DOWN);
 
-            move(bot, Direction.UP, 3);
-            move(bot, Direction.RIGHT, 16);
+            move(bot, Direction.DOWN, 12);
             destroy(bot, Direction.DOWN);
 
-            move(bot, Direction.LEFT, 2);
-            move(bot, Direction.DOWN, 4);
-            move(bot, Direction.RIGHT, 2);
+            move(bot, Direction.DOWN, 12);
             destroy(bot, Direction.DOWN);
 
-            move(bot, Direction.LEFT, 2);
-            move(bot, Direction.DOWN, 4);
-            move(bot, Direction.RIGHT, 2);
-            destroy(bot, Direction.DOWN);
-
-            move(bot, Direction.LEFT, 3);
-            move(bot, Direction.DOWN, 4);
-            GameState state = destroy(bot, Direction.LEFT);
+            move(bot, Direction.DOWN, 13);
+            GameState state = destroy(bot, Direction.DOWN);
             System.out.printf(
                     "Match status: %s, winner: %s, revision: %d.%n",
                     state.status(),

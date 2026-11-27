@@ -95,22 +95,25 @@ class GameClientIntegrationTest {
     void destroysAnEnemyHeadquartersWithoutEndingTheFactionMatchEarly() {
         try (GameClient client = GameClient.connect(serverUrl(), "blue-token")) {
             for (int step = 0; step < 6; step++) {
-                client.move(Direction.RIGHT);
-            }
-            for (int step = 0; step < 6; step++) {
                 client.move(Direction.DOWN);
             }
+            for (int step = 0; step < 48; step++) {
+                client.move(Direction.RIGHT);
+            }
+            for (int step = 0; step < 5; step++) {
+                client.move(Direction.UP);
+            }
             for (int hit = 0; hit < 3; hit++) {
-                client.attack(Direction.DOWN);
+                client.attack(Direction.UP);
             }
 
             GameState state = client.awaitSimulationIdle();
             assertEquals("RUNNING", state.status());
             assertEquals(null, state.winnerTeamId());
-            assertTrue(state.revision() >= 16);
+            assertTrue(state.revision() >= 62);
             assertTrue(state.snapshot().simulationTick() >= 1);
             assertEquals(0, state.snapshot().headquarters().stream()
-                    .filter(headquarters -> headquarters.id().equals("hq-red"))
+                    .filter(headquarters -> headquarters.id().equals("hq-orange"))
                     .findFirst()
                     .orElseThrow()
                     .hp());
@@ -136,6 +139,7 @@ class GameClientIntegrationTest {
             bot.move(Direction.DOWN);
             bot.move(Direction.DOWN);
             bot.harvest();
+            bot.harvest();
             bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
             bot.spawn(
                     "barracks-blue", "worker-blue-2", "Builder",
@@ -149,7 +153,7 @@ class GameClientIntegrationTest {
                     .findFirst().orElseThrow().type());
             assertEquals(4, unitX(bot.getLatestState(), "worker-blue-2"));
             assertEquals(2, unitX(bot.getLatestState(), "worker-blue"));
-            assertEquals(7, bot.getLatestState().revision());
+            assertEquals(8, bot.getLatestState().revision());
         }
     }
 
@@ -197,10 +201,10 @@ class GameClientIntegrationTest {
 
             GameClientException build = assertThrows(GameClientException.class, () -> client.submitBatch(
                     List.of(BatchAction.build(
-                            "worker-blue", "barracks-blue", BuildingType.BARRACKS, Direction.RIGHT
+                            "worker-blue", "barracks-blue", BuildingType.BARRACKS, Direction.LEFT
                     )), BatchMode.ATOMIC
             ));
-            assertTrue(build.getMessage().contains("worker-blue — xây BARRACKS phải"));
+            assertTrue(build.getMessage().contains("worker-blue — xây BARRACKS trái"));
 
             GameClientException spawn = assertThrows(GameClientException.class, () -> client.submitBatch(
                     List.of(BatchAction.spawn(
@@ -229,6 +233,7 @@ class GameClientIntegrationTest {
             bot.move(Direction.DOWN);
             bot.move(Direction.DOWN);
             bot.harvest();
+            bot.harvest();
             bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
             bot.spawn(
                     "barracks-blue", "melee-blue-1", "Melee",
@@ -253,9 +258,9 @@ class GameClientIntegrationTest {
             bot.harvest();
             bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
 
-            assertEquals(0, bot.getLatestState().snapshot().teams().stream()
+            assertEquals(100, bot.getLatestState().snapshot().teams().stream()
                     .filter(team -> team.id().equals("BLUE"))
-                    .findFirst().orElseThrow().resources());
+                    .findFirst().orElseThrow().wood());
             assertEquals(BuildingType.BARRACKS.name(), bot.getLatestState().snapshot().buildings().getFirst().type().name());
         }
     }

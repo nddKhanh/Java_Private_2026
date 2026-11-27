@@ -66,6 +66,11 @@ class DesktopBotIntegrationTest {
 
                 public final class Main {
                     public static void main(Bot bot) {
+                        bot.select("worker-blue");
+                        bot.go(2);
+                        bot.go(3);
+                        bot.go(3);
+                        bot.mine();
                         bot.select("hq-blue");
                         bot.spawn("worker-blue-2", "WORKER", 3);
                         bot.select("worker-blue-2");
@@ -82,7 +87,7 @@ class DesktopBotIntegrationTest {
 
             assertTrue(result.successful(), result.standardError());
             try (GameClient observer = GameClient.connect(serverUrl(), "blue-token")) {
-                assertEquals(2, observer.getLatestState().revision());
+                assertEquals(6, observer.getLatestState().revision());
                 assertEquals(0, observer.getLatestState().snapshot().units().stream()
                         .filter(unit -> unit.id().equals("worker-blue-2"))
                         .findFirst().orElseThrow().position().x());

@@ -13,7 +13,7 @@ public final class ResourceBuilderBot {
         try (GameBot bot = GameBots.connect(DemoConfig.serverUrl(), DemoConfig.blueToken())) {
             bot.selectUnit("worker-blue");
             bot.move(Direction.RIGHT);
-            bot.move(Direction.RIGHT);
+            bot.move(Direction.DOWN);
             bot.move(Direction.DOWN);
             bot.harvest();
             bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);

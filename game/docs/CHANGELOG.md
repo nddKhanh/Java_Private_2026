@@ -3,6 +3,40 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-27 — Gỗ, thịt và gói khởi tạo đội
+
+### Changed
+
+- Tài nguyên tách thành gỗ và thịt; quân tốn thịt, công trình tốn gỗ, SIEGE tốn cả hai.
+- Mỗi đội khởi đầu 100 gỗ và 100 thịt; cấu hình bằng `starting-wood` và `starting-meat`.
+- Gói khởi tạo `starter-pack` đặt quân thợ, mỏ và công trình quanh mỗi HQ cho profile lẫn map script.
+- Bản đồ mặc định 50×50; map script cho phép tới 50x50 và nhận `type` cho mỏ.
+- Viewer hiện gỗ và thịt của từng đội và tô màu riêng cho mỏ gỗ, mỏ thịt.
+- Snapshot đã lưu khác bản đồ hoặc phiên bản luật được bỏ qua và trận bắt đầu mới.
+
+### Verified
+
+- Maven reactor test, `npm test` và frontend production build đều pass.
+- `WinningScenario`, `ReinforcementBot` và `ResourceBuilderBot` chạy thành công trên server mới khởi động.
+
+## 2026-11-27 — Giá quân, xây trên mỏ và đạn xuyên
+
+### Changed
+
+- Spawn trừ tài nguyên theo loại quân; giá cấu hình bằng `worker-cost`, `melee-cost`, `ranged-cost`, `siege-cost`.
+
+### Fixed
+
+- Không xây được công trình lên điểm tài nguyên.
+- Đạn không đi chéo nên không lọt khe giữa hai công trình đặt chéo.
+- Quân địch bước vào ô có đạn bị trúng thay vì đi xuyên qua.
+- `ReinforcementBot` tạo quân từ HQ sau khi khai thác; `ResourceBuilderBot` đi đúng tới điểm tài nguyên.
+
+### Verified
+
+- Maven reactor test đều pass.
+- `ReinforcementBot`, `ResourceBuilderBot` và `WinningScenario` chạy thành công trên server mới khởi động.
+
 ## 2026-11-27 — Giới hạn batch theo profile
 
 ### Changed

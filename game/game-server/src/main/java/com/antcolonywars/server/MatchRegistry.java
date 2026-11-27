@@ -31,8 +31,7 @@ public final class MatchRegistry {
         Map<String, MatchCoordinator> configured = new LinkedHashMap<>();
         for (String matchId : matchIds) {
             MatchSetup setup = copyForMatch(template, matchId);
-            MatchState restored = persistence.load(matchId).orElse(null);
-            MatchCoordinator coordinator = new MatchCoordinator(setup, restored, limits, clock, persistence);
+            MatchCoordinator coordinator = restoreOrCreate(setup);
             configured.put(matchId, coordinator);
             tickMetrics.put(matchId, new TickMetrics(0, 0, 0));
         }
@@ -56,11 +55,23 @@ public final class MatchRegistry {
         if (limits == null || clock == null || persistence == null) {
             throw new IllegalStateException("This registry does not support dynamic matches");
         }
-        MatchState restored = persistence.load(setup.matchId()).orElse(null);
-        MatchCoordinator coordinator = new MatchCoordinator(setup, restored, limits, clock, persistence);
+        MatchCoordinator coordinator = restoreOrCreate(setup);
         coordinators.put(setup.matchId(), coordinator);
         tickMetrics.put(setup.matchId(), new TickMetrics(0, 0, 0));
         return coordinator;
+    }
+
+    /** A stored snapshot from another map or rules version is discarded and the match starts fresh. */
+    private MatchCoordinator restoreOrCreate(MatchSetup setup) {
+        MatchState restored = persistence.load(setup.matchId()).orElse(null);
+        try {
+            return new MatchCoordinator(setup, restored, limits, clock, persistence);
+        } catch (IllegalArgumentException exception) {
+            if (restored == null) {
+                throw exception;
+            }
+            return new MatchCoordinator(setup, null, limits, clock, persistence);
+        }
     }
 
     public Optional<MatchCoordinator> find(String matchId) {

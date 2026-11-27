@@ -22,7 +22,7 @@ public final class MatchFactory {
                 setup.mapWidth(),
                 setup.mapHeight(),
                 setup.teams().stream()
-                        .map(team -> team.withResources(setup.rules().startingResources()))
+                        .map(team -> team.withStock(setup.rules().startingWood(), setup.rules().startingMeat()))
                         .toList(),
                 setup.units(),
                 List.of(),
@@ -64,6 +64,14 @@ public final class MatchFactory {
         for (Building building : setup.buildings()) {
             validateEntity(building.id(), building.teamId(), building.position(), building.hp(),
                     setup, teamIds, entityIds, occupied);
+        }
+        Set<Position> resourceCells = new HashSet<>();
+        for (ResourceNode resourceNode : setup.resourceNodes()) {
+            boolean blocked = setup.headquarters().stream().anyMatch(hq -> hq.position().equals(resourceNode.position()))
+                    || setup.buildings().stream().anyMatch(item -> item.position().equals(resourceNode.position()));
+            if (!resourceCells.add(resourceNode.position()) || blocked) {
+                throw new IllegalArgumentException("Resource shares a cell with another object: " + resourceNode.id());
+            }
         }
     }
 

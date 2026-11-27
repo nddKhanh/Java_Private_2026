@@ -204,6 +204,15 @@ class GameWebSocketIntegrationTest {
     void spawnsNamedUnitAndControlsItByGlobalId() throws Exception {
         SocketClient blue = connect("blue-token");
         blue.awaitType("STATE_UPDATED");
+        int moveIndex = 0;
+        for (String direction : new String[]{"RIGHT", "DOWN", "DOWN"}) {
+            blue.send(command("spawn-ore-" + moveIndex++, "MOVE", Map.of("direction", direction)));
+            assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
+            blue.awaitType("STATE_UPDATED");
+        }
+        blue.send(command("spawn-harvest", "HARVEST", Map.of()));
+        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
+        blue.awaitType("STATE_UPDATED");
 
         blue.send(command("spawn-blue-2", "SPAWN", Map.of(
                 "sourceId", "hq-blue",
@@ -217,6 +226,7 @@ class GameWebSocketIntegrationTest {
         assertEquals("Builder", spawned.path("displayName").asText());
         assertEquals(0, spawned.path("position").path("x").asInt());
         assertEquals(1, spawned.path("position").path("y").asInt());
+        assertEquals(99, teamStock(spawnedState, "BLUE", "meat"));
 
         blue.send(command("move-blue-2", "MOVE", Map.of(
                 "unitId", "worker-blue-2",
@@ -243,8 +253,8 @@ class GameWebSocketIntegrationTest {
         blue.send(command("harvest-1", "HARVEST", Map.of()));
         assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
         JsonNode harvested = blue.awaitType("STATE_UPDATED");
-        assertEquals(3, teamResources(harvested, "BLUE"));
-        assertEquals(7, resourceAmount(harvested, "ore-center"));
+        assertEquals(103, teamStock(harvested, "BLUE", "wood"));
+        assertEquals(47, resourceAmount(harvested, "wood-blue"));
 
         blue.send(command("build-1", "BUILD", Map.of(
                 "buildingId", "barracks-blue",
@@ -253,7 +263,7 @@ class GameWebSocketIntegrationTest {
         )));
         assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
         JsonNode built = blue.awaitType("STATE_UPDATED");
-        assertEquals(0, teamResources(built, "BLUE"));
+        assertEquals(100, teamStock(built, "BLUE", "wood"));
         assertEquals("BARRACKS", built.path("state").path("buildings").get(0).path("type").asText());
         blue.close();
     }
@@ -313,10 +323,10 @@ class GameWebSocketIntegrationTest {
         throw new AssertionError("Unit not found: " + unitId);
     }
 
-    private int teamResources(JsonNode envelope, String teamId) {
+    private int teamStock(JsonNode envelope, String teamId, String resource) {
         for (JsonNode team : envelope.path("state").path("teams")) {
             if (teamId.equals(team.path("id").asText())) {
-                return team.path("resources").asInt();
+                return team.path(resource).asInt();
             }
         }
         throw new AssertionError("Team not found: " + teamId);

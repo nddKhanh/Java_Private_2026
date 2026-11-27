@@ -81,6 +81,11 @@ public final class GameEngine {
         if (!source.teamId().equals(command.actorTeamId()) || !source.supports(unitType)) {
             return ApplyResult.failure(state, ErrorCode.INVALID_PRODUCTION_SOURCE);
         }
+        Cost cost = rules.unitCost(unitType);
+        Team team = findTeam(state, command.actorTeamId());
+        if (!cost.affordableBy(team)) {
+            return ApplyResult.failure(state, ErrorCode.INSUFFICIENT_RESOURCES);
+        }
         int footprint = UnitType.SIEGE.name().equals(command.unitType()) ? 2 : 1;
         Position destination = adjacentPosition(
                 source.position(), 1, 1, footprint, footprint, command.direction()
@@ -98,8 +103,9 @@ public final class GameEngine {
                 command.unitId(), displayName, command.actorTeamId(), command.unitType(), destination,
                 rules.spawnedUnitHp(), command.direction(), footprint, footprint
         ));
+        List<Team> teams = replaceTeam(state.teams(), team.spend(cost));
         return accept(state, units, state.retiredUnitIds(), state.headquarters(), state.status(),
-                state.resourceNodes(), state.buildings(), state.teams(), state.projectiles(),
+                state.resourceNodes(), state.buildings(), teams, state.projectiles(),
                 state.winnerTeamId(), command, null);
     }
 
@@ -119,7 +125,7 @@ public final class GameEngine {
         int quantity = Math.min(rules.harvestAmount(), resource.amount());
         List<ResourceNode> resources = replaceResource(state.resourceNodes(), resource.harvest(quantity));
         Team team = findTeam(state, actor.teamId());
-        List<Team> teams = replaceTeam(state.teams(), team.withResources(team.resources() + quantity));
+        List<Team> teams = replaceTeam(state.teams(), team.gain(resource.type(), quantity));
         return accept(state, state.units(), state.retiredUnitIds(), state.headquarters(), state.status(),
                 resources, state.buildings(), teams, state.projectiles(), state.winnerTeamId(), command, resource.id());
     }
@@ -128,16 +134,17 @@ public final class GameEngine {
         if (command.buildingId().isBlank() || entityIdExists(state, command.buildingId())) {
             return ApplyResult.failure(state, ErrorCode.BUILDING_ID_TAKEN);
         }
-        int cost = buildingCost(command.buildingType(), rules);
+        Cost cost = rules.buildingCost(command.buildingType());
         Team team = findTeam(state, actor.teamId());
-        if (team.resources() < cost) {
+        if (!cost.affordableBy(team)) {
             return ApplyResult.failure(state, ErrorCode.INSUFFICIENT_RESOURCES);
         }
         Position destination = adjacentPosition(
                 actor.position(), actor.width(), actor.height(), 1, 1, command.direction()
         );
         List<Position> destinationCells = List.of(destination);
-        if (!withinBounds(state, destinationCells) || isOccupied(state, destinationCells, actor.id())) {
+        if (!withinBounds(state, destinationCells) || isOccupied(state, destinationCells, actor.id())
+                || state.resourceNodes().stream().anyMatch(node -> node.position().equals(destination))) {
             return ApplyResult.failure(state, ErrorCode.INVALID_BUILD_POSITION);
         }
         Building building = new Building(
@@ -145,7 +152,7 @@ public final class GameEngine {
         );
         List<Building> buildings = new ArrayList<>(state.buildings());
         buildings.add(building);
-        List<Team> teams = replaceTeam(state.teams(), team.withResources(team.resources() - cost));
+        List<Team> teams = replaceTeam(state.teams(), team.spend(cost));
         return accept(state, state.units(), state.retiredUnitIds(), state.headquarters(), state.status(),
                 state.resourceNodes(), buildings, teams, state.projectiles(), state.winnerTeamId(), command, building.id());
     }
@@ -159,9 +166,27 @@ public final class GameEngine {
         if (isOccupied(state, destinationCells, actor.id())) {
             return ApplyResult.failure(state, ErrorCode.CELL_OCCUPIED);
         }
-        List<Unit> units = replaceUnit(state.units(), actor.moveTo(destination, command.direction()));
-        return accept(state, units, state.retiredUnitIds(), state.headquarters(), state.status(),
-                state.resourceNodes(), state.buildings(), state.teams(), state.projectiles(),
+        Unit moved = actor.moveTo(destination, command.direction());
+        List<Projectile> projectiles = new ArrayList<>();
+        for (Projectile projectile : state.projectiles()) {
+            if (destinationCells.contains(projectile.position())
+                    && !sameFaction(state, projectile.teamId(), actor.teamId())) {
+                moved = moved.takeDamage(projectile.damage());
+            } else {
+                projectiles.add(projectile);
+            }
+        }
+        List<Unit> units = state.units();
+        List<String> retiredUnitIds = state.retiredUnitIds();
+        if (moved.hp() == 0) {
+            units = removeUnit(units, moved.id());
+            retiredUnitIds = new ArrayList<>(retiredUnitIds);
+            retiredUnitIds.add(moved.id());
+        } else {
+            units = replaceUnit(units, moved);
+        }
+        return accept(state, units, retiredUnitIds, state.headquarters(), state.status(),
+                state.resourceNodes(), state.buildings(), state.teams(), projectiles,
                 state.winnerTeamId(), command, null);
     }
 
@@ -506,14 +531,6 @@ public final class GameEngine {
                 .map(Headquarters::teamId)
                 .findFirst()
                 .orElse(null);
-    }
-
-    private int buildingCost(BuildingType type, RuleSet rules) {
-        return switch (type) {
-            case BARRACKS -> rules.barracksCost();
-            case TOWER -> rules.towerCost();
-            case WALL -> rules.wallCost();
-        };
     }
 
     private ProductionSource productionSource(MatchState state, SpawnCommand command) {

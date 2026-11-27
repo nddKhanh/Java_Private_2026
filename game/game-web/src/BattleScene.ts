@@ -85,9 +85,10 @@ export class BattleScene extends Phaser.Scene {
     for (const resource of state.resourceNodes) {
       const center = this.cellCenter(originX, originY, cellSize, resource.position.x, resource.position.y);
       const size = Math.max(10, cellSize * 0.2);
-      this.add.star(center.x, center.y, 6, size, size * 0.45, 0xf59e0b, 0.9);
-      this.add.text(center.x, center.y + size, `${resource.amount}`, {
-        color: '#fbbf24', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px',
+      const meat = resource.type === 'MEAT';
+      this.add.star(center.x, center.y, 6, size, size * 0.45, meat ? 0xef4444 : 0x84cc16, 0.9);
+      this.add.text(center.x, center.y + size, `${meat ? 'Thịt' : 'Gỗ'} ${resource.amount}`, {
+        color: meat ? '#fca5a5' : '#bef264', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px',
       }).setOrigin(0.5);
     }
 

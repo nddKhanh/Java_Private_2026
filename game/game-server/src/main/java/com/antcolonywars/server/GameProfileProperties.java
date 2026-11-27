@@ -1,5 +1,7 @@
 package com.antcolonywars.server;
 
+import com.antcolonywars.core.ResourceType;
+import com.antcolonywars.core.StarterPack;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
@@ -16,7 +18,8 @@ public record GameProfileProperties(
         List<HeadquartersProfile> headquarters,
         List<ResourceProfile> resources,
         List<BuildingProfile> buildings,
-        Limits limits
+        Limits limits,
+        StarterPack starterPack
 ) {
     public GameProfileProperties {
         List<String> configured = matchIds == null ? List.of() : matchIds;
@@ -24,6 +27,10 @@ public record GameProfileProperties(
                 .filter(id -> id != null && !id.isBlank())
                 .distinct()
                 .toList();
+        units = units == null ? List.of() : units;
+        resources = resources == null ? List.of() : resources;
+        buildings = buildings == null ? List.of() : buildings;
+        starterPack = starterPack == null ? StarterPack.empty() : starterPack;
     }
 
     public record Limits(int maxActionsPerBotPerBatch, int commandQueueCapacity, int tickMillis) {
@@ -42,13 +49,19 @@ public record GameProfileProperties(
             int attackRange,
             int maxUnitsPerTeam,
             int spawnedUnitHp,
-            int startingResources,
+            int startingWood,
+            int startingMeat,
             int harvestAmount,
             int harvestRange,
             int barracksCost,
             int towerCost,
             int wallCost,
-            int buildingHp
+            int buildingHp,
+            int workerCost,
+            int meleeCost,
+            int rangedCost,
+            int siegeMeatCost,
+            int siegeWoodCost
     ) {
     }
 
@@ -70,7 +83,7 @@ public record GameProfileProperties(
     public record HeadquartersProfile(String id, String teamId, int x, int y, int hp) {
     }
 
-    public record ResourceProfile(String id, int x, int y, int amount) {
+    public record ResourceProfile(String id, ResourceType type, int x, int y, int amount) {
     }
 
     public record BuildingProfile(String id, String teamId, String type, int x, int y, int hp) {

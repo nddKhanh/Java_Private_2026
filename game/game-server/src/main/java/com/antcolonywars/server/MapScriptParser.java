@@ -6,6 +6,8 @@ import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.MatchFactory;
 import com.antcolonywars.core.Position;
 import com.antcolonywars.core.ResourceNode;
+import com.antcolonywars.core.ResourceType;
+import com.antcolonywars.core.StarterPack;
 import com.antcolonywars.core.Team;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.UnitType;
@@ -32,10 +34,12 @@ public final class MapScriptParser {
 
     private final ObjectMapper objectMapper;
     private final MatchSetup template;
+    private final StarterPack starterPack;
 
-    public MapScriptParser(ObjectMapper objectMapper, MatchSetup template) {
+    public MapScriptParser(ObjectMapper objectMapper, MatchSetup template, StarterPack starterPack) {
         this.objectMapper = objectMapper;
         this.template = template;
+        this.starterPack = starterPack;
     }
 
     public ParsedMap parse(String matchCode, String source) {
@@ -52,8 +56,8 @@ public final class MapScriptParser {
         int size = Integer.parseInt(matcher.group(1));
         int teamCount = value(script.teams());
         int accountsPerTeam = value(script.accountsPerTeam());
-        if (size < 6 || size > 40) {
-            throw invalid("Map size must be between 6x6 and 40x40");
+        if (size < 6 || size > 50) {
+            throw invalid("Map size must be between 6x6 and 50x50");
         }
         if (teamCount < 2 || teamCount > 10) {
             throw invalid("teams must be between 2 and 10");
@@ -91,12 +95,10 @@ public final class MapScriptParser {
             throw invalid("headquarters must contain one entry for every team");
         }
 
-        Set<Integer> unitTeams = new HashSet<>();
         List<Unit> units = new ArrayList<>();
         int unitIndex = 0;
         for (UnitSpec spec : list(script.units())) {
             validateTeam(spec.team(), teamCount);
-            unitTeams.add(spec.team());
             Position position = position(spec.x(), spec.y(), size, occupied);
             String type = text(spec.type()).isBlank()
                     ? UnitType.WORKER.name()
@@ -111,9 +113,6 @@ public final class MapScriptParser {
                     "unit-" + (++unitIndex), "Unit " + unitIndex, teamId(spec.team()), type, position, 3, facing
             ));
         }
-        if (unitTeams.size() != teamCount) {
-            throw invalid("units must contain at least one entry for every team");
-        }
 
         List<ResourceNode> resources = new ArrayList<>();
         int resourceIndex = 0;
@@ -121,16 +120,25 @@ public final class MapScriptParser {
             if (spec.amount() < 1) {
                 throw invalid("Resource amount must be positive");
             }
+            ResourceType type;
+            try {
+                type = text(spec.type()).isBlank()
+                        ? ResourceType.WOOD
+                        : ResourceType.valueOf(text(spec.type()).toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException exception) {
+                throw invalid("Unsupported resource type: " + spec.type());
+            }
             resources.add(new ResourceNode(
-                    "resource-" + (++resourceIndex), position(spec.x(), spec.y(), size, occupied), spec.amount()
+                    "resource-" + (++resourceIndex), type, position(spec.x(), spec.y(), size, occupied), spec.amount()
             ));
         }
 
-        MatchSetup setup = new MatchSetup(
-                "custom-" + matchCode, matchCode, size, size, template.rules(),
-                teams, units, headquarters, resources, List.of()
-        );
+        MatchSetup setup;
         try {
+            setup = starterPack.applyTo(new MatchSetup(
+                    "custom-" + matchCode, matchCode, size, size, template.rules(),
+                    teams, units, headquarters, resources, List.of()
+            ));
             MatchFactory.create(setup);
         } catch (IllegalArgumentException exception) {
             throw invalid(exception.getMessage());
@@ -188,7 +196,7 @@ public final class MapScriptParser {
     ) {
     }
 
-    public record ResourceSpec(int x, int y, int amount) {
+    public record ResourceSpec(int x, int y, int amount, String type) {
     }
 
     public record HeadquartersSpec(int team, int x, int y) {

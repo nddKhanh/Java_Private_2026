@@ -22,21 +22,27 @@ game:
       - match-default
       - match-training
     board:
-      width: 24
-      height: 16
+      width: 50
+      height: 50
     rules:
-      version: r6-1
+      version: r7-1
       attack-damage: 1
       attack-range: 1
       max-units-per-team: 50
       spawned-unit-hp: 3
-      starting-resources: 0
+      starting-wood: 100
+      starting-meat: 100
       harvest-amount: 3
       harvest-range: 0
       barracks-cost: 3
       tower-cost: 2
       wall-cost: 1
       building-hp: 5
+      worker-cost: 1
+      melee-cost: 2
+      ranged-cost: 3
+      siege-meat-cost: 3
+      siege-wood-cost: 3
     teams:
       - id: BLUE
         display-name: Blue
@@ -88,87 +94,7 @@ game:
         color: "#7f1d1d"
         token: maroon-token
         faction-id: SWARM
-    units:
-      - id: worker-blue
-        display-name: Blue Worker 1
-        team-id: BLUE
-        type: WORKER
-        x: 1
-        y: 0
-        hp: 3
-        facing: RIGHT
-      - id: worker-red
-        display-name: Red Worker 1
-        team-id: RED
-        type: WORKER
-        x: 6
-        y: 7
-        hp: 3
-        facing: LEFT
-      - id: worker-cyan
-        display-name: Cyan Worker 1
-        team-id: CYAN
-        type: WORKER
-        x: 1
-        y: 4
-        hp: 3
-        facing: RIGHT
-      - id: worker-green
-        display-name: Green Worker 1
-        team-id: GREEN
-        type: WORKER
-        x: 1
-        y: 8
-        hp: 3
-        facing: RIGHT
-      - id: worker-teal
-        display-name: Teal Worker 1
-        team-id: TEAL
-        type: WORKER
-        x: 1
-        y: 12
-        hp: 3
-        facing: RIGHT
-      - id: worker-navy
-        display-name: Navy Worker 1
-        team-id: NAVY
-        type: WORKER
-        x: 4
-        y: 14
-        hp: 3
-        facing: UP
-      - id: worker-orange
-        display-name: Orange Worker 1
-        team-id: ORANGE
-        type: WORKER
-        x: 22
-        y: 4
-        hp: 3
-        facing: LEFT
-      - id: worker-yellow
-        display-name: Yellow Worker 1
-        team-id: YELLOW
-        type: WORKER
-        x: 22
-        y: 8
-        hp: 3
-        facing: LEFT
-      - id: worker-magenta
-        display-name: Magenta Worker 1
-        team-id: MAGENTA
-        type: WORKER
-        x: 22
-        y: 12
-        hp: 3
-        facing: LEFT
-      - id: worker-maroon
-        display-name: Maroon Worker 1
-        team-id: MAROON
-        type: WORKER
-        x: 19
-        y: 14
-        hp: 3
-        facing: UP
+    units: []
     headquarters:
       - id: hq-blue
         team-id: BLUE
@@ -177,56 +103,68 @@ game:
         hp: 3
       - id: hq-red
         team-id: RED
-        x: 7
-        y: 7
+        x: 49
+        y: 49
         hp: 3
       - id: hq-cyan
         team-id: CYAN
         x: 0
-        y: 4
+        y: 12
         hp: 3
       - id: hq-green
         team-id: GREEN
         x: 0
-        y: 8
+        y: 24
         hp: 3
       - id: hq-teal
         team-id: TEAL
         x: 0
-        y: 12
+        y: 36
         hp: 3
       - id: hq-navy
         team-id: NAVY
-        x: 4
-        y: 15
+        x: 0
+        y: 49
         hp: 3
       - id: hq-orange
         team-id: ORANGE
-        x: 23
-        y: 4
+        x: 49
+        y: 0
         hp: 3
       - id: hq-yellow
         team-id: YELLOW
-        x: 23
-        y: 8
+        x: 49
+        y: 12
         hp: 3
       - id: hq-magenta
         team-id: MAGENTA
-        x: 23
-        y: 12
+        x: 49
+        y: 24
         hp: 3
       - id: hq-maroon
         team-id: MAROON
-        x: 19
-        y: 15
+        x: 49
+        y: 36
         hp: 3
-    resources:
-      - id: ore-center
-        x: 2
-        y: 2
-        amount: 10
+    resources: []
     buildings: []
     limits:
       max-actions-per-bot-per-batch: 10
       command-queue-capacity: 32
       tick-millis: 250
+    # Placed around every headquarters; offsets point inward on the far half of each axis.
+    starter-pack:
+      units:
+        - type: WORKER
+          dx: 1
+          dy: 0
+      resources:
+        - type: WOOD
+          dx: 2
+          dy: 2
+          amount: 50
+        - type: MEAT
+          dx: 0
+          dy: 2
+          amount: 50
+      buildings: []
