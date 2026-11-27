@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class GameEngine {
+    /** Recent client command IDs kept for duplicate detection; tick IDs are not stored. */
+    static final int RECENT_COMMAND_ID_LIMIT = 1024;
+
     public ApplyResult apply(MatchState state, GameCommand command, RuleSet rules) {
         if (command instanceof GetStateCommand) {
             return ApplyResult.success(state, List.of());
@@ -352,8 +355,14 @@ public final class GameEngine {
     ) {
         long revision = previous.revision() + 1;
         long sequence = previous.eventSequence() + 1;
-        List<String> processedCommandIds = new ArrayList<>(previous.processedCommandIds());
-        processedCommandIds.add(command.commandId());
+        List<String> processedCommandIds = previous.processedCommandIds();
+        if (!(command instanceof TickCommand)) {
+            List<String> recent = new ArrayList<>(processedCommandIds);
+            recent.add(command.commandId());
+            processedCommandIds = recent.size() > RECENT_COMMAND_ID_LIMIT
+                    ? recent.subList(recent.size() - RECENT_COMMAND_ID_LIMIT, recent.size())
+                    : recent;
+        }
         MatchState next = new MatchState(
                 previous.matchId(), previous.setupId(), previous.rulesVersion(), status, winnerTeamId,
                 revision, sequence, previous.simulationTick() + (command instanceof TickCommand ? 1 : 0),

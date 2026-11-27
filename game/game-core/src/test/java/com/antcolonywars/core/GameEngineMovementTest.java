@@ -62,6 +62,20 @@ class GameEngineMovementTest {
     }
 
     @Test
+    void keepsOnlyRecentCommandIdsAndRejectsRecentDuplicate() {
+        GameSession session = new GameSession(setupWithBlueAt(new Position(2, 2)));
+        int total = GameEngine.RECENT_COMMAND_ID_LIMIT + 10;
+        for (int i = 0; i < total; i++) {
+            assertTrue(session.apply(new WaitCommand("wait-" + i, "BLUE", "worker-blue")).accepted());
+        }
+
+        assertEquals(GameEngine.RECENT_COMMAND_ID_LIMIT, session.state().processedCommandIds().size());
+        assertEquals(total, session.state().revision());
+        ApplyResult duplicate = session.apply(new WaitCommand("wait-" + (total - 1), "BLUE", "worker-blue"));
+        assertEquals(ErrorCode.DUPLICATE_COMMAND, duplicate.error());
+    }
+
+    @Test
     void rejectsCommandForUnitOwnedByAnotherTeam() {
         GameSession session = new GameSession(setupWithBlueAt(new Position(2, 2)));
         MatchState before = session.state();

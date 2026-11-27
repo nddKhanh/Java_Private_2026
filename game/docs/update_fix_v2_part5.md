@@ -22,15 +22,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - **Test:** Batch 500 command hợp lệ chạy được; batch vượt giới hạn bị từ chối nhanh; hai trận gửi đồng thời không chặn nhau.
 - **File:** `game-server/.../GameWebSocketHandler.java`, `MatchCoordinator.java`, `GameWebSocketConfiguration.java`.
 
-### P1-03. `processedCommandIds` phình theo thời gian — XÁC NHẬN TỪ CODE
-
-- **Hiện trạng:** Snapshot đã được ghi một lần mỗi batch.
-  Nhưng mỗi `GameEngine.accept()` vẫn sao chép toàn bộ `processedCommandIds` rồi thêm ID mới, kể cả `system:tick:N` mỗi 250 ms khi có tower bắn hoặc projectile bay.
-- **Hậu quả:** Trận dài làm snapshot JSON, bộ nhớ, dung lượng H2 và độ trễ tăng dần.
-- **Sửa:** Không lưu ID của tick; chỉ giữ một cửa sổ ID gần nhất (hoặc tách metadata chống trùng khỏi snapshot công khai) mà vẫn giữ idempotency khi reconnect.
-- **Test:** Chạy 10.000 tick và đo kích thước snapshot; gửi lại commandId gần đây vẫn bị coi là trùng; restart không mất revision và sequence.
-- **File:** `game-core/.../GameEngine.java`, `MatchState.java`.
-
 ## B. P2 — Trải nghiệm/quan sát
 
 ### P2-01. Broadcast một snapshot đầy đủ cho mỗi event trong batch — XÁC NHẬN TỪ CODE
@@ -55,6 +46,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 ## Kiểm chứng tập trung, một lần
 
 - Chạy unit/integration tests Maven Core/Server/Client/Desktop và `npm test`, `npm run build`; **ghi kết quả thực tế**, không suy luận từ `PROGRESS.md`.
-- Bổ sung test cho P1-02, P1-03, P2-01 và load test cho P1-02/P1-03.
+- Bổ sung test cho P1-02, P2-01 và load test cho P1-02.
 - Chạy một kịch bản 4–10 đội, 2 phe và hai máy học viên cùng trận, IntelliJ Run → Desktop → Server → Phaser; batch nhiều lệnh, mất mạng, restart giữa trận, viewer chậm.
 - Với mục chỉ là rủi ro, báo `chưa tái hiện` nếu chưa chạy test. Không khẳng định repo “hết mọi lỗi” chỉ từ rà soát tĩnh.

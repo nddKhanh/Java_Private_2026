@@ -359,7 +359,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 
 ## 6. Những khả năng chưa có
 
-- [ ] Công trình tự sản xuất quân hoặc tự phòng thủ.
+- [ ] Công trình tự sản xuất quân; TOWER đã tự bắn trong tầm 5.
 - [x] Hai match chạy đồng thời với route WebSocket riêng và endpoint tick latency.
 - [~] Load gate 400 match-tick đã có trong test; chưa phải benchmark production nhiều máy.
 - [ ] Matchmaking, xác minh email, quên mật khẩu, quản lý/thu hồi session.

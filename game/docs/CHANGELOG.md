@@ -3,6 +3,16 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-27 — Giới hạn ID lệnh trong snapshot
+
+### Fixed
+
+- Snapshot chỉ giữ 1024 ID lệnh gần nhất và bỏ ID tick, nên không còn phình theo thời lượng trận.
+
+### Verified
+
+- Maven test của Game Core và server đều pass.
+
 ## 2026-11-25 — Token điều khiển Desktop
 
 ### Changed

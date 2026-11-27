@@ -1,5 +1,12 @@
 # Tiến độ dự án
 
+## 2026-11-27 — Giới hạn ID lệnh trong snapshot
+
+- **Trạng thái:** `VERIFIED` bằng test tự động.
+- **Đã đạt:** Snapshot chỉ giữ 1024 ID lệnh gần nhất để chống trùng và không lưu ID của tick mô phỏng.
+- **Bằng chứng:** `mvnw -q -pl game-core,game-server -am test` hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa đo kích thước snapshot trong trận dài thật; lệnh gửi lại sau hơn 1024 lệnh mới hơn không còn bị coi là trùng.
+
 ## 2026-11-25 — Token điều khiển Desktop
 
 - **Trạng thái:** `VERIFIED` bằng test tự động và production build.
