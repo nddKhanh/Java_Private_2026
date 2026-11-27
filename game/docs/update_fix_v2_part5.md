@@ -52,6 +52,12 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - **Mọi đội nhận gói giống hệt nhau:** chưa có gói riêng theo đội hoặc theo phe.
 - **Lỗi đặt gói khó hiểu:** gói đè lên HQ khác hoặc ra ngoài bản đồ chỉ báo lỗi chung `INVALID_MAP_SCRIPT` hoặc làm server không khởi động.
 
+### B-04. Server gửi thông tin của mọi đội cho mọi người xem
+
+- **Hiện trạng:** mục Lực lượng trên viewer chỉ hiện đội của người xem, nhưng `STATE_UPDATED` vẫn chứa kho gỗ/thịt, HP và quân của tất cả các đội.
+- **Hậu quả:** người chơi đọc được kho và lực lượng của đối thủ qua WebSocket hoặc `bot.state()`.
+- **Cần chốt:** có lọc snapshot theo đội của từng kết nối không, và đội đối phương còn thấy gì (vị trí quân trên bản đồ, HP, kho tài nguyên).
+
 ## C. Rủi ro triển khai — Chỉ ưu tiên nếu chạy trên máy chung/public
 
 1. **Java code học viên không được sandbox:** `BotCompiler` biên dịch mã Java tự do, `BotProcessRunner` chỉ giới hạn heap, thời gian và output; tiến trình vẫn có quyền đọc/ghi file và gọi mạng theo tài khoản OS. Nếu Desktop chạy source không tin cậy trên máy giáo viên/máy chung, cần cách ly bằng tài khoản OS/container/VM và quyền mạng/tệp. Nếu mỗi học viên chỉ chạy code của chính mình trên máy riêng thì có thể chấp nhận rủi ro MVP có ghi rõ.

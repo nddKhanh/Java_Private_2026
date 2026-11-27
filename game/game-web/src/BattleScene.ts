@@ -46,6 +46,8 @@ export class BattleScene extends Phaser.Scene {
     const boardHeight = cellSize * state.mapHeight;
     const originX = (canvasWidth - boardWidth) / 2;
     const originY = (canvasHeight - boardHeight) / 2;
+    // Small cells hide ID labels until the entity is hovered.
+    const compact = cellSize < 28;
 
     const background = this.add.graphics();
     background.fillStyle(0x111827, 1);
@@ -66,54 +68,62 @@ export class BattleScene extends Phaser.Scene {
     for (const headquarters of state.headquarters) {
       const team = teams.get(headquarters.teamId);
       const center = this.cellCenter(originX, originY, cellSize, headquarters.position.x, headquarters.position.y);
-      const size = Math.max(20, cellSize * 0.68);
+      const size = cellSize * 0.9;
+      // Polygon points stay non-negative so Phaser centers the hexagon on its cell.
+      const halfWidth = size * 0.46;
+      const halfHeight = size * 0.5;
       const shape = this.add.polygon(center.x, center.y, [
-        0, -size * 0.52, size * 0.46, -size * 0.26, size * 0.46, size * 0.26,
-        0, size * 0.52, -size * 0.46, size * 0.26, -size * 0.46, -size * 0.26,
+        halfWidth, 0, halfWidth * 2, halfHeight * 0.5, halfWidth * 2, halfHeight * 1.5,
+        halfWidth, halfHeight * 2, 0, halfHeight * 1.5, 0, halfHeight * 0.5,
       ], this.teamColor(team), headquarters.hp > 0 ? 0.82 : 0.22);
-      shape.setStrokeStyle(Math.max(2, cellSize * 0.04), 0xf8fafc, headquarters.hp > 0 ? 0.8 : 0.25);
-      this.add.text(center.x, center.y + size * 0.08, `HQ\n${headquarters.hp}`, {
+      shape.setStrokeStyle(Math.max(1, cellSize * 0.06), 0xf8fafc, headquarters.hp > 0 ? 0.8 : 0.25);
+      this.add.text(center.x, center.y, compact ? `${headquarters.hp}` : `HQ\n${headquarters.hp}`, {
         align: 'center',
         color: '#ffffff',
         fontFamily: 'Inter, system-ui, sans-serif',
-        fontSize: `${Math.max(10, Math.min(16, cellSize * 0.2))}px`,
+        fontSize: `${Math.max(7, Math.min(16, cellSize * 0.32))}px`,
         fontStyle: '700',
       }).setOrigin(0.5);
-      this.addIdLabel(center.x, center.y - size * 0.32, headquarters.id, size * 0.8);
+      this.addIdLabel(shape, center.x, center.y - size * 0.32, headquarters.id, size * 0.8, compact);
     }
 
     for (const resource of state.resourceNodes) {
       const center = this.cellCenter(originX, originY, cellSize, resource.position.x, resource.position.y);
-      const size = Math.max(10, cellSize * 0.2);
+      const size = cellSize * 0.32;
       const meat = resource.type === 'MEAT';
       this.add.star(center.x, center.y, 6, size, size * 0.45, meat ? 0xef4444 : 0x84cc16, 0.9);
-      this.add.text(center.x, center.y + size, `${meat ? 'Thịt' : 'Gỗ'} ${resource.amount}`, {
-        color: meat ? '#fca5a5' : '#bef264', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px',
-      }).setOrigin(0.5);
+      this.add.text(center.x, center.y + size, compact ? `${resource.amount}` : `${meat ? 'Thịt' : 'Gỗ'} ${resource.amount}`, {
+        color: meat ? '#fca5a5' : '#bef264',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        fontSize: `${Math.max(7, Math.min(10, cellSize * 0.26))}px`,
+      }).setOrigin(0.5, 0.2);
     }
 
     for (const building of state.buildings) {
       const team = teams.get(building.teamId);
       const center = this.cellCenter(originX, originY, cellSize, building.position.x, building.position.y);
-      const size = Math.max(18, cellSize * 0.54);
+      const size = cellSize * 0.8;
       const shape = building.type === 'TOWER'
         ? this.add.circle(center.x, center.y, size * 0.42, this.teamColor(team), 0.95)
         : this.add.rectangle(center.x, center.y, size, building.type === 'WALL' ? size * 0.38 : size,
           this.teamColor(team), 0.95);
       if (building.type === 'BARRACKS') shape.setAngle(45);
-      shape.setStrokeStyle(2, 0xfbbf24, 1);
+      shape.setStrokeStyle(Math.max(1, cellSize * 0.05), 0xfbbf24, 1);
       const glyph = building.type === 'BARRACKS' ? 'B' : building.type === 'TOWER' ? 'T' : '▰';
-      this.add.text(center.x, center.y + size * 0.1, glyph, {
-        color: '#ffffff', fontFamily: 'Inter, system-ui, sans-serif', fontSize: '14px', fontStyle: '700',
+      this.add.text(center.x, center.y, glyph, {
+        color: '#ffffff',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        fontSize: `${Math.max(7, Math.min(14, cellSize * 0.4))}px`,
+        fontStyle: '700',
       }).setOrigin(0.5);
-      this.addIdLabel(center.x, center.y - size * 0.3, building.id, size * 0.82);
+      this.addIdLabel(shape, center.x, center.y - size * 0.3, building.id, size * 0.82, compact);
     }
 
     for (const projectile of state.projectiles) {
       const team = teams.get(projectile.teamId);
       const center = this.cellCenter(originX, originY, cellSize, projectile.position.x, projectile.position.y);
-      const shape = this.add.circle(center.x, center.y, Math.max(4, cellSize * 0.09), this.teamColor(team), 1);
-      shape.setStrokeStyle(2, 0xf8fafc, 0.95);
+      const shape = this.add.circle(center.x, center.y, Math.max(2, cellSize * 0.12), this.teamColor(team), 1);
+      shape.setStrokeStyle(1, 0xf8fafc, 0.95);
     }
 
     for (const unit of state.units) {
@@ -122,46 +132,96 @@ export class BattleScene extends Phaser.Scene {
         originX + (unit.position.x + unit.width / 2) * cellSize,
         originY + (unit.position.y + unit.height / 2) * cellSize,
       );
-      const radius = Math.max(10, cellSize * 0.3);
       const alpha = unit.hp > 0 ? 1 : 0.25;
-      const shape = unit.type === 'WORKER'
-        ? this.add.circle(center.x, center.y, radius, this.teamColor(team), alpha)
-        : unit.type === 'MELEE'
-          ? this.add.triangle(center.x, center.y, radius, 0, radius * 2, radius * 2, 0, radius * 2,
-            this.teamColor(team), alpha)
-          : unit.type === 'RANGED'
-            ? this.add.rectangle(center.x, center.y, radius * 1.55, radius * 1.55,
-              this.teamColor(team), alpha).setAngle(45)
-            : this.add.rectangle(
-          center.x,
-          center.y,
-          cellSize * unit.width * 0.82,
-          cellSize * unit.height * 0.82,
-          this.teamColor(team),
-          alpha,
+      const color = this.teamColor(team);
+      let shape: Phaser.GameObjects.GameObject;
+      if (unit.type === 'SIEGE') {
+        const vehicle = this.add.rectangle(
+          center.x, center.y, cellSize * unit.width * 0.82, cellSize * unit.height * 0.82, color, alpha,
         );
-      shape.setStrokeStyle(Math.max(2, cellSize * 0.04), 0xf8fafc, 0.9);
-      const glyph = unit.type === 'WORKER' ? 'W' : unit.type === 'MELEE' ? 'M' : unit.type === 'RANGED' ? 'R' : 'S';
-      this.add.text(center.x, center.y + radius * 0.16, `${glyph}\n${unit.hp}`, {
+        vehicle.setStrokeStyle(Math.max(1, cellSize * 0.06), 0xf8fafc, 0.9);
+        shape = vehicle;
+      } else {
+        shape = this.drawPerson(center.x, center.y, cellSize * 0.9, color, alpha, unit.type);
+      }
+      this.add.text(center.x, center.y + cellSize * unit.height * 0.42, `${unit.hp}`, {
         align: 'center',
         color: '#ffffff',
         fontFamily: 'Inter, system-ui, sans-serif',
-        fontSize: `${Math.max(9, Math.min(13, cellSize * 0.17))}px`,
+        fontSize: `${Math.max(7, Math.min(12, cellSize * 0.28))}px`,
         fontStyle: '700',
-      }).setOrigin(0.5);
+        stroke: '#020617',
+        strokeThickness: 2,
+      }).setOrigin(0.5, 0.2).setDepth(10);
       this.addIdLabel(
+        shape,
         center.x,
         center.y - cellSize * unit.height * 0.3,
         unit.id,
         cellSize * unit.width * 0.78,
+        compact,
       );
     }
   }
 
-  private addIdLabel(x: number, y: number, id: string, availableWidth: number): void {
+  /** Stick figure in team color; WORKER holds a pickaxe, MELEE a sword, RANGED a bow. */
+  private drawPerson(
+    x: number,
+    y: number,
+    height: number,
+    color: number,
+    alpha: number,
+    type: string,
+  ): Phaser.GameObjects.Graphics {
+    const figure = this.add.graphics({ x, y });
+    const line = Math.max(1.2, height * 0.12);
+    const headY = -height * 0.3;
+    const neckY = -height * 0.17;
+    const hipY = height * 0.1;
+    const footY = height * 0.42;
+    const handY = height * 0.02;
+    for (const [width, stroke] of [[line + 2, 0x020617], [line, color]] as const) {
+      figure.lineStyle(width, stroke, alpha);
+      figure.lineBetween(0, neckY, 0, hipY);
+      figure.lineBetween(0, hipY, -height * 0.15, footY);
+      figure.lineBetween(0, hipY, height * 0.15, footY);
+      figure.lineBetween(0, neckY + line, -height * 0.2, handY);
+      figure.lineBetween(0, neckY + line, height * 0.2, handY);
+    }
+    figure.fillStyle(0x020617, alpha);
+    figure.fillCircle(0, headY, height * 0.14 + 1);
+    figure.fillStyle(color, alpha);
+    figure.fillCircle(0, headY, height * 0.14);
+    figure.lineStyle(Math.max(1, line * 0.7), 0xe2e8f0, alpha);
+    if (type === 'WORKER') {
+      figure.lineBetween(height * 0.2, handY, height * 0.3, -height * 0.25);
+      figure.lineBetween(height * 0.18, -height * 0.22, height * 0.4, -height * 0.28);
+    } else if (type === 'MELEE') {
+      figure.lineBetween(height * 0.2, handY, height * 0.2, -height * 0.4);
+      figure.lineBetween(height * 0.12, -height * 0.05, height * 0.28, -height * 0.05);
+    } else if (type === 'RANGED') {
+      figure.beginPath();
+      figure.arc(-height * 0.2, handY, height * 0.22, -Math.PI / 2, Math.PI / 2, true);
+      figure.strokePath();
+    }
+    figure.setInteractive(
+      new Phaser.Geom.Rectangle(-height * 0.3, -height * 0.5, height * 0.6, height),
+      Phaser.Geom.Rectangle.Contains,
+    );
+    return figure;
+  }
+
+  private addIdLabel(
+    target: Phaser.GameObjects.GameObject,
+    x: number,
+    y: number,
+    id: string,
+    availableWidth: number,
+    compact: boolean,
+  ): void {
     const maxCharacters = Math.max(7, Math.floor(availableWidth / 6));
     const compactId = id.length > maxCharacters ? `${id.slice(0, maxCharacters - 1)}…` : id;
-    const label = this.add.text(x, y, compactId, {
+    const label = this.add.text(x, y, compact ? id : compactId, {
       align: 'center',
       backgroundColor: '#020617',
       color: '#f8fafc',
@@ -170,7 +230,12 @@ export class BattleScene extends Phaser.Scene {
       fontStyle: '700',
       padding: { x: 3, y: 1 },
     }).setOrigin(0.5).setDepth(20).setInteractive();
-    if (compactId !== id) {
+    if (compact) {
+      label.setVisible(false).setDepth(40);
+      if (!target.input) target.setInteractive();
+      target.on('pointerover', () => label.setVisible(true));
+      target.on('pointerout', () => label.setVisible(false));
+    } else if (compactId !== id) {
       label.on('pointerover', () => label.setText(id).setDepth(40));
       label.on('pointerout', () => label.setText(compactId).setDepth(20));
     }

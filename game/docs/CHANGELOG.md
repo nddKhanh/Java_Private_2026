@@ -3,6 +3,23 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-27 — Viewer hình người và lực lượng theo đội
+
+### Changed
+
+- WORKER, MELEE và RANGED hiển thị thành hình người; SIEGE giữ hình xe.
+- Mục Lực lượng chỉ hiện đội của người xem.
+- Nhãn ID ẩn đến khi rê chuột khi ô nhỏ; canvas viewer tăng lên 960 điểm ảnh.
+
+### Fixed
+
+- HQ hiển thị đúng giữa ô.
+- Server không dừng khi trận tạo trên web được lưu theo luật cũ; trận được dựng lại từ map script.
+
+### Verified
+
+- `npm test`, frontend production build và Maven test của server đều pass.
+
 ## 2026-11-27 — Gỗ, thịt và gói khởi tạo đội
 
 ### Changed

@@ -1,5 +1,14 @@
 # Tiến độ dự án
 
+## 2026-11-27 — Viewer hình người và lực lượng theo đội
+
+- **Trạng thái:** `VERIFIED` bằng `npm test`, production build và Maven test của server.
+- **Đã đạt:** HQ nằm đúng giữa ô; HQ, công trình, mỏ và đạn co theo kích thước ô; nhãn ID hiện khi rê chuột nếu ô nhỏ.
+- **Đã đạt:** WORKER, MELEE và RANGED vẽ thành hình người cầm cuốc, kiếm hoặc cung; SIEGE giữ hình xe 2×2.
+- **Đã đạt:** Mục Lực lượng chỉ hiện đội của người xem.
+- **Đã đạt:** Trận tạo trên web được dựng lại từ map script khi bản lưu theo luật cũ không đọc được; trận không còn hợp lệ bị bỏ qua thay vì làm server dừng.
+- **Chưa kiểm chứng:** Chưa xem trực quan bản đồ 50×50 sau khi sửa; server vẫn gửi thông tin mọi đội (BACKLOG B-04).
+
 ## 2026-11-27 — Gỗ, thịt và gói khởi tạo đội
 
 - **Trạng thái:** `VERIFIED` bằng test tự động, production build và chạy bot mẫu trên server thật.

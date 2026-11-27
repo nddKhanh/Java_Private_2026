@@ -283,7 +283,7 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Xem vị trí, tên, loại quân và HP của từng quân.
 - [x] Xem nhà chính của 10 đội và điểm sinh lực còn lại.
 - [x] Xem điểm tài nguyên cùng số lượng còn lại.
-- [x] Xem số gỗ và thịt hiện có của mỗi đội.
+- [x] Xem số gỗ và thịt hiện có của đội mình trong mục Lực lượng.
 - [x] Xem BARRACKS, TOWER và WALL trên bản đồ.
 - [x] Theo dõi số lần thay đổi trạng thái của trận đấu.
 - [x] Theo dõi đội thắng khi toàn bộ HQ của phe đối phương bị phá hủy.

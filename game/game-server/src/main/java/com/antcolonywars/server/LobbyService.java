@@ -53,9 +53,15 @@ public class LobbyService {
     @EventListener(ApplicationReadyEvent.class)
     public void restoreStartedMatches() {
         jdbcTemplate.query(
-                "SELECT setup_json FROM game_lobby WHERE status = 'RUNNING'",
-                (resultSet, rowNumber) -> readSetup(resultSet.getString("setup_json"))
-        ).forEach(matchRegistry::register);
+                "SELECT match_code, setup_json FROM game_lobby WHERE status = 'RUNNING'",
+                (resultSet, rowNumber) -> new String[]{resultSet.getString("match_code"), resultSet.getString("setup_json")}
+        ).forEach(row -> {
+            try {
+                matchRegistry.register(currentSetup(row[0], row[1]));
+            } catch (RuntimeException ignored) {
+                // A match whose map script no longer fits the current rules stays unavailable.
+            }
+        });
     }
 
     @Transactional
@@ -146,7 +152,7 @@ public class LobbyService {
             throw new ApiException(HttpStatus.FORBIDDEN, "NOT_MATCH_OWNER", "Only the match owner can start it");
         }
         if ("WAITING".equals(lobby.status())) {
-            matchRegistry.register(readSetup(lobby.setupJson()));
+            matchRegistry.register(currentSetup(code, lobby.setupJson()));
             jdbcTemplate.update(
                     "UPDATE game_lobby SET status = 'RUNNING', started_at_ms = ? WHERE match_code = ?",
                     clock.millis(), code
@@ -340,6 +346,28 @@ public class LobbyService {
             return objectMapper.writeValueAsString(setup);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Cannot serialize map setup", exception);
+        }
+    }
+
+    /** Stored setups from older rules are rebuilt from the original map script. */
+    private MatchSetup currentSetup(String matchCode, String setupJson) {
+        try {
+            return readSetup(setupJson);
+        } catch (IllegalStateException outdated) {
+            String mapScript = jdbcTemplate.queryForObject(
+                    "SELECT map_script FROM game_lobby WHERE match_code = ?", String.class, matchCode
+            );
+            MatchSetup setup;
+            try {
+                setup = mapScriptParser.parse(matchCode, mapScript).setup();
+            } catch (ApiException invalid) {
+                throw new ApiException(HttpStatus.CONFLICT, "MATCH_SETUP_OUTDATED",
+                        "This match was created with older rules and must be recreated");
+            }
+            jdbcTemplate.update(
+                    "UPDATE game_lobby SET setup_json = ? WHERE match_code = ?", writeSetup(setup), matchCode
+            );
+            return setup;
         }
     }
 

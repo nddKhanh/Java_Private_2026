@@ -66,6 +66,7 @@ let sessionToken = window.localStorage.getItem('acw-session') ?? '';
 let currentAccount: Account | null = null;
 let currentLobby: LobbyView | null = null;
 let lobbyPoll: number | null = null;
+let viewerTeamId: string | null = null;
 
 document.querySelector<HTMLTextAreaElement>('#map-script')!.value = SAMPLE_MAP;
 bindForms();
@@ -235,8 +236,9 @@ function startMatch(matchId: string, token: string): void {
   stopLobbyPoll();
   gameSocket?.disconnect();
   game?.destroy(true);
-  game = new Phaser.Game({ type: Phaser.AUTO, width: 640, height: 640, parent: 'game', backgroundColor: '#0b1120', scene: battleScene, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
+  game = new Phaser.Game({ type: Phaser.AUTO, width: 960, height: 960, parent: 'game', backgroundColor: '#0b1120', scene: battleScene, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
   events.length = 0;
+  viewerTeamId = teamOfViewer(matchId);
   setText('#arena-title', matchId);
   showScreen('arena');
   const query = new URLSearchParams({ matchId });
@@ -245,6 +247,15 @@ function startMatch(matchId: string, token: string): void {
   const url = `${socketBase}${socketBase.includes('?') ? '&' : '?'}${query.toString()}`;
   gameSocket = new GameSocket(url, setConnection, receiveState);
   gameSocket.connect();
+}
+
+/** The forces panel shows only the viewer's own team: lobby membership for created matches, account team otherwise. */
+function teamOfViewer(matchId: string): string | null {
+  if (currentLobby && currentLobby.matchCode === matchId) {
+    const own = currentLobby.teams.find((team) => team.members.some((member) => member.accountId === currentLobby?.currentAccountId));
+    return own?.teamId ?? null;
+  }
+  return currentAccount?.teamId ?? null;
 }
 
 async function api<T>(path: string, init: RequestInit = {}, authenticated = true): Promise<T> {
@@ -281,8 +292,13 @@ function updatePanel(state: MatchState): void {
   if (banner) { banner.classList.toggle('hidden', !finished); banner.textContent = state.winnerTeamId ? `Đội ${state.winnerTeamId} thắng trận` : 'Trận đã kết thúc'; }
   const forces = document.querySelector<HTMLElement>('#forces');
   if (!forces) return;
-  forces.classList.remove('empty');
-  forces.innerHTML = state.teams.map((team) => {
+  const ownTeams = state.teams.filter((team) => team.id === viewerTeamId);
+  forces.classList.toggle('empty', ownTeams.length === 0);
+  if (ownTeams.length === 0) {
+    forces.textContent = 'Bạn không thuộc đội nào trong trận này.';
+    return;
+  }
+  forces.innerHTML = ownTeams.map((team) => {
     const headquarters = state.headquarters.find((item) => item.teamId === team.id);
     const units = state.units.filter((unit) => unit.teamId === team.id);
     return `<article class="team-card" style="--team-color:${safeColor(team.color)}"><div class="team-heading"><span class="team-swatch"></span><strong>${escapeHtml(team.displayName)}</strong><small>Gỗ ${team.wood} · Thịt ${team.meat}</small></div><div class="force-stat"><span>HQ</span><strong>${headquarters?.hp ?? 0} HP</strong></div>${units.map((unit) => `<div class="force-stat"><span>${escapeHtml(unit.displayName)}</span><strong>${unit.hp} HP</strong></div>`).join('')}</article>`;
