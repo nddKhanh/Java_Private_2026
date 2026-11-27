@@ -136,7 +136,8 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         if (request.commands() == null || request.commands().isEmpty()
-                || request.commands().size() > 256) {
+                || request.commands().size() > coordinator.maxBatchCommands(teamId, request.commands().stream()
+                .filter(command -> command != null && "BUILD".equals(command.action())).count())) {
             sendFailure(session, request.commandId(), "INVALID_BATCH");
             return;
         }

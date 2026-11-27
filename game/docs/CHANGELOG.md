@@ -3,6 +3,17 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-27 — Giới hạn batch theo profile
+
+### Changed
+
+- Giới hạn tổng lệnh của batch tính theo số quân tối đa và công trình của đội nhân hạn mức hành động.
+- WebSocket nhận message tới 1 MB để chứa batch lớn hợp lệ.
+
+### Verified
+
+- Maven reactor test đều pass.
+
 ## 2026-11-27 — Một cập nhật state cho mỗi batch
 
 ### Changed

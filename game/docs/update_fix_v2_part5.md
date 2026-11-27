@@ -8,19 +8,16 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 
 ## A. P1 — Đúng đắn vận hành/ổn định khi chơi thật
 
-### P1-02. Giới hạn batch và khóa WebSocket toàn server — XÁC NHẬN TỪ CODE; CẦN LOAD TEST
+### P1-02. Khóa WebSocket toàn server — XÁC NHẬN TỪ CODE; CHỈ CẦN KHI ĐÔNG NGƯỜI CHƠI
 
-- **Hiện trạng:** `GameWebSocketHandler.handleBatch()` từ chối batch quá `256` command, con số viết cứng.
-  Một batch hợp lệ có thể lớn hơn: 50 unit × 10 hành động là 500 command, sẽ bị trả `INVALID_BATCH`.
+- **Hiện trạng:** `handleTextMessage()` vẫn `synchronized` trên một handler chung cho mọi trận; broadcast gửi tuần tự tới từng socket.
   `MatchCoordinator.commandQueueCapacity` vẫn không được dùng.
-  `handleTextMessage()` vẫn `synchronized` trên một handler chung cho mọi trận; broadcast cũng gửi tuần tự tới từng socket.
-- **Hậu quả:** Batch hợp lệ của đội đông quân bị từ chối; một trận bận hoặc viewer chậm làm tăng độ trễ của trận khác.
-- **Sửa:** Tính giới hạn tổng batch theo profile (số unit và công trình tối đa × 10) và kiểm tra trước khi chuyển đổi command.
-  Cấu hình giới hạn bytes WebSocket đủ cho batch hợp lệ.
-  Tuần tự hóa theo trận thay vì khóa toàn server; giới hạn hoặc đệm gửi tới viewer chậm.
+- **Hậu quả:** Một trận bận hoặc viewer chậm làm tăng độ trễ của trận khác.
+  Với khoảng 30 người chơi, chưa cần xử lý.
+- **Sửa:** Tuần tự hóa theo trận thay vì khóa toàn server; giới hạn hoặc đệm gửi tới viewer chậm.
   Không tái áp giới hạn theo giây.
-- **Test:** Batch 500 command hợp lệ chạy được; batch vượt giới hạn bị từ chối nhanh; hai trận gửi đồng thời không chặn nhau.
-- **File:** `game-server/.../GameWebSocketHandler.java`, `MatchCoordinator.java`, `GameWebSocketConfiguration.java`.
+- **Test:** Hai trận gửi đồng thời không chặn nhau; load test nhiều kết nối.
+- **File:** `game-server/.../GameWebSocketHandler.java`, `MatchCoordinator.java`.
 
 ## C. Rủi ro triển khai — Chỉ ưu tiên nếu chạy trên máy chung/public
 
@@ -36,6 +33,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 ## Kiểm chứng tập trung, một lần
 
 - Chạy unit/integration tests Maven Core/Server/Client/Desktop và `npm test`, `npm run build`; **ghi kết quả thực tế**, không suy luận từ `PROGRESS.md`.
-- Bổ sung test và load test cho P1-02.
+- Bổ sung test và load test cho P1-02 khi cần mở rộng.
 - Chạy một kịch bản 4–10 đội, 2 phe và hai máy học viên cùng trận, IntelliJ Run → Desktop → Server → Phaser; batch nhiều lệnh, mất mạng, restart giữa trận, viewer chậm.
 - Với mục chỉ là rủi ro, báo `chưa tái hiện` nếu chưa chạy test. Không khẳng định repo “hết mọi lỗi” chỉ từ rà soát tĩnh.

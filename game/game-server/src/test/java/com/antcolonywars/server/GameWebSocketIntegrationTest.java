@@ -154,6 +154,29 @@ class GameWebSocketIntegrationTest {
     }
 
     @Test
+    void acceptsLargeBatchesUpToTheProfileLimit() throws Exception {
+        SocketClient blue = connect("blue-token");
+        blue.awaitType("STATE_UPDATED");
+
+        blue.send(batch("large-batch", "PARTIAL", waits("large", 300)));
+        JsonNode large = blue.awaitType("COMMAND_RESULT");
+        assertEquals("BATCH_LIMIT_EXCEEDED", large.path("error").asText());
+        assertEquals(10, large.path("failedIndex").asInt());
+        assertEquals(10, large.path("appliedCount").asInt());
+        assertEquals(10, blue.awaitType("STATE_UPDATED").path("events").size());
+
+        blue.send(batch("oversized-batch", "PARTIAL", waits("oversized", 2000)));
+        assertEquals("INVALID_BATCH", blue.awaitType("COMMAND_RESULT").path("error").asText());
+        blue.close();
+    }
+
+    private List<Map<String, Object>> waits(String prefix, int count) {
+        return java.util.stream.IntStream.range(0, count)
+                .mapToObj(index -> action(prefix + "-" + index, "WAIT", Map.of("unitId", "worker-blue")))
+                .toList();
+    }
+
+    @Test
     void serializesNearConcurrentCommandsIntoUniqueOrderedSequences() throws Exception {
         SocketClient viewer = connect(null);
         SocketClient blue = connect("blue-token");

@@ -86,6 +86,15 @@ public final class MatchCoordinator {
         return result;
     }
 
+    /** Upper bound of a valid batch: every unit and structure the team can control uses its full action quota. */
+    public synchronized int maxBatchCommands(String teamId, long buildCommands) {
+        MatchState state = session.state();
+        long structures = state.headquarters().stream().filter(hq -> hq.teamId().equals(teamId)).count()
+                + state.buildings().stream().filter(building -> building.teamId().equals(teamId)).count();
+        long subjects = setup.rules().maxUnitsPerTeam() + structures + buildCommands;
+        return (int) Math.min(Integer.MAX_VALUE, subjects * maxActionsPerBotPerBatch);
+    }
+
     int commandQueueCapacity() {
         return commandQueueCapacity;
     }

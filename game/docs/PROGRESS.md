@@ -1,5 +1,13 @@
 # Tiến độ dự án
 
+## 2026-11-27 — Giới hạn batch theo profile
+
+- **Trạng thái:** `VERIFIED` bằng test tự động.
+- **Đã đạt:** Giới hạn tổng lệnh của batch tính theo số quân tối đa và số công trình của đội nhân hạn mức hành động, thay cho con số cố định 256.
+- **Đã đạt:** WebSocket nhận message tới 1 MB nên batch lớn hợp lệ không bị đóng kết nối.
+- **Bằng chứng:** `GameWebSocketIntegrationTest` gửi batch 300 lệnh và 2000 lệnh; `mvnw -q test` hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa load test nhiều trận gửi đồng thời; handler vẫn dùng một khóa chung cho mọi trận.
+
 ## 2026-11-27 — Một cập nhật state cho mỗi batch
 
 - **Trạng thái:** `VERIFIED` bằng test tự động và production build.
