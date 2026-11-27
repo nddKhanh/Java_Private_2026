@@ -90,7 +90,7 @@ export interface StateUpdatedMessage {
   revision: number;
   sequence: number;
   state: MatchState;
-  event: GameEvent | null;
+  events: GameEvent[];
 }
 
 export interface MatchRuntime {

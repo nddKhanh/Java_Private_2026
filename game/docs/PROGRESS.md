@@ -1,5 +1,12 @@
 # Tiến độ dự án
 
+## 2026-11-27 — Một cập nhật state cho mỗi batch
+
+- **Trạng thái:** `VERIFIED` bằng test tự động và production build.
+- **Đã đạt:** Mỗi batch phát một `STATE_UPDATED` kèm danh sách `events` theo thứ tự; viewer thêm đủ các event vào log.
+- **Bằng chứng:** `mvnw -q test`, `npm test` và `npm run build` trong `game-web` hoàn tất với exit code 0.
+- **Chưa kiểm chứng:** Chưa xem trực quan log lệnh trên trình duyệt với batch nhiều lệnh.
+
 ## 2026-11-27 — Giới hạn ID lệnh trong snapshot
 
 - **Trạng thái:** `VERIFIED` bằng test tự động.

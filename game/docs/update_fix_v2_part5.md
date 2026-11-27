@@ -22,16 +22,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - **Test:** Batch 500 command hợp lệ chạy được; batch vượt giới hạn bị từ chối nhanh; hai trận gửi đồng thời không chặn nhau.
 - **File:** `game-server/.../GameWebSocketHandler.java`, `MatchCoordinator.java`, `GameWebSocketConfiguration.java`.
 
-## B. P2 — Trải nghiệm/quan sát
-
-### P2-01. Broadcast một snapshot đầy đủ cho mỗi event trong batch — XÁC NHẬN TỪ CODE
-
-- **Hiện trạng:** Log lệnh đã đủ các lệnh trong batch, nhưng `GameWebSocketHandler.handleBatch()` gửi một `STATE_UPDATED` kèm toàn bộ snapshot cho từng event.
-  Batch 256 command thành 256 snapshot gửi tới mọi viewer.
-- **Sửa:** Gửi một `STATE_UPDATED` cho mỗi batch, kèm danh sách `events` theo thứ tự; viewer thêm đủ các event vào log.
-- **Test:** Batch 3 lệnh hợp lệ ⇒ viewer nhận một snapshot và 3 event đúng thứ tự; Partial 2 thành công + 1 lỗi ⇒ log có đúng 2; reconnect không trùng.
-- **File:** `game-server/.../GameWebSocketHandler.java`, `StateUpdatedMessage.java`, `game-web/src/main.ts`, `types.ts`.
-
 ## C. Rủi ro triển khai — Chỉ ưu tiên nếu chạy trên máy chung/public
 
 1. **Java code học viên không được sandbox:** `BotCompiler` biên dịch mã Java tự do, `BotProcessRunner` chỉ giới hạn heap, thời gian và output; tiến trình vẫn có quyền đọc/ghi file và gọi mạng theo tài khoản OS. Nếu Desktop chạy source không tin cậy trên máy giáo viên/máy chung, cần cách ly bằng tài khoản OS/container/VM và quyền mạng/tệp. Nếu mỗi học viên chỉ chạy code của chính mình trên máy riêng thì có thể chấp nhận rủi ro MVP có ghi rõ.
@@ -46,6 +36,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 ## Kiểm chứng tập trung, một lần
 
 - Chạy unit/integration tests Maven Core/Server/Client/Desktop và `npm test`, `npm run build`; **ghi kết quả thực tế**, không suy luận từ `PROGRESS.md`.
-- Bổ sung test cho P1-02, P2-01 và load test cho P1-02.
+- Bổ sung test và load test cho P1-02.
 - Chạy một kịch bản 4–10 đội, 2 phe và hai máy học viên cùng trận, IntelliJ Run → Desktop → Server → Phaser; batch nhiều lệnh, mất mạng, restart giữa trận, viewer chậm.
 - Với mục chỉ là rủi ro, báo `chưa tái hiện` nếu chưa chạy test. Không khẳng định repo “hết mọi lỗi” chỉ từ rà soát tĩnh.

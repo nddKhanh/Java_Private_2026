@@ -3,6 +3,16 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-27 — Một cập nhật state cho mỗi batch
+
+### Changed
+
+- `STATE_UPDATED` mang danh sách `events` thay cho một `event`; mỗi batch chỉ phát một snapshot.
+
+### Verified
+
+- Maven reactor test, `npm test` và frontend production build đều pass.
+
 ## 2026-11-27 — Giới hạn ID lệnh trong snapshot
 
 ### Fixed

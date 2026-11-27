@@ -2,6 +2,7 @@ package com.antcolonywars.server;
 
 import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.MatchState;
+import java.util.List;
 
 public record StateUpdatedMessage(
         String type,
@@ -10,9 +11,13 @@ public record StateUpdatedMessage(
         long revision,
         long sequence,
         MatchState state,
-        GameEvent event
+        List<GameEvent> events
 ) {
-    public static StateUpdatedMessage from(MatchState state, GameEvent event) {
+    public StateUpdatedMessage {
+        events = List.copyOf(events);
+    }
+
+    public static StateUpdatedMessage from(MatchState state, List<GameEvent> events) {
         return new StateUpdatedMessage(
                 "STATE_UPDATED",
                 GameWebSocketHandler.SCHEMA_VERSION,
@@ -20,7 +25,7 @@ public record StateUpdatedMessage(
                 state.revision(),
                 state.eventSequence(),
                 state,
-                event
+                events
         );
     }
 }

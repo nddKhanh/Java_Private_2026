@@ -145,7 +145,11 @@ class GameWebSocketIntegrationTest {
         assertEquals(2, partial.path("failedIndex").asInt());
         assertEquals(2, partial.path("appliedCount").asInt());
         assertEquals(2, partial.path("revision").asLong());
-        assertEquals(2, blue.awaitType("STATE_UPDATED").path("revision").asLong());
+        JsonNode partialState = blue.awaitType("STATE_UPDATED");
+        assertEquals(2, partialState.path("revision").asLong());
+        assertEquals(2, partialState.path("events").size());
+        assertEquals("first", partialState.path("events").get(0).path("commandId").asText());
+        assertEquals("second", partialState.path("events").get(1).path("commandId").asText());
         blue.close();
     }
 
@@ -165,8 +169,8 @@ class GameWebSocketIntegrationTest {
         JsonNode second = viewer.awaitType("STATE_UPDATED");
         assertEquals(1, first.path("sequence").asLong());
         assertEquals(2, second.path("sequence").asLong());
-        assertNotNull(first.path("event").path("commandId").textValue());
-        assertNotNull(second.path("event").path("commandId").textValue());
+        assertNotNull(first.path("events").get(0).path("commandId").textValue());
+        assertNotNull(second.path("events").get(0).path("commandId").textValue());
 
         viewer.close();
         blue.close();

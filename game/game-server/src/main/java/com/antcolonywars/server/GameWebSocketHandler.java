@@ -53,7 +53,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     @Override
     public synchronized void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
-        sendState(session, coordinator(session).state(), null);
+        sendState(session, coordinator(session).state(), List.of());
     }
 
     @Override
@@ -121,8 +121,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 result.state().revision(),
                 result.state().eventSequence()
         ));
-        GameEvent event = result.events().isEmpty() ? null : result.events().getFirst();
-        broadcastState(result.state(), event);
+        broadcastState(result.state(), result.events());
     }
 
     private void handleBatch(
@@ -171,7 +170,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 result.state().eventSequence()
         ));
         if (!result.events().isEmpty()) {
-            result.events().forEach(event -> broadcastState(result.state(), event));
+            broadcastState(result.state(), result.events());
         }
     }
 
@@ -200,7 +199,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 state.revision(),
                 state.eventSequence()
         ));
-        sendState(session, state, null);
+        sendState(session, state, List.of());
     }
 
     private ActionCommand toCommand(ClientMessage request, String teamId, MatchState state) {
@@ -299,7 +298,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         ));
     }
 
-    private void broadcastState(MatchState state, GameEvent event) {
+    private void broadcastState(MatchState state, List<GameEvent> events) {
         sessions.removeIf(session -> {
             if (!session.isOpen()) {
                 return true;
@@ -308,7 +307,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
                 return false;
             }
             try {
-                sendState(session, state, event);
+                sendState(session, state, events);
                 return false;
             } catch (IOException exception) {
                 return true;
@@ -320,11 +319,11 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         if (!result.accepted() || result.events().isEmpty()) {
             return;
         }
-        broadcastState(result.state(), result.events().getFirst());
+        broadcastState(result.state(), result.events());
     }
 
-    private void sendState(WebSocketSession session, MatchState state, GameEvent event) throws IOException {
-        send(session, StateUpdatedMessage.from(state, event));
+    private void sendState(WebSocketSession session, MatchState state, List<GameEvent> events) throws IOException {
+        send(session, StateUpdatedMessage.from(state, events));
     }
 
     private void send(WebSocketSession session, Object payload) throws IOException {

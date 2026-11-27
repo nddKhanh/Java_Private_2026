@@ -265,10 +265,12 @@ async function api<T>(path: string, init: RequestInit = {}, authenticated = true
 
 function receiveState(message: StateUpdatedMessage): void {
   battleScene.updateSnapshot(message.state);
-  if (message.event && !events.some((event) => event.sequence === message.event?.sequence)) {
-    events.unshift(message.event);
-    events.splice(5);
+  for (const incoming of message.events ?? []) {
+    if (!events.some((event) => event.sequence === incoming.sequence)) {
+      events.unshift(incoming);
+    }
   }
+  events.splice(5);
   updatePanel(message.state);
   updateLog();
 }

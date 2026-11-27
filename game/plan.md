@@ -263,15 +263,16 @@ Server phát cho các client đang theo dõi trận:
 ```json
 {
   "type": "STATE_UPDATED",
-  "schemaVersion": 4,
+  "schemaVersion": 7,
   "matchId": "match-default",
   "revision": 1,
   "sequence": 1,
-  "state": {}
+  "state": {},
+  "events": []
 }
 ```
 
-MVP phát toàn bộ snapshot sau mỗi command thành công để giảm logic đồng bộ.
+MVP phát một snapshot đầy đủ sau mỗi command hoặc batch thành công, kèm `events` theo thứ tự.
 Snapshot phải serialize được và event phải có thứ tự để sau này hỗ trợ replay hoặc client simulation.
 Chỉ chuyển sang delta event khi state lớn hơn và có benchmark chứng minh cần thiết.
 
