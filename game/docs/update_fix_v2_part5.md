@@ -45,8 +45,9 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
   - Bấm vào unit hoặc công trình của đội mình thì cột phải hiện hàng chờ của nó thay cho Lực lượng, chỉ có nút xóa toàn bộ lệnh.
   - Mọi thành viên cùng đội được xóa hàng chờ; đồng minh khác đội thì không; hàng chờ chỉ gửi cho thành viên cùng đội.
   - Không thêm hồi chiêu riêng cho quân.
-- **Cần chốt:** `bot.state()` là state lúc bắt đầu Run, trong khi bot có thể còn lệnh cũ trong hàng chờ.
-  Đề xuất trả kèm hàng chờ của từng bot trong state của đội mình, Run không tự chờ hàng chờ chạy hết.
+  - Người chơi điều khiển trực tiếp qua giao diện: vị trí trên viewer là vị trí thật, hàng chờ trên viewer là hàng chờ thật của server.
+    `bot.state()` giữ nguyên là state lúc bắt đầu Run, chưa tính lệnh còn chờ; Run không tự chờ hàng chờ chạy hết.
+    Docs ghi rõ điều này.
 
 ## C. Rủi ro triển khai — Chỉ ưu tiên nếu chạy trên máy chung/public
 
