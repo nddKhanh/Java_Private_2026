@@ -1,14 +1,11 @@
 package com.antcolonywars.desktop;
 
-import com.antcolonywars.core.BatchMode;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.Separator;
@@ -45,7 +42,6 @@ public final class CodeStudioApplication extends Application {
     private final TextField username = new TextField();
     private final PasswordField password = new PasswordField();
     private final TextField teamToken = new TextField();
-    private final ComboBox<BatchMode> batchMode = new ComboBox<>();
     private final TextField className = new TextField(DefaultBotSource.CLASS_NAME);
     private final Spinner<Integer> timeoutSeconds = new Spinner<>(1, 300, 15);
     private final TextArea editor = new TextArea(DefaultBotSource.SOURCE);
@@ -66,8 +62,6 @@ public final class CodeStudioApplication extends Application {
         username.setPromptText("Username");
         password.setPromptText("Password");
         teamToken.setPromptText("Filled by Pair; demo: blue-token");
-        batchMode.getItems().setAll(BatchMode.ATOMIC, BatchMode.PARTIAL);
-        batchMode.getSelectionModel().select(BatchMode.ATOMIC);
         matchId.setPromptText("Match code (blank = match-default)");
         editor.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 14px;");
         console.setStyle("-fx-font-family: 'Consolas'; -fx-font-size: 12px;");
@@ -143,8 +137,7 @@ public final class CodeStudioApplication extends Application {
         HBox match = new HBox(
                 8,
                 new Label("Match code"), matchId,
-                new Label("Token"), teamToken,
-                new Label("Batch"), batchMode
+                new Label("Token"), teamToken
         );
         HBox.setHgrow(matchId, Priority.ALWAYS);
         HBox.setHgrow(teamToken, Priority.ALWAYS);
@@ -204,11 +197,6 @@ public final class CodeStudioApplication extends Application {
             pairingKey.setText(submission.pairingKey().trim());
             username.setText(submission.username().trim());
             password.setText(submission.password());
-            try {
-                batchMode.getSelectionModel().select(BatchMode.valueOf(submission.batchMode().trim().toUpperCase()));
-            } catch (RuntimeException exception) {
-                batchMode.getSelectionModel().select(BatchMode.ATOMIC);
-            }
             compileAfterPairing = true;
             runAfterCompilation = false;
             appendConsole("Đã nhận " + submission.className() + " từ IntelliJ. Đang pair trận đấu...");
@@ -293,7 +281,6 @@ public final class CodeStudioApplication extends Application {
                 serverUrl.getText().trim(),
                 matchId.getText().trim(),
                 selectedTeamToken,
-                batchMode.getValue(),
                 Duration.ofSeconds(timeoutSeconds.getValue()),
                 64,
                 MAX_OUTPUT_BYTES

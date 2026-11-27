@@ -1,30 +1,26 @@
 package com.antcolonywars.server;
 
-import com.antcolonywars.core.ApplyResult;
 import com.antcolonywars.core.ActionCommand;
-import com.antcolonywars.core.BatchApplyResult;
-import com.antcolonywars.core.BatchMode;
-import com.antcolonywars.core.ErrorCode;
-import com.antcolonywars.core.GameCommand;
+import com.antcolonywars.core.CommandQueue;
 import com.antcolonywars.core.GameSession;
 import com.antcolonywars.core.MatchSetup;
 import com.antcolonywars.core.MatchState;
-import com.antcolonywars.core.SpawnCommand;
+import com.antcolonywars.core.MatchStatus;
+import com.antcolonywars.core.QueueTickResult;
 
 import java.time.Clock;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/** Owns one match: its state, the command queue of every bot and the persistence of each tick. */
 public final class MatchCoordinator {
     private GameSession session;
+    private CommandQueue queue;
     private final MatchSetup setup;
-    private final int maxActionsPerBotPerBatch;
-    private final int commandQueueCapacity;
     private final MatchPersistence persistence;
 
     public MatchCoordinator(MatchSetup setup) {
-        this(setup, new GameProfileProperties.Limits(10, 32, 250), Clock.systemUTC());
+        this(setup, new GameProfileProperties.Limits(250), Clock.systemUTC());
     }
 
     public MatchCoordinator(MatchSetup setup, GameProfileProperties.Limits limits) {
@@ -44,77 +40,53 @@ public final class MatchCoordinator {
     ) {
         this.setup = setup;
         session = new GameSession(setup, restoredState);
-        maxActionsPerBotPerBatch = limits.maxActionsPerBotPerBatch();
-        commandQueueCapacity = limits.commandQueueCapacity();
+        queue = new CommandQueue(setup.rules().commands().maxPerBot());
         this.persistence = persistence;
         persistence.save(session.state(), null);
     }
 
-    public synchronized ApplyResult apply(GameCommand command) {
-        if (!(command instanceof ActionCommand action)) {
-            return session.apply(command);
+    /** Appends a team's batch to the queues of its bots; returns the subjects whose share was refused. */
+    public synchronized EnqueueResult enqueue(String teamId, String batchId, List<? extends ActionCommand> commands) {
+        if (session.state().status() == MatchStatus.FINISHED) {
+            return new EnqueueResult(0, commands.stream().map(CommandQueue::subjectOf).distinct().toList(), true);
         }
-        BatchApplyResult batch = applyBatch(List.of(action), BatchMode.ATOMIC);
-        if (!batch.accepted()) {
-            return ApplyResult.failure(batch.state(), batch.error());
-        }
-        return ApplyResult.success(batch.state(), batch.events());
+        List<String> refused = queue.enqueue(batchId, teamId, commands);
+        long queued = commands.stream().filter(command -> !refused.contains(CommandQueue.subjectOf(command))).count();
+        return new EnqueueResult((int) queued, refused, false);
     }
 
-    public synchronized BatchApplyResult applyBatch(List<? extends ActionCommand> commands, BatchMode mode) {
-        int limitIndex = firstLimitViolation(commands);
-        GameSession candidate = new GameSession(setup, session.state());
-        BatchApplyResult result = candidate.applyBatch(
-                commands, mode, limitIndex, ErrorCode.BATCH_LIMIT_EXCEEDED
-        );
-        persist(result);
-        if (result.accepted() || result.appliedCount() > 0) session = candidate;
-        return result;
+    public synchronized int clearQueue(String teamId, String subjectId) {
+        return queue.clear(teamId, subjectId);
+    }
+
+    public synchronized Map<String, List<ActionCommand>> pendingCommands(String teamId) {
+        return queue.pendingFor(teamId);
     }
 
     public synchronized MatchState state() {
         return session.state();
     }
 
-    public synchronized ApplyResult advanceTick() {
+    /** Runs one tick on copies and keeps them only after the tick's events are persisted. */
+    public synchronized QueueTickResult advanceTick() {
         GameSession candidate = new GameSession(setup, session.state());
-        ApplyResult result = candidate.advanceTick();
+        CommandQueue candidateQueue = queue.copy();
+        QueueTickResult result = candidate.advanceTick(candidateQueue);
         if (!result.events().isEmpty()) {
             persistence.saveBatch(result.state(), result.events());
-            session = candidate;
         }
+        session = candidate;
+        queue = candidateQueue;
         return result;
     }
 
-    /** Upper bound of a valid batch: every unit and structure the team can control uses its full action quota. */
-    public synchronized int maxBatchCommands(String teamId, long buildCommands) {
-        MatchState state = session.state();
-        long structures = state.headquarters().stream().filter(hq -> hq.teamId().equals(teamId)).count()
-                + state.buildings().stream().filter(building -> building.teamId().equals(teamId)).count();
-        long subjects = setup.rules().maxUnitsPerTeam() + structures + buildCommands;
-        return (int) Math.min(Integer.MAX_VALUE, subjects * maxActionsPerBotPerBatch);
+    public int maxBatchCommands() {
+        return setup.rules().commands().maxPerBatch();
     }
 
-    int commandQueueCapacity() {
-        return commandQueueCapacity;
-    }
-
-    private int firstLimitViolation(List<? extends ActionCommand> commands) {
-        Map<String, Integer> actionsByBot = new HashMap<>();
-        for (int index = 0; index < commands.size(); index++) {
-            ActionCommand command = commands.get(index);
-            String botId = command instanceof SpawnCommand spawn
-                    ? spawn.sourceId()
-                    : command.unitId();
-            int count = actionsByBot.merge(botId, 1, Integer::sum);
-            if (count > maxActionsPerBotPerBatch) {
-                return index;
-            }
+    public record EnqueueResult(int queuedCount, List<String> refusedSubjects, boolean matchFinished) {
+        public EnqueueResult {
+            refusedSubjects = List.copyOf(refusedSubjects);
         }
-        return -1;
-    }
-
-    private void persist(BatchApplyResult result) {
-        if (!result.events().isEmpty()) persistence.saveBatch(result.state(), result.events());
     }
 }

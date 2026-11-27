@@ -3,6 +3,25 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-27 — Hàng chờ lệnh cho từng bot
+
+### Changed
+
+- Mỗi unit, HQ và công trình có hàng chờ lệnh riêng; mỗi nhịp 250 ms mỗi bot chạy một lệnh và Run chỉ nối lệnh vào cuối hàng chờ.
+- Lệnh lỗi khi tới lượt bỏ các lệnh còn lại của cùng bot trong cùng lần gửi; lệnh của bot khác và lần gửi khác vẫn chạy.
+- Bỏ chế độ Atomic/Partial và giới hạn 10 hành động mỗi batch; thay bằng tối đa 40 lệnh chờ mỗi bot và 256 lệnh mỗi lần gửi trong `game-rules.yml`.
+- Viewer hiện hàng chờ của bot được chọn, cho xóa toàn bộ lệnh và tô màu cam lệnh bị từ chối trong nhật ký lệnh.
+- Hàng chờ được xóa khi trận kết thúc; giao thức WebSocket lên schema 8.
+
+### Fixed
+
+- Bản đồ không còn trống khi vào trận hoặc khi chuyển sang trận khác; thông tin trận cũ được xóa khi đổi trận.
+- Mục Lực lượng hiện đúng kho của đội người xem dù vào trận bằng cách nào, nhờ server gửi kèm đội của kết nối.
+
+### Verified
+
+- `mvnw test`, `npm test` và frontend production build đều pass; `WinningScenario` thắng qua hàng chờ trên server thật.
+
 ## 2026-11-27 — Thông số tập trung, vị trí HQ và ẩn kho đối thủ
 
 ### Changed

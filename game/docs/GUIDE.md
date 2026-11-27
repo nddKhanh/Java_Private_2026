@@ -9,13 +9,13 @@ Tài liệu này mô tả những gì người chơi có thể nhìn thấy và 
 
 ## 1. Trạng thái hiện tại
 
-- Ngày cập nhật: 2026-11-14.
+- Ngày cập nhật: 2026-11-27.
 - Kịch bản đã hoàn thành: R1, R2, R3, R4, R4.1, R5, R6 và R8.1–R8.4.
 - Người chơi điều khiển quân của mình bằng chương trình Java hoặc Desktop Code Studio.
 - Phaser là màn hình quan sát bản đồ và trạng thái trận đấu.
 - Máy chủ giữ kết quả chính thức của mọi hành động.
 - Web viewer mở đầu bằng phòng chọn trận, tự đọc danh sách từ `/api/matches` và cho phép nhập mã session token.
-- Trong trận, người chơi thấy revision, nhịp mô phỏng, lực lượng, command gần nhất và banner khi trận kết thúc.
+- Trong trận, người chơi thấy revision, nhịp mô phỏng, lực lượng, nhật ký lệnh, hàng chờ của từng bot và banner khi trận kết thúc.
 
 Khi README cấp gốc thay đổi về cách dùng, chức năng, trạng thái hoặc quy trình, phải cập nhật lại tài liệu này cùng `docs/README.md` và `docs/CHANGELOG.md`.
 
@@ -104,7 +104,6 @@ Thiếu tài khoản, sai mật khẩu hoặc tài khoản chưa vào trận s�
 Không cần nhấn thêm Compile hoặc Run trong Desktop.
 
 Source chỉ đi từ IntelliJ tới Desktop trên chính máy đang chạy và không được upload lên game server.
-Có thể đặt `BATCH_MODE=ATOMIC` hoặc `BATCH_MODE=PARTIAL` trong `.env`.
 
 ### Tùy chọn — đăng nhập và join team thay cho demo token
 
@@ -166,10 +165,9 @@ Hai overload `spawn` cũ không có `sourceId` đã deprecated và báo lỗi ng
 
 Với trận tạo từ web, nhập pairing key cùng username và mật khẩu rồi nhấn **Pair**.
 Server, Match code và Token điều khiển được điền tự động theo đội của tài khoản.
-Chọn `ATOMIC` để toàn bộ batch chỉ được áp dụng khi mọi hành động hợp lệ, hoặc `PARTIAL` để dừng tại lỗi đầu tiên và giữ các hành động trước đó.
 Luồng thủ công vẫn hỗ trợ nhập `ws://192.168.1.23:8080/game`, mã trận và session token của thành viên trận khi không thể quét LAN.
 Với `match-default`, để trống Match code và dùng demo token `blue-token` hoặc `red-token`.
-Giữ tên lớp là `MyBot`.
+Giữ tên lớp là `MyBot` cho chương trình `BotProgram` dưới đây; chương trình `Main.main(Bot)` dùng tên lớp `Main`.
 Thay nội dung ô soạn thảo bằng chương trình sau để thử trên trận mới:
 
 ```java
@@ -192,20 +190,23 @@ public final class MyBot implements BotProgram {
 
 1. Nhấn `Compile` (`Ctrl+B`); nếu có lỗi, sửa theo dòng và cột được thông báo.
 2. Nhấn `Run` (`Ctrl+R`) sau khi biên dịch thành công.
-3. Desktop gom các hành động của lần Run thành một batch rồi gửi đến server.
+3. Desktop gom các hành động của lần Run thành một batch rồi xếp vào hàng chờ của từng bot trên server.
 4. Mở trang bản đồ: quân xanh đi sang phải một ô rồi đứng chờ.
    Quân thợ khởi đầu ở một ô ngẫu nhiên sát HQ, nên đọc vị trí từ `state()` trước khi tính đường đi.
 5. Nhấn `Stop` (`Ctrl+K`) khi cần dừng chương trình đang chạy.
 
-Mỗi bot hoặc công trình sản xuất có tối đa 10 hành động trong một batch; thao tác chọn chỉ đổi đối tượng đang chọn nên không tính hạn mức.
-Không có giới hạn lệnh theo giây hoặc simulation tick.
-Các lời gọi đọc state trong lúc tạo batch dùng snapshot nhận tại đầu lần Run.
+Mỗi unit, HQ và công trình có hàng chờ riêng; mỗi nhịp 250 ms mỗi bot chạy đúng một lệnh, các bot khác nhau chạy song song.
+Run chỉ nối lệnh vào cuối hàng chờ, không thay lệnh đang chờ.
+Mỗi bot giữ tối đa 40 lệnh chờ và mỗi lần Run gửi tối đa 256 lệnh.
+Lệnh lỗi khi tới lượt bỏ các lệnh còn lại của bot đó trong lần Run đó và hiện màu cam trong nhật ký lệnh.
+Lệnh tạo quân từ nhà lính vừa xây, hoặc lệnh của quân vừa tạo, tự chờ tới khi lệnh xây hay lệnh tạo quân trước nó chạy xong.
+Các lời gọi đọc state trong lúc tạo batch dùng snapshot nhận tại đầu lần Run, chưa tính lệnh còn trong hàng chờ.
 Batch chỉ được gửi sau khi `main` hoặc `run` kết thúc bình thường.
 Exception hoặc thao tác Stop trước thời điểm đó sẽ bỏ toàn bộ batch chưa gửi.
-Lỗi batch trong console IntelliJ nêu số lệnh, ID unit hoặc công trình thực hiện, hành động và nguyên nhân tiếng Việt.
+Console báo số lệnh đã xếp và nêu số lệnh, ID bot, hành động cùng nguyên nhân của lệnh bị từ chối ngay khi gửi.
 
 Sau mỗi lần sửa, biên dịch lại trước khi chạy.
-Stop không hoàn tác batch đã được server chấp nhận.
+Stop không hủy lệnh đã vào hàng chờ; bấm vào bot trên viewer rồi chọn **Xóa toàn bộ lệnh** để hủy.
 Khởi động lại server mặc định sẽ phục hồi trận đã lưu.
 Để thử kịch bản từ state seed mà không xóa dữ liệu, dừng máy chủ bằng `Ctrl+C`, chạy `.\scripts\start-server.ps1 -Fresh` rồi chờ bản đồ kết nối lại.
 
@@ -287,6 +288,8 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Xem điểm tài nguyên cùng số lượng còn lại.
 - [x] Xem số gỗ và thịt hiện có của đội mình trong mục Lực lượng.
 - [x] Không nhận được kho gỗ và thịt của đội khác, kể cả đồng minh.
+- [x] Bấm vào quân, HQ hoặc công trình của đội mình để xem hàng chờ lệnh và xóa toàn bộ lệnh đang chờ.
+- [x] Xem lệnh bị từ chối màu cam trong nhật ký lệnh, kèm lý do và số lệnh bị bỏ theo.
 - [x] Xem BARRACKS, TOWER và WALL trên bản đồ.
 - [x] Theo dõi số lần thay đổi trạng thái của trận đấu.
 - [x] Theo dõi đội thắng khi toàn bộ HQ của phe đối phương bị phá hủy.
@@ -345,18 +348,17 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 
 ### Giới hạn khi chơi
 
-- [x] Máy chủ xử lý lần lượt các hành động.
-- [x] Mỗi unit/công trình có giới hạn 10 hành động trong một batch.
-- [x] Hai chương trình cùng điều khiển một đội dùng chung giới hạn này.
-- [x] Chương trình Java tự chờ rồi gửi lại khi bị giới hạn tốc độ.
-- [x] Batch giới hạn 10 hành động cho mỗi unit hoặc công trình và được server xử lý tuần tự.
-- [x] Desktop cho chọn Atomic hoặc Partial trước khi Run.
+- [x] Mỗi bot chạy một lệnh mỗi nhịp 250 ms; lệnh khác xếp hàng chờ.
+- [x] Mỗi bot giữ tối đa 40 lệnh chờ; lần gửi vượt giới hạn bị từ chối phần của bot đó.
+- [x] Hai chương trình cùng điều khiển một đội nối lệnh vào chung hàng chờ của từng bot.
+- [x] Lệnh lỗi chỉ bỏ các lệnh sau của cùng bot trong cùng lần gửi.
+- [x] Trận kết thúc thì mọi hàng chờ được xóa.
 
 ### Account, lobby và dữ liệu đã lưu
 
 - [x] Đăng ký account và đăng nhập để nhận session token.
 - [x] Join BLUE hoặc RED trước khi dùng session token điều khiển quân.
-- [x] Năm account cùng team điều khiển chung state; giới hạn được tính theo bot trong từng batch.
+- [x] Năm account cùng team điều khiển chung state và chung hàng chờ của từng bot.
 - [x] Account thứ sáu bị từ chối khi team đã đủ chỗ.
 - [x] Reconnect nhận lại snapshot mới nhất; `matchId` tách biệt giữa các match.
 - [x] Snapshot cùng event history được ghi vào H2 qua Flyway migration.

@@ -4,8 +4,9 @@ import com.antcolonywars.bot.BotProgram;
 import com.antcolonywars.bot.BatchGameBot;
 import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.bot.GameBots;
+import com.antcolonywars.client.BatchReceipt;
 import com.antcolonywars.client.GameClientException;
-import com.antcolonywars.core.BatchMode;
+import com.antcolonywars.client.QueueRejection;
 import com.antcolonywars.sdk.Bot;
 import com.antcolonywars.sdk.BotAdapter;
 
@@ -21,7 +22,6 @@ public final class BotRunnerMain {
     static final String TEAM_TOKEN_ENV = "GAME_TEAM_TOKEN";
     static final String MATCH_ID_ENV = "GAME_MATCH_ID";
     static final String CONNECTION_TIMEOUT_ENV = "GAME_CONNECTION_TIMEOUT_SECONDS";
-    static final String BATCH_MODE_ENV = "GAME_BATCH_MODE";
 
     private BotRunnerMain() {
     }
@@ -65,13 +65,16 @@ public final class BotRunnerMain {
         }
 
         Duration timeout = connectionTimeout(environment);
-        BatchMode batchMode = batchMode(environment);
-        try (BatchGameBot bot = GameBots.connectBatch(serverUrl, teamToken, matchId, timeout, batchMode)) {
+        try (BatchGameBot bot = GameBots.connectBatch(serverUrl, teamToken, matchId, timeout)) {
             out.printf("Đã kết nối. Đang chạy %s.%n", args[0]);
             program.run(bot);
-            bot.submitBatch();
-            out.println("Batch đã được server chấp nhận.");
-            return 0;
+            BatchReceipt receipt = bot.submitBatch();
+            out.printf("Đã xếp %d lệnh vào hàng chờ; mỗi bot chạy một lệnh mỗi nhịp, theo dõi trên bản đồ.%n",
+                    receipt.queuedCount());
+            for (QueueRejection rejection : receipt.rejections()) {
+                err.println("Bị từ chối: " + receipt.describe(rejection));
+            }
+            return receipt.queuedCount() > 0 || receipt.rejections().isEmpty() ? 0 : 4;
         } catch (Throwable exception) {
             String code = exception instanceof GameClientException clientException
                     ? clientException.code()
@@ -93,15 +96,6 @@ public final class BotRunnerMain {
     @FunctionalInterface
     private interface ProgramEntry {
         void run(GameBot bot) throws Throwable;
-    }
-
-    private static BatchMode batchMode(Map<String, String> environment) {
-        String value = environment.getOrDefault(BATCH_MODE_ENV, BatchMode.ATOMIC.name());
-        try {
-            return BatchMode.valueOf(value.trim().toUpperCase());
-        } catch (IllegalArgumentException exception) {
-            return BatchMode.ATOMIC;
-        }
     }
 
     private static String requiredEnvironment(Map<String, String> environment, String name, PrintStream err) {

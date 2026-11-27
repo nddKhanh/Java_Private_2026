@@ -211,7 +211,7 @@ Chỉ phase `VERIFIED` mới cho phép bắt đầu phase tiếp theo.
 - Scene duy nhất hiển thị lưới theo kích thước snapshot, mặc định 8×8.
 - Placeholder render theo danh sách HQ/unit trong snapshot, không khóa số lượng hoặc màu trong scene.
 - Panel HP, trạng thái match, winner, revision và kết nối.
-- Log năm command gần nhất.
+- Nhật ký tám lệnh gần nhất; lệnh bị từ chối tô màu cam.
 - Kết nối WebSocket chỉ để nhận snapshot và trạng thái kết nối.
 
 **Nghiệm thu:**
@@ -504,35 +504,36 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 
 **Phạm vi chuyển tiếp:** Footprint 2×2, projectile và fixed simulation tick được hoàn thiện trong R4.1.
 
-## R4 — Hàng đợi và quota
+## R4 — Hàng chờ lệnh theo bot
 
-- Mỗi lần Run tạo một batch với tối đa 10 hành động cho mỗi unit hoặc công trình được điều khiển.
-- Coordinator xử lý lệnh tuần tự theo state sau từng hành động và không giới hạn theo giây.
-- Atomic rollback toàn batch khi có lỗi; Partial giữ kết quả trước lỗi đầu tiên.
-- Kết quả trả mã lỗi, thông báo tiếng Việt, vị trí lỗi và số hành động đã áp dụng.
+- Mỗi unit, HQ và công trình có hàng chờ riêng theo đội; mỗi nhịp mô phỏng chạy lệnh đầu của mọi hàng chờ theo thứ tự xếp.
+- Mỗi lần Run nối batch vào cuối hàng chờ; server xác nhận ngay với số lệnh đã xếp và các lệnh bị từ chối khi gửi.
+- Lệnh lỗi khi tới lượt bỏ các lệnh còn lại của cùng bot trong cùng lần gửi; lệnh chưa có chủ thể chờ lệnh trước nó trong cùng lần gửi.
+- Giới hạn 40 lệnh chờ mỗi bot và 256 lệnh mỗi lần gửi đặt trong `game-rules.yml`.
+- Viewer hiện hàng chờ của bot được chọn, cho xóa toàn bộ lệnh và tô màu cam lệnh bị từ chối.
 
 **Nghiệm thu:**
 
-- [x] Tối đa 10 hành động cho mỗi unit hoặc công trình trong một batch; thao tác chọn và đọc state không tính hạn mức.
-- [x] Nhiều unit và công trình trong cùng batch có bộ đếm độc lập; spawn tính cho công trình nguồn.
-- [x] Atomic không thay đổi state nếu bất kỳ hành động nào lỗi.
-- [x] Partial dừng tại lỗi đầu tiên và giữ đúng các hành động trước đó, kể cả lỗi chuyển đổi dữ liệu command.
-- [x] Simulation tick không tham gia hạn mức batch.
+- [x] Mỗi bot chạy đúng một lệnh mỗi nhịp; các bot khác nhau chạy trong cùng nhịp.
+- [x] Lệnh lỗi chỉ bỏ phần còn lại của cùng bot trong cùng lần gửi.
+- [x] Lần gửi vượt giới hạn hàng chờ bị từ chối phần của bot đó; lần gửi quá 256 lệnh bị từ chối.
+- [x] SPAWN từ BARRACKS xây trong cùng lần gửi chờ tới khi BARRACKS xong.
+- [x] Hàng chờ và lệnh bị từ chối chỉ gửi tới đội sở hữu; chỉ thành viên cùng đội xóa được hàng chờ.
+- [x] Trận kết thúc thì mọi hàng chờ được xóa.
 
-**Bằng chứng:** Toàn bộ Maven test pass sau khi nâng giao thức batch lên schema 7.
+**Bằng chứng:** `mvnw test`, `npm test` và production build pass với giao thức schema 8; `WinningScenario` thắng qua hàng chờ trên server thật.
 
 ## R4.1 — Footprint, projectile và simulation tick
 
 - SIEGE chiếm footprint 2×2 trong spawn, movement, occupancy, attack range và render.
 - ATTACK tạo projectile; damage và winner chỉ được áp dụng khi projectile chạm mục tiêu.
-- Server chạy simulation tick mặc định 250 ms ngoài batch hành động của bot và phát state mới qua WebSocket schema 7.
+- Server chạy simulation tick mặc định 250 ms: mỗi nhịp chạy lệnh đầu hàng chờ của từng bot rồi cập nhật đạn và tháp, phát state mới qua WebSocket.
 - Java SDK và `GameBot` có thể chờ simulation trở về trạng thái không còn projectile.
 
 **Nghiệm thu:**
 
 - [x] Mọi ô trong footprint 2×2 được kiểm tra bounds và occupancy.
 - [x] Projectile cùng tick được đưa vào snapshot, replay và state hash xác định.
-- [x] Simulation tick không tiêu thụ hạn mức batch của bot.
 - [x] Phaser hiển thị footprint SIEGE và projectile từ snapshot server-authoritative.
 - [x] Kịch bản Java client chờ projectile kết thúc trước khi đọc winner.
 
@@ -546,7 +547,7 @@ Người dùng xác nhận trực tiếp Compile → Run, console bot hoàn tấ
 - Mật khẩu BCrypt, session token ngẫu nhiên chỉ lưu hash SHA-256 và hạn dùng cấu hình được.
 - Session token đã join team dùng trực tiếp cho WebSocket; demo token cũ tiếp tục hỗ trợ kịch bản local.
 - H2 dạng file và Flyway lưu account, session, lobby membership, snapshot cùng event history.
-- Server nạp snapshot tương thích với `MatchSetup` khi khởi động; nhiều account cùng team điều khiển chung state và giới hạn batch theo bot.
+- Server nạp snapshot tương thích với `MatchSetup` khi khởi động; nhiều account cùng team điều khiển chung state và chung hàng chờ của từng bot.
 
 **Nghiệm thu:**
 

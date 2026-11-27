@@ -15,11 +15,13 @@ public record RuleSet(
         int headquartersHp,
         Map<UnitType, UnitStats> units,
         Map<BuildingType, BuildingStats> buildings,
-        TowerStats tower
+        TowerStats tower,
+        CommandLimits commands
 ) {
     public RuleSet {
         Objects.requireNonNull(version, "version");
         Objects.requireNonNull(tower, "tower");
+        Objects.requireNonNull(commands, "commands");
         if (maxUnitsPerTeam <= 0) {
             throw new IllegalArgumentException("Unit limit must be positive");
         }
@@ -50,7 +52,7 @@ public record RuleSet(
                         BuildingType.TOWER, new BuildingStats(buildingHp, towerCost),
                         BuildingType.WALL, new BuildingStats(buildingHp, wallCost)
                 ),
-                new TowerStats(1, 5, towerCooldownTicks));
+                new TowerStats(1, 5, towerCooldownTicks), new CommandLimits(40, 256));
     }
 
     public RuleSet(
@@ -130,6 +132,15 @@ public record RuleSet(
         public BuildingStats {
             if (hp <= 0 || woodCost <= 0) {
                 throw new IllegalArgumentException("Invalid building stats");
+            }
+        }
+    }
+
+    /** maxPerBot: pending commands one bot may hold; maxPerBatch: commands accepted in one batch. */
+    public record CommandLimits(int maxPerBot, int maxPerBatch) {
+        public CommandLimits {
+            if (maxPerBot <= 0 || maxPerBatch <= 0) {
+                throw new IllegalArgumentException("Invalid command limits");
             }
         }
     }

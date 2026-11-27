@@ -11,7 +11,7 @@ Khi thay đổi README cấp gốc về cách dùng, chức năng, trạng thái
 ## Kiến trúc
 
 ```text
-Java bot → batch → GameClient → WebSocket /game → Spring Boot → Game Core → STATE_UPDATED → Phaser
+Java bot → batch → GameClient → WebSocket /game → hàng chờ của từng bot → nhịp mô phỏng → Game Core → STATE_UPDATED → Phaser
 ```
 
 Server là nguồn sự thật duy nhất cho movement, damage, HP và winner.
@@ -20,7 +20,7 @@ Bot có thể spawn `WORKER`, `MELEE`, `RANGED`, `SIEGE`; lệnh attack nhận m
 HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE, RANGED và SIEGE.
 Projectile giữ tọa độ đích lúc khai hỏa, đi từng ô ngang hoặc dọc theo đường thẳng, bị công trình chặn và không đuổi theo mục tiêu.
 TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô.
-Web viewer có đăng ký/đăng nhập, tạo/tìm trận, phòng chờ theo đội, cùng bảng trạng thái revision, tick, lực lượng và kết quả trận.
+Web viewer có đăng ký/đăng nhập, tạo/tìm trận, phòng chờ theo đội, cùng bảng trạng thái revision, tick, lực lượng, hàng chờ lệnh, nhật ký lệnh và kết quả trận.
 Khi chạy `start-web.ps1`, viewer mở trên mọi địa chỉ mạng để các máy cùng Wi-Fi truy cập bằng IPv4 của máy chủ.
 
 Desktop Code Studio dùng JavaFX để viết, biên dịch và chạy source Java local trong JVM con, sau đó tái sử dụng `GameClient` để điều khiển server.
@@ -33,8 +33,13 @@ Người học cũng có thể mở `student-bot-template` trong IntelliJ, viế
 `Submit` đọc pairing key cùng tài khoản từ `.env` và gửi source qua HTTP loopback tới Desktop để tự pair, nhận token điều khiển của tài khoản, compile và chạy.
 Game server chỉ nhận batch command, không nhận source hoặc class Java.
 
-Mỗi lần Run gom các hành động thành một batch; người dùng chọn Atomic để từ chối toàn bộ khi có lỗi hoặc Partial để giữ phần hợp lệ trước lỗi đầu tiên.
-Mỗi bot được gửi tối đa 10 hành động trong một batch và không có giới hạn theo giây hoặc simulation tick.
+Mỗi lần Run gom các hành động thành một batch rồi nối vào cuối hàng chờ của từng bot; server xác nhận ngay khi đã xếp lệnh.
+Mỗi unit, HQ và công trình có hàng chờ lệnh riêng trên server; mỗi nhịp 250 ms mỗi bot chạy đúng một lệnh.
+Lệnh lỗi khi tới lượt bỏ các lệnh còn lại của đúng bot đó trong đúng lần gửi đó; lệnh của lần gửi khác và của bot khác vẫn chạy.
+Lệnh không đọc được bị từ chối ngay khi gửi, cùng các lệnh sau nó của cùng bot.
+Lệnh SPAWN hoặc lệnh của quân chưa tồn tại chờ tới khi lệnh xây hoặc lệnh tạo quân trước nó trong cùng lần gửi chạy xong.
+Mỗi bot giữ tối đa 40 lệnh chờ và mỗi lần gửi tối đa 256 lệnh, cấu hình trong `game-rules.yml`; lần gửi làm hàng chờ của một bot vượt giới hạn thì phần của bot đó bị từ chối.
+Khi trận kết thúc, mọi hàng chờ được xóa.
 
 ## Yêu cầu
 
@@ -94,30 +99,30 @@ Trong ứng dụng:
 
 1. Với phòng tạo từ web, nhập pairing key sáu ký tự đang hiển thị trong phòng chờ cùng username và mật khẩu của tài khoản đã vào đội, rồi nhấn **Pair**.
 2. Chờ ứng dụng tự điền Server, Match code và Token điều khiển của tài khoản.
-3. Chọn Atomic hoặc Partial tại ô Batch.
-4. Nếu không dùng pairing, vẫn có thể nhập thủ công WebSocket URL, mã phòng và session token của thành viên trận.
-5. Giữ Bot class là MyBot và source mẫu mặc định.
-6. Nhấn **Compile**; trạng thái phải chuyển thành Compiled.
-7. Nhấn **Run**; Desktop gửi một batch và console hiển thị kết quả hoặc lỗi tiếng Việt.
-8. Quan sát Phaser cập nhật theo các hành động server đã chấp nhận.
+3. Nếu không dùng pairing, vẫn có thể nhập thủ công WebSocket URL, mã phòng và session token của thành viên trận.
+4. Giữ Bot class là `Main` và source mẫu mặc định.
+5. Nhấn **Compile**; trạng thái phải chuyển thành Compiled.
+6. Nhấn **Run**; console báo số lệnh đã xếp vào hàng chờ và các lệnh bị từ chối ngay khi gửi.
+7. Quan sát Phaser cập nhật theo từng nhịp; bấm vào bot để xem hàng chờ của nó.
 
 Có thể dùng `Ctrl+B` để Compile, `Ctrl+R` để Run và `Ctrl+K` để Stop.
 
 Để dùng IntelliJ thay cho editor tích hợp:
 
 1. Mở `student-bot-template` bằng IntelliJ với JDK 21.
-2. Sao chép `.env.example` thành `.env`, rồi điền `MATCH_KEY`, `USERNAME`, `PASSWORD` và `BATCH_MODE`.
+2. Sao chép `.env.example` thành `.env`, rồi điền `MATCH_KEY`, `USERNAME` và `PASSWORD`.
 3. Sửa `src/main/java/Main.java`.
 4. Chạy `Submit.main()` trong khi Desktop đang mở và xem toàn bộ kết quả trong console IntelliJ.
 
 API ngắn gồm `select`, `go`, `hit`, `mine`, `build`, `spawn`, `stay` và `state`.
 `spawn(id, type, dir)` dùng HQ hoặc BARRACKS đã chọn làm nguồn sản xuất.
 API đầy đủ phải truyền `sourceId`; overload cũ không có nguồn sẽ báo lỗi tại client trước khi gửi request.
-Desktop chỉ gửi batch sau khi chương trình kết thúc bình thường và trả log biên dịch, Java hoặc server về console IntelliJ.
+Desktop chỉ gửi batch sau khi chương trình kết thúc bình thường và trả log biên dịch, Java hoặc kết quả xếp hàng chờ về console IntelliJ.
+Lệnh lỗi khi tới lượt chạy hiện trong nhật ký lệnh trên viewer.
 
 Nếu sửa source sau khi compile, ứng dụng bắt buộc compile lại trước khi Run.
 Nút Stop kết thúc ngay JVM con đang chạy và bỏ batch chưa gửi.
-Batch đã được server chấp nhận vẫn được giữ sau khi dừng chương trình.
+Lệnh đã vào hàng chờ vẫn chạy sau khi dừng chương trình; dùng nút xóa hàng chờ trên viewer để hủy.
 
 ## Account và lobby team
 
@@ -181,11 +186,11 @@ Hướng dẫn tại [`GUIDE.md`](GUIDE.md) đi tuần tự từ khởi chạy c
 ## Cấu hình trận
 
 Profile mặc định nằm tại `game-server/src/main/resources/application.yml`.
-Map, match list, team, faction, màu, token demo, unit, HQ, resource node, building, giới hạn batch, tick interval và session lifetime đều có thể đổi mà không sửa Phaser renderer.
-Thông số cân bằng nằm riêng trong `game-server/src/main/resources/game-rules.yml`, mỗi biến có chú thích.
+Map, match list, team, faction, màu, token demo, unit, HQ, resource node, building, tick interval và session lifetime đều có thể đổi mà không sửa Phaser renderer.
+Thông số cân bằng và giới hạn hàng chờ nằm riêng trong `game-server/src/main/resources/game-rules.yml`, mỗi biến có chú thích.
 Đổi giá trị thì tăng `version` trong file đó; trận đã lưu theo phiên bản cũ sẽ được tạo lại từ đầu.
 
-Profile mặc định dùng bản đồ 50×50, mỗi đội khởi đầu 100 gỗ và 100 thịt, và giới hạn 10 hành động cho mỗi unit hoặc công trình được điều khiển trong một batch.
+Profile mặc định dùng bản đồ 50×50, mỗi đội khởi đầu 100 gỗ và 100 thịt, và nhịp mô phỏng 250 ms (`limits.tick-millis`).
 Danh sách `headquarters` để trống thì HQ tự đặt: phe đầu ở mép trái, phe sau ở mép phải, đội đầu tiên của mỗi phe ở hai góc đối nhau và các đội còn lại cách đều dọc mép.
 Khối `starter-pack` khai báo quân, mỏ và công trình mà mỗi đội nhận quanh HQ.
 Mỏ và công trình đặt theo độ lệch so với HQ, tự đảo chiều ở nửa xa của bản đồ để hướng vào trong.
@@ -210,8 +215,9 @@ Không dùng các token này cho môi trường public hoặc production.
 
 - Server mặc định phục hồi state từ H2 sau khi restart; chế độ `-Fresh` mới chủ ý giữ state trong RAM.
 - Có 10 team trong 2 faction; mỗi team có một unit seed, một HQ và có thể spawn tối đa 50 unit theo profile mặc định.
-- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; server xử lý batch tuần tự theo chế độ Atomic hoặc Partial.
-- Lỗi chuyển đổi command và lỗi luật chơi cùng giữ đúng vị trí lỗi; log client nêu ID chủ thể và hành động tương ứng.
+- Gameplay gồm MOVE, WAIT, ATTACK, SPAWN, HARVEST, BUILD và GET_STATE; mỗi bot chạy một lệnh trong hàng chờ của mình mỗi nhịp.
+- Hàng chờ và lệnh bị từ chối của một đội chỉ gửi tới thành viên đội đó; mọi thành viên cùng đội được xóa hàng chờ, đồng minh khác đội thì không.
+- Hàng chờ chỉ nằm trong bộ nhớ server; khởi động lại server thì các lệnh đang chờ mất.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
 - Spawn tạo unit ở ô kề nguồn sản xuất, trừ thịt theo loại quân và trừ thêm gỗ với SIEGE; HQ chỉ tạo WORKER và BARRACKS chỉ tạo quân chiến đấu.
 - Resource node, harvest và building đã có; công trình chặn/nhận damage, bị phá hủy ở HP 0 và mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.

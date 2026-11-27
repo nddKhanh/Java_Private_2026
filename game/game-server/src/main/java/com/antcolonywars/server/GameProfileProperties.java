@@ -38,10 +38,10 @@ public record GameProfileProperties(
         starterPack = starterPack == null ? StarterPack.empty() : starterPack;
     }
 
-    public record Limits(int maxActionsPerBotPerBatch, int commandQueueCapacity, int tickMillis) {
+    public record Limits(int tickMillis) {
         public Limits {
-            if (maxActionsPerBotPerBatch < 1 || commandQueueCapacity < 1 || tickMillis < 1) {
-                throw new IllegalArgumentException("Batch, queue and tick limits must be positive");
+            if (tickMillis < 1) {
+                throw new IllegalArgumentException("Tick interval must be positive");
             }
         }
     }
@@ -56,14 +56,16 @@ public record GameProfileProperties(
             HeadquartersRules headquarters,
             Map<UnitType, RuleSet.UnitStats> units,
             Map<BuildingType, RuleSet.BuildingStats> buildings,
-            Tower tower
+            Tower tower,
+            Commands commands
     ) {
         public RuleSet toRuleSet(int tickMillis) {
             return new RuleSet(
                     version, maxUnitsPerTeam, economy.startingWood(), economy.startingMeat(),
                     economy.harvestAmount(), economy.harvestRange(), headquarters.hp(), units, buildings,
                     new RuleSet.TowerStats(tower.damage(), tower.range(),
-                            Math.max(1, (int) Math.ceil(tower.cooldownMillis() / (double) tickMillis)))
+                            Math.max(1, (int) Math.ceil(tower.cooldownMillis() / (double) tickMillis))),
+                    new RuleSet.CommandLimits(commands.maxPerBot(), commands.maxPerBatch())
             );
         }
     }
@@ -75,6 +77,9 @@ public record GameProfileProperties(
     }
 
     public record Tower(int damage, int range, int cooldownMillis) {
+    }
+
+    public record Commands(int maxPerBot, int maxPerBatch) {
     }
 
     public record TeamProfile(String id, String displayName, String color, String token, String factionId) {

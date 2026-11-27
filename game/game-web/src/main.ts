@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import './style.css';
 import { BattleScene } from './BattleScene';
 import { GameSocket, type ConnectionStatus } from './GameSocket';
-import type { Account, GameEvent, LobbyView, MatchRuntime, MatchState, Session, StateUpdatedMessage } from './types';
+import type { Account, CommandRejection, GameEvent, LobbyView, MatchRuntime, MatchState, QueuedCommand, Session, StateUpdatedMessage } from './types';
 
 const SAMPLE_MAP = `{
   "map": "12x12",
@@ -44,7 +44,7 @@ app.innerHTML = `
 
       <section id="waiting-room" class="hidden"><div class="section-heading"><div><p class="eyebrow">WAITING ROOM</p><h2>Phòng <span id="waiting-code">—</span></h2><p id="waiting-status" class="muted-copy">Đang chờ chủ phòng bắt đầu.</p><div class="pairing-key"><span>DESKTOP PAIRING KEY</span><strong id="pairing-key">—</strong><small>Nhập mã này cùng tài khoản của bạn trong Desktop Code Studio.</small></div></div><button id="leave-waiting" class="quiet-button" type="button">Về sảnh</button></div><div id="team-grid" class="team-grid"></div><div class="waiting-actions"><button id="start-game" class="hidden" type="button">Bắt đầu trận đấu</button><button id="open-game" class="hidden" type="button">Mở bản đồ trận đấu</button><p class="form-message" data-message="waiting"></p></div></section>
 
-      <section id="arena" class="arena hidden"><div class="arena-heading"><div><p class="eyebrow">LIVE MATCH</p><h2 id="arena-title">match-default</h2></div><button id="change-match" class="quiet-button" type="button">Về sảnh</button></div><div class="workspace"><section class="board-card" aria-label="Bản đồ trận đấu"><div id="game"></div><div id="result-banner" class="result-banner hidden"></div></section><aside class="sidebar"><section class="panel match-panel"><p class="panel-label">TRẬN ĐẤU</p><div class="status-row"><span>Trạng thái</span><strong id="match-status">Đang chờ</strong></div><div class="status-row"><span>Revision</span><strong id="revision">—</strong></div><div class="status-row"><span>Winner</span><strong id="winner">—</strong></div><div class="status-row"><span>Nhịp mô phỏng</span><strong id="tick">—</strong></div></section><section class="panel"><p class="panel-label">LỰC LƯỢNG</p><div id="forces" class="forces empty">Chưa có snapshot.</div></section><section class="panel log-panel"><p class="panel-label">COMMAND GẦN NHẤT</p><ol id="command-log" class="command-log"><li class="empty">Chưa có command.</li></ol></section></aside></div></section>
+      <section id="arena" class="arena hidden"><div class="arena-heading"><div><p class="eyebrow">LIVE MATCH</p><h2 id="arena-title">match-default</h2></div><button id="change-match" class="quiet-button" type="button">Về sảnh</button></div><div class="workspace"><section class="board-card" aria-label="Bản đồ trận đấu"><div id="game"></div><div id="result-banner" class="result-banner hidden"></div></section><aside class="sidebar"><section class="panel match-panel"><p class="panel-label">TRẬN ĐẤU</p><div class="status-row"><span>Trạng thái</span><strong id="match-status">Đang chờ</strong></div><div class="status-row"><span>Revision</span><strong id="revision">—</strong></div><div class="status-row"><span>Winner</span><strong id="winner">—</strong></div><div class="status-row"><span>Nhịp mô phỏng</span><strong id="tick">—</strong></div></section><section class="panel"><p id="side-label" class="panel-label">LỰC LƯỢNG</p><div id="forces" class="forces empty">Chưa có snapshot.</div><div id="queue-panel" class="queue-panel hidden"></div></section><section class="panel log-panel"><p class="panel-label">NHẬT KÝ LỆNH</p><ol id="command-log" class="command-log"><li class="empty">Chưa có command.</li></ol></section></aside></div></section>
     </main>
     <footer>Trạng thái trận đấu được xác nhận bởi Java server.</footer>
   </div>`;
@@ -54,8 +54,12 @@ const socketProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 const httpProtocol = window.location.protocol === 'https:' ? 'https' : 'http';
 const socketBase = import.meta.env.VITE_GAME_WS_URL ?? `${socketProtocol}://${lanHost}:8080/game`;
 const httpBase = import.meta.env.VITE_GAME_HTTP_URL ?? `${httpProtocol}://${lanHost}:8080`;
-const battleScene = new BattleScene();
-const events: GameEvent[] = [];
+let battleScene = new BattleScene();
+/** Latest log lines, newest first: confirmed events and the viewer team's failed commands. */
+const logEntries: { key: string; html: string }[] = [];
+let latestState: MatchState | null = null;
+let latestQueues: Record<string, QueuedCommand[]> = {};
+let selectedSubjectId: string | null = null;
 let game: Phaser.Game | null = null;
 let gameSocket: GameSocket | null = null;
 let sessionToken = window.localStorage.getItem('acw-session') ?? '';
@@ -232,11 +236,19 @@ function startMatch(matchId: string, token: string): void {
   stopLobbyPoll();
   gameSocket?.disconnect();
   game?.destroy(true);
-  game = new Phaser.Game({ type: Phaser.AUTO, width: 960, height: 960, parent: 'game', backgroundColor: '#0b1120', scene: battleScene, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
-  events.length = 0;
-  viewerTeamId = teamOfViewer(matchId);
   setText('#arena-title', matchId);
+  // The arena must be visible before Phaser measures its parent, or FIT scaling sizes the canvas to 0x0.
   showScreen('arena');
+  // A destroyed game cannot host its old scene again, so every match gets a fresh one.
+  battleScene = new BattleScene();
+  resetArena();
+  game = new Phaser.Game({ type: Phaser.AUTO, width: 960, height: 960, parent: 'game', backgroundColor: '#0b1120', scene: battleScene, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
+  logEntries.length = 0;
+  latestState = null;
+  latestQueues = {};
+  selectedSubjectId = null;
+  battleScene.onSelect(selectSubject);
+  viewerTeamId = null;
   const query = new URLSearchParams({ matchId });
   const credential = sessionToken || token;
   if (credential) query.set('token', credential);
@@ -245,13 +257,19 @@ function startMatch(matchId: string, token: string): void {
   gameSocket.connect();
 }
 
-/** The forces panel shows only the viewer's own team: lobby membership for created matches, account team otherwise. */
-function teamOfViewer(matchId: string): string | null {
-  if (currentLobby && currentLobby.matchCode === matchId) {
-    const own = currentLobby.teams.find((team) => team.members.some((member) => member.accountId === currentLobby?.currentAccountId));
-    return own?.teamId ?? null;
-  }
-  return currentAccount?.teamId ?? null;
+/** Clears the previous match's panels until the new match sends its first state. */
+function resetArena(): void {
+  setText('#match-status', 'Đang chờ');
+  setText('#revision', '—');
+  setText('#winner', '—');
+  setText('#tick', '—');
+  document.querySelector('#result-banner')?.classList.add('hidden');
+  const forces = document.querySelector<HTMLElement>('#forces');
+  if (forces) { forces.classList.remove('hidden'); forces.classList.add('empty'); forces.textContent = 'Chưa có snapshot.'; }
+  document.querySelector('#queue-panel')?.classList.add('hidden');
+  setText('#side-label', 'LỰC LƯỢNG');
+  const log = document.querySelector<HTMLOListElement>('#command-log');
+  if (log) log.innerHTML = '<li class="empty">Chưa có lệnh nào chạy.</li>';
 }
 
 async function api<T>(path: string, init: RequestInit = {}, authenticated = true): Promise<T> {
@@ -267,15 +285,91 @@ async function api<T>(path: string, init: RequestInit = {}, authenticated = true
 }
 
 function receiveState(message: StateUpdatedMessage): void {
+  latestState = message.state;
+  latestQueues = message.queues ?? {};
+  // The server knows which team this connection plays for; the forces and queue panels follow it.
+  viewerTeamId = message.viewerTeamId ?? null;
   battleScene.updateSnapshot(message.state);
-  for (const incoming of message.events ?? []) {
-    if (!events.some((event) => event.sequence === incoming.sequence)) {
-      events.unshift(incoming);
-    }
+  for (const event of message.events ?? []) {
+    if (event.action !== 'TICK') addLog(`e${event.sequence}`, eventLine(event));
   }
-  events.splice(5);
+  for (const rejection of message.rejections ?? []) {
+    addLog(`r${rejection.commandId}`, rejectionLine(rejection));
+  }
+  if (selectedSubjectId && !subjectExists(message.state, selectedSubjectId)) selectedSubjectId = null;
   updatePanel(message.state);
   updateLog();
+}
+
+/** Only the viewer's own units, headquarters and buildings open their queue; anything else closes it. */
+function selectSubject(id: string | null): void {
+  const state = latestState;
+  selectedSubjectId = id && state && ownerOf(state, id) === viewerTeamId ? id : null;
+  battleScene.setSelected(selectedSubjectId);
+  if (state) updatePanel(state);
+}
+
+function ownerOf(state: MatchState, id: string): string | null {
+  return state.units.find((item) => item.id === id)?.teamId
+    ?? state.headquarters.find((item) => item.id === id)?.teamId
+    ?? state.buildings.find((item) => item.id === id)?.teamId
+    ?? null;
+}
+
+function subjectExists(state: MatchState, id: string): boolean {
+  return state.units.some((item) => item.id === id && item.hp > 0)
+    || state.headquarters.some((item) => item.id === id && item.hp > 0)
+    || state.buildings.some((item) => item.id === id && item.hp > 0);
+}
+
+const ACTION_LABELS: Record<string, string> = { MOVE: 'Đi', ATTACK: 'Tấn công', WAIT: 'Đứng yên', HARVEST: 'Khai thác', BUILD: 'Xây', SPAWN: 'Tạo quân' };
+const DIRECTION_LABELS: Record<string, string> = { UP: 'lên', RIGHT: 'phải', DOWN: 'xuống', LEFT: 'trái' };
+
+function commandLabel(command: QueuedCommand): string {
+  const parts = [ACTION_LABELS[command.action] ?? command.action];
+  if (command.type) parts.push(command.type);
+  if (command.direction) parts.push(DIRECTION_LABELS[command.direction] ?? command.direction);
+  if (command.target) parts.push(`→ ${command.target}`);
+  return parts.join(' ');
+}
+
+function renderQueuePanel(): void {
+  const panel = document.querySelector<HTMLElement>('#queue-panel');
+  const forces = document.querySelector<HTMLElement>('#forces');
+  if (!panel || !forces) return;
+  const open = selectedSubjectId !== null;
+  panel.classList.toggle('hidden', !open);
+  forces.classList.toggle('hidden', open);
+  setText('#side-label', open ? 'HÀNG CHỜ LỆNH' : 'LỰC LƯỢNG');
+  if (!selectedSubjectId) return;
+  const queue = latestQueues[selectedSubjectId] ?? [];
+  const items = queue.length
+    ? queue.map((command, index) => `<li><span class="queue-index">${index + 1}</span>${escapeHtml(commandLabel(command))}</li>`).join('')
+    : '<li class="empty">Không có lệnh đang chờ.</li>';
+  panel.innerHTML = `<div class="queue-head"><strong>${escapeHtml(selectedSubjectId)}</strong><small>${queue.length} lệnh · mỗi nhịp chạy một lệnh</small></div><ol class="queue-list">${items}</ol><div class="queue-actions"><button id="clear-queue" class="danger-button" type="button" ${queue.length ? '' : 'disabled'}>Xóa toàn bộ lệnh</button><button id="close-queue" class="quiet-button" type="button">Quay lại lực lượng</button></div>`;
+}
+
+document.querySelector('#queue-panel')?.addEventListener('click', (event) => {
+  const target = event.target as HTMLElement;
+  if (target.id === 'close-queue') selectSubject(null);
+  if (target.id === 'clear-queue' && selectedSubjectId && latestState) {
+    gameSocket?.send({ type: 'CLEAR_QUEUE', matchId: latestState.matchId, commandId: crypto.randomUUID(), subjectId: selectedSubjectId });
+  }
+});
+
+function addLog(key: string, html: string): void {
+  if (logEntries.some((entry) => entry.key === key)) return;
+  logEntries.unshift({ key, html });
+  logEntries.splice(8);
+}
+
+function eventLine(event: GameEvent): string {
+  return `<li><span class="log-sequence">#${event.sequence}</span><div><strong>${escapeHtml(event.actorTeamId)} · ${escapeHtml(event.action)}</strong><small>${escapeHtml(event.unitId)}${event.targetId ? ` → ${escapeHtml(event.targetId)}` : ''}</small></div></li>`;
+}
+
+function rejectionLine(rejection: CommandRejection): string {
+  const dropped = rejection.droppedCount > 0 ? ` Đã bỏ ${rejection.droppedCount} lệnh sau của bot này.` : '';
+  return `<li class="rejected"><span class="log-sequence">!</span><div><strong>${escapeHtml(rejection.subjectId)} · ${escapeHtml(rejection.action ?? 'lệnh')} bị từ chối</strong><small>${escapeHtml(rejection.errorMessage ?? rejection.error)}${dropped}</small></div></li>`;
 }
 
 function updatePanel(state: MatchState): void {
@@ -286,6 +380,7 @@ function updatePanel(state: MatchState): void {
   setText('#tick', String(state.simulationTick));
   const banner = document.querySelector<HTMLElement>('#result-banner');
   if (banner) { banner.classList.toggle('hidden', !finished); banner.textContent = state.winnerTeamId ? `Đội ${state.winnerTeamId} thắng trận` : 'Trận đã kết thúc'; }
+  renderQueuePanel();
   const forces = document.querySelector<HTMLElement>('#forces');
   if (!forces) return;
   const ownTeams = state.teams.filter((team) => team.id === viewerTeamId);
@@ -304,7 +399,7 @@ function updatePanel(state: MatchState): void {
 function updateLog(): void {
   const log = document.querySelector<HTMLOListElement>('#command-log');
   if (!log) return;
-  log.innerHTML = events.length ? events.map((event) => `<li><span class="log-sequence">#${event.sequence}</span><div><strong>${escapeHtml(event.actorTeamId)} · ${escapeHtml(event.action)}</strong><small>${escapeHtml(event.unitId)}${event.targetId ? ` → ${escapeHtml(event.targetId)}` : ''}</small></div></li>`).join('') : '<li class="empty">Chưa có command.</li>';
+  log.innerHTML = logEntries.length ? logEntries.map((entry) => entry.html).join('') : '<li class="empty">Chưa có lệnh nào chạy.</li>';
 }
 
 function setConnection(status: ConnectionStatus | 'idle'): void {

@@ -34,54 +34,40 @@ public final class GameSession {
         return result;
     }
 
-    public BatchApplyResult applyBatch(List<? extends ActionCommand> commands, BatchMode mode) {
-        return applyBatch(commands, mode, -1, null);
+    /**
+     * Runs one tick: the head of every queue in queued order, then projectiles and towers.
+     * A head whose subject does not exist yet waits while an earlier command of its batch is still queued
+     * (for example a SPAWN from a barracks the same batch is building); any other failure drops the rest
+     * of that batch for that subject. Once the match is finished every queue is emptied.
+     */
+    public QueueTickResult advanceTick(CommandQueue queue) {
+        List<GameEvent> events = new ArrayList<>();
+        List<CommandRejection> rejections = new ArrayList<>();
+        for (CommandQueue.Entry head : queue.heads()) {
+            ApplyResult result = apply(head.command());
+            if (result.accepted()) {
+                queue.pop(head);
+                events.addAll(result.events());
+                continue;
+            }
+            if (waitsForEarlierCommand(result.error()) && queue.hasEarlierPending(head)) {
+                continue;
+            }
+            int dropped = queue.dropBatch(head);
+            rejections.add(new CommandRejection(
+                    head.teamId(), head.batchId(), head.command().commandId(), head.subjectId(),
+                    CommandRejection.actionOf(head.command()), result.error(), Math.max(0, dropped - 1)
+            ));
+        }
+        events.addAll(advanceTick().events());
+        if (state.status() == MatchStatus.FINISHED) {
+            queue.clearAll();
+        }
+        return new QueueTickResult(state, events, rejections);
     }
 
-    public BatchApplyResult applyBatch(
-            List<? extends ActionCommand> commands,
-            BatchMode mode,
-            int rejectedIndex,
-            ErrorCode rejectedError
-    ) {
-        Objects.requireNonNull(commands, "commands");
-        Objects.requireNonNull(mode, "mode");
-        MatchState originalState = state;
-        MatchState workingState = state;
-        List<GameEvent> events = new ArrayList<>();
-        List<ActionCommand> acceptedCommands = new ArrayList<>();
-
-        for (int index = 0; index < commands.size(); index++) {
-            if (index == rejectedIndex) {
-                if (mode == BatchMode.ATOMIC) {
-                    return BatchApplyResult.failure(originalState, List.of(), rejectedError, index, 0);
-                }
-                state = workingState;
-                commandLog.addAll(acceptedCommands);
-                return BatchApplyResult.failure(
-                        workingState, events, rejectedError, index, acceptedCommands.size()
-                );
-            }
-            ActionCommand command = Objects.requireNonNull(commands.get(index), "command");
-            ApplyResult result = engine.apply(workingState, command, rules);
-            if (!result.accepted()) {
-                if (mode == BatchMode.ATOMIC) {
-                    return BatchApplyResult.failure(originalState, List.of(), result.error(), index, 0);
-                }
-                state = workingState;
-                commandLog.addAll(acceptedCommands);
-                return BatchApplyResult.failure(
-                        workingState, events, result.error(), index, acceptedCommands.size()
-                );
-            }
-            workingState = result.state();
-            events.addAll(result.events());
-            acceptedCommands.add(command);
-        }
-
-        state = workingState;
-        commandLog.addAll(acceptedCommands);
-        return BatchApplyResult.success(workingState, events, acceptedCommands.size());
+    private static boolean waitsForEarlierCommand(ErrorCode error) {
+        return error == ErrorCode.UNIT_NOT_FOUND || error == ErrorCode.PRODUCTION_SOURCE_NOT_FOUND;
     }
 
     public ApplyResult advanceTick() {

@@ -11,7 +11,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 ### P1-02. Khóa WebSocket toàn server — XÁC NHẬN TỪ CODE; CHỈ CẦN KHI ĐÔNG NGƯỜI CHƠI
 
 - **Hiện trạng:** `handleTextMessage()` vẫn `synchronized` trên một handler chung cho mọi trận; broadcast gửi tuần tự tới từng socket.
-  `MatchCoordinator.commandQueueCapacity` vẫn không được dùng.
 - **Hậu quả:** Một trận bận hoặc viewer chậm làm tăng độ trễ của trận khác.
   Với khoảng 30 người chơi, chưa cần xử lý.
 - **Sửa:** Tuần tự hóa theo trận thay vì khóa toàn server; giới hạn hoặc đệm gửi tới viewer chậm.
@@ -25,7 +24,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 
 - **Giá trị còn là số thử nghiệm:** mọi thông số đã nằm trong `game-server/src/main/resources/game-rules.yml`, nhưng HQ chỉ có 3 HP, mọi quân 3 HP, mọi công trình 5 HP; SIEGE chỉ hơn 1 sát thương, RANGED chỉ hơn 1 tầm.
   Cần chốt bảng HP, sát thương, tầm cho từng loại quân, HP từng loại công trình và HP của HQ.
-- **Đánh không hồi chiêu, đi không giới hạn tốc độ:** hết khi làm B-05, vì mỗi bot chỉ chạy một lệnh mỗi nhịp 250 ms.
 
 ### B-02. Cân bằng kinh tế
 
@@ -36,18 +34,25 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - **Giới hạn quân:** 50 quân × 10 đội trên bản đồ 50×50 dễ kín chỗ.
   Cần chốt giới hạn quân mỗi đội cho bản đồ này.
 
-### B-05. Hàng chờ lệnh cho từng bot
+### B-06. Đồ họa và trải nghiệm người chơi còn kém
 
-- **Mục tiêu:** mỗi nhịp 250 ms, mỗi unit hoặc công trình chỉ chạy một lệnh; lần Run chỉ nối thêm lệnh vào cuối hàng chờ của từng bot.
-- **Đã chốt:**
-  - Bỏ Atomic/Partial; lệnh lỗi lúc tới lượt chạy thì xóa các lệnh còn lại của đúng bot đó trong đúng lần gửi đó, lệnh của lần gửi khác và của bot khác giữ nguyên.
-  - Bỏ giới hạn 10 hành động mỗi bot mỗi batch; chống spam bằng giới hạn độ dài hàng chờ mỗi bot và giữ giới hạn 256 lệnh mỗi lần gửi, cả hai đặt trong `game-rules.yml`.
-  - Bấm vào unit hoặc công trình của đội mình thì cột phải hiện hàng chờ của nó thay cho Lực lượng, chỉ có nút xóa toàn bộ lệnh.
-  - Mọi thành viên cùng đội được xóa hàng chờ; đồng minh khác đội thì không; hàng chờ chỉ gửi cho thành viên cùng đội.
-  - Không thêm hồi chiêu riêng cho quân.
-  - Người chơi điều khiển trực tiếp qua giao diện: vị trí trên viewer là vị trí thật, hàng chờ trên viewer là hàng chờ thật của server.
-    `bot.state()` giữ nguyên là state lúc bắt đầu Run, chưa tính lệnh còn chờ; Run không tự chờ hàng chờ chạy hết.
-    Docs ghi rõ điều này.
+- **Tham khảo:** [tram-cuoi-cung-hoc-vien](https://github.com/tung51652-alt/tram-cuoi-cung-hoc-vien), học cách làm rồi làm theo kiểu của mình, không sao chép mã hay tài sản đồ họa.
+- **Điểm nên học:**
+  - Bảng màu và font tiếng Việt thống nhất (Be Vietnam Pro, giấy phép OFL), robot có trạng thái nhìn thấy được (mắt tắt/sáng).
+  - Nhật ký hành động tô màu theo kết quả: cam là bị từ chối, đỏ là code lỗi, kèm lý do dễ hiểu.
+  - Điều khiển xem trận: tạm dừng, xem chậm 0.5x, nhanh 2x; phím tắt cho các nút chính.
+  - Hướng dẫn từng bài có ảnh chụp giao diện đánh số từng khu vực.
+- **Cần chốt:** phạm vi đợt đầu (bảng màu và font, nhật ký màu, hay điều khiển tốc độ xem) và có cần ảnh chụp trong docs không.
+
+### B-07. Viết code trong trình soạn thảo bất kỳ
+
+- **Hiện trạng:** người chơi phải dùng ô soạn thảo của Desktop Code Studio, hoặc project IntelliJ mẫu chạy `Submit.main()`.
+- **Tham khảo:** ở repo trên, người chơi sửa một file bằng trình soạn thảo bất kỳ rồi lưu; game có nút "Chạy lại code" (F5) luôn đọc bản đã lưu mới nhất, không cần bước gửi code.
+- **Mục tiêu:** một file mẫu mà người chơi mở bằng IDE hay trình soạn thảo nào cũng chạy được.
+- **Hướng có thể chọn:**
+  - Desktop theo dõi một file người chơi chọn và nút Run luôn biên dịch bản đã lưu, giống repo tham khảo.
+  - File mẫu tự chứa một lớp nhỏ chỉ dùng thư viện chuẩn của JDK 21 để gửi lệnh tới Desktop qua loopback, nên chạy được bằng `java Main.java` hay nút Run của IDE bất kỳ mà không cần cài thêm thư viện.
+- **Cần chốt:** chọn hướng gửi code, file mẫu đặt ở đâu và có giữ project IntelliJ mẫu hiện tại không.
 
 ## C. Rủi ro triển khai — Chỉ ưu tiên nếu chạy trên máy chung/public
 
@@ -56,7 +61,7 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 
 ## Những chức năng không đưa vào sửa lại
 
-- Atomic/Partial tuần tự, exception Java hủy batch dở; spawn đúng HQ/BARRACKS và tính hạn mức công trình.
+- Hàng chờ lệnh theo bot, exception Java hủy batch dở; spawn đúng HQ/BARRACKS.
 - Đạn Bresenham cố định, xuyên đồng minh, tháp cooldown 1 giây; API `bot.stay()`.
 - Cảnh báo overload spawn cũ, nhãn ID nằm trên hình; phân biệt WORKER/MELEE/RANGED/SIEGE và HQ/BARRACKS/TOWER/WALL.
 

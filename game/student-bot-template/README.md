@@ -7,7 +7,8 @@
 4. Mở Desktop Code Studio; không cần bấm Compile hoặc Run tại Desktop.
 5. Chạy `Submit.main()` trong IntelliJ để gửi source, key và tài khoản tới Desktop rồi xem kết quả ngay trong console IntelliJ.
 
-Desktop tự pair trong LAN, đăng nhập để nhận token điều khiển của đội mình, biên dịch source, tạo batch rồi gửi command đến server.
+Desktop tự pair trong LAN, đăng nhập để nhận token điều khiển của đội mình, biên dịch source, rồi xếp các lệnh vào hàng chờ của từng bot trên server.
+Mỗi bot chạy một lệnh mỗi nhịp 250 ms; theo dõi tiến trình và lệnh bị từ chối trên bản đồ.
 Source Java chỉ được biên dịch trên Desktop và không được gửi đến server game.
 Batch chỉ được gửi khi `Main.main(Bot bot)` kết thúc bình thường; exception giữa chương trình sẽ bỏ các lệnh đang gom.
 

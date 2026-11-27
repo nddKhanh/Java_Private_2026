@@ -2,11 +2,9 @@ package com.antcolonywars.client;
 
 import com.antcolonywars.bot.GameBot;
 import com.antcolonywars.bot.GameBots;
-import com.antcolonywars.bot.BatchGameBot;
 import com.antcolonywars.core.GameEvent;
 import com.antcolonywars.core.GameSession;
 import com.antcolonywars.core.MatchSetup;
-import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
 import com.antcolonywars.client.BuildingType;
@@ -38,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
         properties = {
                 "spring.datasource.url=jdbc:h2:mem:client-integration",
+                "game.profile.limits.tick-millis=50",
                 // Pins the starter worker next to its headquarters so scripted moves stay deterministic.
                 "game.profile.starter-pack.units[0].type=WORKER",
                 "game.profile.starter-pack.units[0].dx=1",
@@ -184,75 +183,66 @@ class GameClientIntegrationTest {
     }
 
     @Test
-    void batchErrorNamesCommandSubjectActionAndReason() {
+    void singleCommandReportsTheFailureOfItsTurn() {
         try (GameClient client = GameClient.connect(serverUrl(), "blue-token")) {
             GameClientException move = assertThrows(
-                    GameClientException.class,
-                    () -> client.submitBatch(
-                            List.of(BatchAction.move("worker-blue", Direction.UP)),
-                            BatchMode.ATOMIC
-                    )
+                    GameClientException.class, () -> client.move("worker-blue", Direction.UP)
             );
 
             assertEquals("OUT_OF_BOUNDS", move.code());
-            assertEquals(
-                    "Lệnh 1 — worker-blue — di chuyển lên: Vị trí nằm ngoài bản đồ.",
-                    move.getMessage()
-            );
-
-            GameClientException attack = assertThrows(GameClientException.class, () -> client.submitBatch(
-                    List.of(BatchAction.attack("worker-blue", Direction.UP)), BatchMode.ATOMIC
-            ));
-            assertTrue(attack.getMessage().contains("worker-blue — tấn công lên"));
-
-            GameClientException build = assertThrows(GameClientException.class, () -> client.submitBatch(
-                    List.of(BatchAction.build(
-                            "worker-blue", "barracks-blue", BuildingType.BARRACKS, Direction.LEFT
-                    )), BatchMode.ATOMIC
-            ));
-            assertTrue(build.getMessage().contains("worker-blue — xây BARRACKS trái"));
-
-            GameClientException spawn = assertThrows(GameClientException.class, () -> client.submitBatch(
-                    List.of(BatchAction.spawn(
-                            "hq-blue", "melee-blue", "Melee", "MELEE", Direction.DOWN
-                    )), BatchMode.ATOMIC
-            ));
-            assertTrue(spawn.getMessage().contains("hq-blue — spawn MELEE xuống"));
-
-            List<BatchAction> tooMany = java.util.stream.IntStream.range(0, 11)
-                    .mapToObj(ignored -> BatchAction.waitTurn("worker-blue"))
-                    .toList();
-            GameClientException limit = assertThrows(GameClientException.class, () -> client.submitBatch(
-                    tooMany, BatchMode.ATOMIC
-            ));
-            assertTrue(limit.getMessage().contains("Lệnh 11 — worker-blue — đứng yên"));
-            assertTrue(limit.getMessage().contains("Vượt giới hạn 10 hành động"));
+            assertEquals("Vị trí nằm ngoài bản đồ.", move.getMessage());
         }
     }
 
     @Test
-    void batchCanBuildBarracksAndSpawnFromItSequentially() {
-        try (BatchGameBot bot = GameBots.connectBatch(
-                serverUrl(), "blue-token", "match-default", Duration.ofSeconds(5), BatchMode.ATOMIC
-        )) {
-            bot.move(Direction.RIGHT);
-            bot.move(Direction.DOWN);
-            bot.move(Direction.DOWN);
-            bot.harvest();
-            bot.harvest();
-            bot.build("barracks-blue", BuildingType.BARRACKS, Direction.RIGHT);
-            bot.spawn(
-                    "barracks-blue", "melee-blue-1", "Melee",
-                    com.antcolonywars.core.UnitType.MELEE, Direction.DOWN
-            );
+    void batchReceiptNamesRefusedCommandSubjectActionAndReason() {
+        try (GameClient client = GameClient.connect(serverUrl(), "blue-token")) {
+            List<BatchAction> tooMany = java.util.stream.IntStream.range(0, 41)
+                    .mapToObj(ignored -> BatchAction.waitTurn("worker-blue"))
+                    .toList();
 
-            GameState state = bot.submitBatch();
+            BatchReceipt receipt = client.submitBatch(tooMany);
+
+            assertEquals(0, receipt.queuedCount());
+            String text = receipt.describe(receipt.rejections().getFirst());
+            assertTrue(text.startsWith("Lệnh 1 — worker-blue — đứng yên: Hàng chờ của bot đã đầy"), text);
+            assertTrue(text.endsWith("Đã bỏ 40 lệnh sau của bot này trong lần gửi."), text);
+        }
+    }
+
+    @Test
+    void batchCanBuildBarracksAndSpawnFromItSequentially() throws InterruptedException {
+        try (GameClient client = GameClient.connect(serverUrl(), "blue-token")) {
+            BatchReceipt receipt = client.submitBatch(List.of(
+                    BatchAction.move("worker-blue", Direction.RIGHT),
+                    BatchAction.move("worker-blue", Direction.DOWN),
+                    BatchAction.move("worker-blue", Direction.DOWN),
+                    BatchAction.harvest("worker-blue"),
+                    BatchAction.harvest("worker-blue"),
+                    BatchAction.build("worker-blue", "barracks-blue", BuildingType.BARRACKS, Direction.RIGHT),
+                    BatchAction.spawn("barracks-blue", "melee-blue-1", "Melee", "MELEE", Direction.DOWN)
+            ));
+            assertEquals(7, receipt.queuedCount());
+
+            GameState state = awaitState(client, current -> current.snapshot().units().stream()
+                    .anyMatch(unit -> unit.id().equals("melee-blue-1") && unit.type().equals("MELEE")));
 
             assertTrue(state.snapshot().buildings().stream()
                     .anyMatch(building -> building.id().equals("barracks-blue")));
-            assertTrue(state.snapshot().units().stream()
-                    .anyMatch(unit -> unit.id().equals("melee-blue-1") && unit.type().equals("MELEE")));
         }
+    }
+
+    private static GameState awaitState(GameClient client, java.util.function.Predicate<GameState> condition)
+            throws InterruptedException {
+        long deadline = System.nanoTime() + Duration.ofSeconds(10).toNanos();
+        while (System.nanoTime() < deadline) {
+            GameState state = client.getLatestState();
+            if (condition.test(state)) {
+                return state;
+            }
+            Thread.sleep(20);
+        }
+        throw new AssertionError("Timed out waiting for the queued commands to run");
     }
 
     @Test

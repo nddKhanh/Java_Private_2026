@@ -1,7 +1,6 @@
 package com.antcolonywars.client;
 
 import com.antcolonywars.core.MatchState;
-import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.core.UnitType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -25,12 +25,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 7;
+    private static final int SCHEMA_VERSION = 8;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
+    /** A single command waits behind its bot's queue, one command per tick, so its result can take a while. */
+    private static final Duration EXECUTION_TIMEOUT = Duration.ofSeconds(60);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Duration timeout;
     private final Map<String, CompletableFuture<CommandResult>> pending = new ConcurrentHashMap<>();
+    private final Map<String, CompletableFuture<GameState>> executions = new ConcurrentHashMap<>();
     private final Object stateMonitor = new Object();
     private final StringBuilder textFragments = new StringBuilder();
     private volatile MatchState latestState;
@@ -168,58 +171,51 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         return new GameState(state);
     }
 
-    public GameState submitBatch(List<BatchAction> actions, BatchMode mode) {
+    /** Appends the actions to the queues of their bots and returns once the server has queued them. */
+    public BatchReceipt submitBatch(List<BatchAction> actions) {
         Objects.requireNonNull(actions, "actions");
-        Objects.requireNonNull(mode, "mode");
-        if (actions.isEmpty()) {
-            return getLatestState();
-        }
-        ensureOpen();
         String batchId = UUID.randomUUID().toString();
+        if (actions.isEmpty()) {
+            return new BatchReceipt(batchId, actions, 0, List.of());
+        }
         Map<String, Object> message = new HashMap<>();
         message.put("type", "BATCH");
-        message.put("schemaVersion", SCHEMA_VERSION);
-        message.put("matchId", latestState.matchId());
-        message.put("commandId", batchId);
-        message.put("mode", mode.name());
         message.put("commands", List.copyOf(actions));
-
-        CompletableFuture<CommandResult> response = new CompletableFuture<>();
-        pending.put(batchId, response);
-        try {
-            webSocket.sendText(objectMapper.writeValueAsString(message), true)
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            CommandResult result = response.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            if (result.appliedCount() > 0) {
-                waitForRevision(result.revision(), false);
-            }
-            if (!result.ok()) {
-                int actionNumber = result.failedIndex() == null ? 0 : result.failedIndex() + 1;
-                String prefix = "";
-                if (actionNumber > 0) {
-                    BatchAction failed = actions.get(actionNumber - 1);
-                    prefix = "Lệnh " + actionNumber + " — " + subjectId(failed)
-                            + " — " + actionDescription(failed) + ": ";
-                }
-                String detail = result.errorMessage() == null ? "Lệnh không thể thực hiện." : result.errorMessage();
-                throw new GameClientException(result.error(), prefix + detail);
-            }
-            waitForRevision(result.revision(), false);
-            return getLatestState();
-        } catch (GameClientException exception) {
-            throw exception;
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new GameClientException("INTERRUPTED", "Đã dừng khi đang gửi batch.", exception);
-        } catch (ExecutionException exception) {
-            throw new GameClientException("BATCH_FAILED", "Không thể gửi batch.", exception.getCause());
-        } catch (TimeoutException exception) {
-            throw new GameClientException("TIMEOUT", "Hết thời gian chờ kết quả batch.", exception);
-        } catch (Exception exception) {
-            throw new GameClientException("INVALID_MESSAGE", "Không thể mã hóa batch.", exception);
-        } finally {
-            pending.remove(batchId);
+        CommandResult result = request(batchId, message);
+        if (!result.ok() && result.rejections().isEmpty()) {
+            throw new GameClientException(result.error(), textOrDefault(result.errorMessage(), "Không thể gửi lệnh."));
         }
+        return new BatchReceipt(batchId, actions, result.queuedCount(), result.rejections());
+    }
+
+    /** Removes every pending command of one of the team's bots; returns how many were removed. */
+    public int clearQueue(String subjectId) {
+        Objects.requireNonNull(subjectId, "subjectId");
+        Map<String, Object> message = new HashMap<>();
+        message.put("type", "CLEAR_QUEUE");
+        message.put("subjectId", subjectId);
+        CommandResult result = request(UUID.randomUUID().toString(), message);
+        if (!result.ok()) {
+            throw new GameClientException(result.error(), textOrDefault(result.errorMessage(), "Không thể xóa hàng chờ."));
+        }
+        return result.queuedCount();
+    }
+
+    /** Describes a refused command the way the console shows it: position, bot, action and reason. */
+    static String describe(QueueRejection rejection, List<BatchAction> actions) {
+        String prefix = "";
+        if (rejection.index() != null && rejection.index() >= 0 && rejection.index() < actions.size()) {
+            BatchAction action = actions.get(rejection.index());
+            prefix = "Lệnh " + (rejection.index() + 1) + " — " + subjectId(action) + " — "
+                    + actionDescription(action) + ": ";
+        } else if (rejection.subjectId() != null && !rejection.subjectId().isBlank()) {
+            prefix = rejection.subjectId() + " — " + textOrDefault(rejection.action(), "lệnh").toLowerCase() + ": ";
+        }
+        String detail = textOrDefault(rejection.errorMessage(), "Lệnh không thể thực hiện.");
+        String dropped = rejection.droppedCount() > 0
+                ? " Đã bỏ " + rejection.droppedCount() + " lệnh sau của bot này trong lần gửi."
+                : "";
+        return prefix + detail + dropped;
     }
 
     private static String subjectId(BatchAction action) {
@@ -359,30 +355,22 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
         }
     }
 
+    /** Queues one command and waits until it runs on its bot's turn, returning the state right after it. */
     private GameState sendAction(String action, Map<String, Object> parameters) {
-        ensureOpen();
         String commandId = UUID.randomUUID().toString();
         Map<String, Object> message = new HashMap<>(parameters);
         message.put("type", "COMMAND");
-        message.put("schemaVersion", SCHEMA_VERSION);
-        message.put("matchId", latestState.matchId());
-        message.put("commandId", commandId);
         message.put("action", action);
-
-        CompletableFuture<CommandResult> response = new CompletableFuture<>();
-        pending.put(commandId, response);
+        CompletableFuture<GameState> execution = new CompletableFuture<>();
+        executions.put(commandId, execution);
         try {
-            webSocket.sendText(objectMapper.writeValueAsString(message), true)
-                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-            CommandResult result = response.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            CommandResult result = request(commandId, message);
             if (!result.ok()) {
-                String messageText = result.errorMessage() == null
-                        ? "Lệnh không thể thực hiện."
-                        : result.errorMessage();
-                throw new GameClientException(result.error(), messageText);
+                throw new GameClientException(
+                        result.error(), textOrDefault(result.errorMessage(), "Lệnh không thể thực hiện.")
+                );
             }
-            waitForRevision(result.revision(), false);
-            return getLatestState();
+            return execution.get(EXECUTION_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
         } catch (GameClientException exception) {
             throw exception;
         } catch (InterruptedException exception) {
@@ -392,11 +380,38 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
             if (exception.getCause() instanceof GameClientException clientException) {
                 throw clientException;
             }
-            throw new GameClientException("COMMAND_FAILED", "Cannot send command", exception.getCause());
+            throw new GameClientException("COMMAND_FAILED", "Cannot run command", exception.getCause());
         } catch (TimeoutException exception) {
             throw new GameClientException("TIMEOUT", "Timed out waiting for command " + commandId, exception);
-        } catch (Exception exception) {
-            throw new GameClientException("INVALID_MESSAGE", "Cannot encode command", exception);
+        } finally {
+            executions.remove(commandId);
+        }
+    }
+
+    /** Sends one message and waits for its COMMAND_RESULT acknowledgement. */
+    private CommandResult request(String commandId, Map<String, Object> message) {
+        ensureOpen();
+        message.put("schemaVersion", SCHEMA_VERSION);
+        message.put("matchId", latestState.matchId());
+        message.put("commandId", commandId);
+        CompletableFuture<CommandResult> response = new CompletableFuture<>();
+        pending.put(commandId, response);
+        try {
+            webSocket.sendText(objectMapper.writeValueAsString(message), true)
+                    .get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            return response.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new GameClientException("INTERRUPTED", "Đã dừng khi đang gửi lệnh.", exception);
+        } catch (ExecutionException exception) {
+            if (exception.getCause() instanceof GameClientException clientException) {
+                throw clientException;
+            }
+            throw new GameClientException("COMMAND_FAILED", "Không thể gửi lệnh.", exception.getCause());
+        } catch (TimeoutException exception) {
+            throw new GameClientException("TIMEOUT", "Hết thời gian chờ server xác nhận lệnh.", exception);
+        } catch (java.io.IOException exception) {
+            throw new GameClientException("INVALID_MESSAGE", "Không thể mã hóa lệnh.", exception);
         } finally {
             pending.remove(commandId);
         }
@@ -429,6 +444,20 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
                 synchronized (stateMonitor) {
                     stateMonitor.notifyAll();
                 }
+                for (JsonNode event : message.path("events")) {
+                    CompletableFuture<GameState> execution = executions.get(event.path("commandId").asText());
+                    if (execution != null) {
+                        execution.complete(new GameState(state));
+                    }
+                }
+                for (QueueRejection rejection : rejections(message.path("rejections"))) {
+                    CompletableFuture<GameState> execution = executions.get(rejection.commandId());
+                    if (execution != null) {
+                        execution.completeExceptionally(new GameClientException(
+                                rejection.error(), textOrDefault(rejection.errorMessage(), "Lệnh không thể thực hiện.")
+                        ));
+                    }
+                }
                 return;
             }
             if ("COMMAND_RESULT".equals(type)) {
@@ -440,10 +469,10 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
                     future.complete(new CommandResult(
                             commandId,
                             message.path("ok").asBoolean(),
-                            message.path("error").isNull() ? null : message.path("error").asText(),
-                            message.path("errorMessage").isNull() ? null : message.path("errorMessage").asText(),
-                            message.path("failedIndex").isNull() ? null : message.path("failedIndex").asInt(),
-                            message.path("appliedCount").asInt(),
+                            text(message.path("error")),
+                            text(message.path("errorMessage")),
+                            message.path("queuedCount").asInt(),
+                            rejections(message.path("rejections")),
                             message.path("revision").asLong(),
                             message.path("sequence").asLong()
                     ));
@@ -492,6 +521,27 @@ public final class GameClient implements AutoCloseable, WebSocket.Listener {
 
     private void failPending(GameClientException exception) {
         pending.values().forEach(future -> future.completeExceptionally(exception));
+        executions.values().forEach(future -> future.completeExceptionally(exception));
+    }
+
+    private static List<QueueRejection> rejections(JsonNode node) {
+        List<QueueRejection> result = new ArrayList<>();
+        for (JsonNode item : node) {
+            result.add(new QueueRejection(
+                    text(item.path("commandId")),
+                    text(item.path("subjectId")),
+                    text(item.path("action")),
+                    text(item.path("error")),
+                    text(item.path("errorMessage")),
+                    item.path("droppedCount").asInt(),
+                    item.path("index").isNumber() ? item.path("index").asInt() : null
+            ));
+        }
+        return result;
+    }
+
+    private static String text(JsonNode node) {
+        return node.isMissingNode() || node.isNull() ? null : node.asText();
     }
 
     private void recordConnectionFailure(GameClientException exception) {

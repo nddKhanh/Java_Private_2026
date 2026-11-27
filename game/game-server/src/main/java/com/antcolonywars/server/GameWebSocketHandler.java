@@ -1,19 +1,18 @@
 package com.antcolonywars.server;
 
 import com.antcolonywars.core.ActionCommand;
-import com.antcolonywars.core.ApplyResult;
-import com.antcolonywars.core.BatchApplyResult;
-import com.antcolonywars.core.BatchMode;
 import com.antcolonywars.core.AttackCommand;
 import com.antcolonywars.core.BuildCommand;
 import com.antcolonywars.core.BuildingType;
+import com.antcolonywars.core.CommandQueue;
+import com.antcolonywars.core.CommandRejection;
 import com.antcolonywars.core.Direction;
 import com.antcolonywars.core.GameEvent;
-import com.antcolonywars.core.GetStateCommand;
+import com.antcolonywars.core.HarvestCommand;
+import com.antcolonywars.core.Headquarters;
 import com.antcolonywars.core.MatchState;
 import com.antcolonywars.core.MoveCommand;
-import com.antcolonywars.core.HarvestCommand;
-import com.antcolonywars.core.InvalidActionCommand;
+import com.antcolonywars.core.QueueTickResult;
 import com.antcolonywars.core.SpawnCommand;
 import com.antcolonywars.core.Unit;
 import com.antcolonywars.core.WaitCommand;
@@ -21,8 +20,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -30,13 +29,19 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * WebSocket protocol: COMMAND and BATCH append to bot queues and are acknowledged at once;
+ * queued commands run one per bot per tick and reach every viewer through STATE_UPDATED.
+ */
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 7;
+    public static final int SCHEMA_VERSION = 8;
 
     private final MatchRegistry matchRegistry;
     private final ObjectMapper objectMapper;
@@ -55,7 +60,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
     @Override
     public synchronized void afterConnectionEstablished(WebSocketSession session) throws Exception {
         sessions.add(session);
-        sendState(session, coordinator(session).state(), List.of());
+        sendState(session, coordinator(session).state(), List.of(), List.of());
     }
 
     @Override
@@ -79,101 +84,115 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return;
         }
         if ("GET_STATE".equals(request.type())) {
-            handleGetState(session, request, coordinator);
+            send(session, CommandResultMessage.success(
+                    state.matchId(), request.commandId(), state.revision(), state.eventSequence()
+            ));
+            sendState(session, state, List.of(), List.of());
             return;
         }
-        if ("BATCH".equals(request.type())) {
-            handleBatch(session, request, coordinator, state);
-            return;
-        }
-        if (!"COMMAND".equals(request.type())) {
-            sendFailure(session, request.commandId(), "INVALID_MESSAGE_TYPE");
-            return;
-        }
-
-        String teamId = (String) session.getAttributes().get(TokenHandshakeInterceptor.TEAM_ID_ATTRIBUTE);
+        String teamId = teamId(session);
         if (teamId == null) {
             sendFailure(session, request.commandId(), "UNAUTHORIZED");
             return;
         }
+        switch (request.type() == null ? "" : request.type()) {
+            case "COMMAND" -> handleEnqueue(session, teamId, request.commandId(), List.of(new BatchCommandMessage(
+                    request.commandId(), request.action(), request.unitId(), request.displayName(),
+                    request.unitType(), request.direction(), request.targetId(), request.buildingId(),
+                    request.buildingType(), request.sourceId()
+            )), coordinator);
+            case "BATCH" -> handleEnqueue(session, teamId, request.commandId(), request.commands(), coordinator);
+            case "CLEAR_QUEUE" -> handleClearQueue(session, teamId, request, coordinator);
+            default -> sendFailure(session, request.commandId(), "INVALID_MESSAGE_TYPE");
+        }
+    }
 
-        ActionCommand command;
-        try {
-            command = toCommand(request, teamId, state);
-        } catch (IllegalArgumentException exception) {
+    /**
+     * Converts and queues a batch. A command that cannot be read is refused together with the later commands
+     * of the same bot in this batch; other bots keep theirs.
+     */
+    private void handleEnqueue(
+            WebSocketSession session,
+            String teamId,
+            String batchId,
+            List<BatchCommandMessage> items,
+            MatchCoordinator coordinator
+    ) throws IOException {
+        if (batchId == null || batchId.isBlank() || items == null || items.isEmpty()
+                || items.size() > coordinator.maxBatchCommands()) {
+            sendFailure(session, batchId, "INVALID_BATCH");
+            return;
+        }
+        MatchState state = coordinator.state();
+        List<ActionCommand> commands = new ArrayList<>();
+        List<Integer> indexes = new ArrayList<>();
+        List<RejectionMessage> rejections = new ArrayList<>();
+        Map<String, RejectionMessage> blocked = new LinkedHashMap<>();
+        Map<String, Integer> droppedBySubject = new LinkedHashMap<>();
+        for (int index = 0; index < items.size(); index++) {
+            BatchCommandMessage item = items.get(index);
+            String subject = subjectOf(item, teamId, state);
+            if (blocked.containsKey(subject)) {
+                droppedBySubject.merge(subject, 1, Integer::sum);
+                continue;
+            }
+            try {
+                commands.add(toCommand(item, teamId, state));
+                indexes.add(index);
+            } catch (IllegalArgumentException | NullPointerException exception) {
+                String commandId = item == null || item.commandId() == null ? batchId + ":" + index : item.commandId();
+                String action = item == null ? null : item.action();
+                blocked.put(subject, RejectionMessage.onArrival(
+                        batchId, index, commandId, subject, action, "INVALID_COMMAND", 0
+                ));
+            }
+        }
+        for (Map.Entry<String, RejectionMessage> entry : blocked.entrySet()) {
+            RejectionMessage first = entry.getValue();
+            rejections.add(RejectionMessage.onArrival(
+                    batchId, first.index(), first.commandId(), first.subjectId(), first.action(), first.error(),
+                    droppedBySubject.getOrDefault(entry.getKey(), 0)
+            ));
+        }
+
+        MatchCoordinator.EnqueueResult result = coordinator.enqueue(teamId, batchId, commands);
+        for (String subject : result.refusedSubjects()) {
+            List<ActionCommand> share = commands.stream()
+                    .filter(command -> CommandQueue.subjectOf(command).equals(subject))
+                    .toList();
+            ActionCommand first = share.getFirst();
+            rejections.add(RejectionMessage.onArrival(
+                    batchId, indexes.get(commands.indexOf(first)), first.commandId(), subject,
+                    CommandRejection.actionOf(first), result.matchFinished() ? "MATCH_FINISHED" : "COMMAND_QUEUE_FULL",
+                    share.size() - 1
+            ));
+        }
+        rejections.sort(java.util.Comparator.comparing(RejectionMessage::index));
+        send(session, CommandResultMessage.queued(
+                state.matchId(), batchId, result.queuedCount(), rejections, state.revision(), state.eventSequence()
+        ));
+        if (result.queuedCount() > 0) {
+            sendTeamState(state, teamId);
+        }
+    }
+
+    private void handleClearQueue(
+            WebSocketSession session,
+            String teamId,
+            ClientMessage request,
+            MatchCoordinator coordinator
+    ) throws IOException {
+        if (request.subjectId() == null || request.subjectId().isBlank()) {
             sendFailure(session, request.commandId(), "INVALID_COMMAND");
             return;
         }
-
-        ApplyResult result = coordinator.apply(command);
-        if (!result.accepted()) {
-            send(session, CommandResultMessage.failure(
-                    result.state().matchId(),
-                    request.commandId(),
-                    result.error().name(),
-                    result.state().revision(),
-                    result.state().eventSequence()
-            ));
-            return;
-        }
-
-        send(session, CommandResultMessage.success(
-                result.state().matchId(),
-                request.commandId(),
-                result.state().revision(),
-                result.state().eventSequence()
+        int removed = coordinator.clearQueue(teamId, request.subjectId());
+        MatchState state = coordinator.state();
+        send(session, CommandResultMessage.queued(
+                state.matchId(), request.commandId(), removed, List.of(), state.revision(), state.eventSequence()
         ));
-        broadcastState(result.state(), result.events());
-    }
-
-    private void handleBatch(
-            WebSocketSession session,
-            ClientMessage request,
-            MatchCoordinator coordinator,
-            MatchState state
-    ) throws IOException {
-        String teamId = (String) session.getAttributes().get(TokenHandshakeInterceptor.TEAM_ID_ATTRIBUTE);
-        if (teamId == null) {
-            sendFailure(session, request.commandId(), "UNAUTHORIZED");
-            return;
-        }
-        if (request.commands() == null || request.commands().isEmpty()
-                || request.commands().size() > coordinator.maxBatchCommands(teamId, request.commands().stream()
-                .filter(command -> command != null && "BUILD".equals(command.action())).count())) {
-            sendFailure(session, request.commandId(), "INVALID_BATCH");
-            return;
-        }
-
-        BatchMode mode;
-        try {
-            mode = BatchMode.valueOf(requireText(request.mode()));
-        } catch (IllegalArgumentException exception) {
-            sendFailure(session, request.commandId(), "INVALID_BATCH");
-            return;
-        }
-
-        List<ActionCommand> commands = new ArrayList<>();
-        for (int index = 0; index < request.commands().size(); index++) {
-            BatchCommandMessage command = request.commands().get(index);
-            try {
-                commands.add(toCommand(command, teamId, state));
-            } catch (IllegalArgumentException | NullPointerException exception) {
-                commands.add(invalidCommand(request.commandId(), index, command, teamId, state));
-            }
-        }
-
-        BatchApplyResult result = coordinator.applyBatch(commands, mode);
-        send(session, CommandResultMessage.batch(
-                result.state().matchId(),
-                request.commandId(),
-                result.error() == null ? null : result.error().name(),
-                result.failedIndex() < 0 ? null : result.failedIndex(),
-                result.appliedCount(),
-                result.state().revision(),
-                result.state().eventSequence()
-        ));
-        if (!result.events().isEmpty()) {
-            broadcastState(result.state(), result.events());
+        if (removed > 0) {
+            sendTeamState(state, teamId);
         }
     }
 
@@ -190,27 +209,19 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void handleGetState(
-            WebSocketSession session,
-            ClientMessage request,
-            MatchCoordinator coordinator
-    ) throws IOException {
-        MatchState state = coordinator.state();
-        send(session, CommandResultMessage.success(
-                state.matchId(),
-                request.commandId(),
-                state.revision(),
-                state.eventSequence()
-        ));
-        sendState(session, state, List.of());
-    }
-
-    private ActionCommand toCommand(ClientMessage request, String teamId, MatchState state) {
-        return toCommand(new BatchCommandMessage(
-                request.commandId(), request.action(), request.unitId(), request.displayName(),
-                request.unitType(), request.direction(), request.targetId(), request.buildingId(),
-                request.buildingType(), request.sourceId()
-        ), teamId, state);
+    public synchronized void broadcastSimulationUpdate(QueueTickResult result) {
+        if (!result.changed()) {
+            return;
+        }
+        // A tick that only failed commands concerns just the teams that sent them.
+        Set<String> rejectedTeams = new java.util.HashSet<>();
+        result.rejections().forEach(rejection -> rejectedTeams.add(rejection.teamId()));
+        broadcast(
+                result.state(),
+                session -> !result.events().isEmpty() || rejectedTeams.contains(teamId(session)),
+                result.events(),
+                result.rejections()
+        );
     }
 
     private ActionCommand toCommand(BatchCommandMessage request, String teamId, MatchState state) {
@@ -220,7 +231,7 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
             return new SpawnCommand(
                     request.commandId(),
                     teamId,
-                    request.sourceId(),
+                    spawnSource(request, teamId, state),
                     requireText(request.unitId()),
                     requireText(request.displayName()),
                     request.unitType() == null || request.unitType().isBlank() ? "WORKER" : request.unitType(),
@@ -249,30 +260,34 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         };
     }
 
-    private InvalidActionCommand invalidCommand(
-            String batchId,
-            int index,
-            BatchCommandMessage request,
-            String teamId,
-            MatchState state
-    ) {
-        String commandId = request == null ? null : request.commandId();
-        if (commandId == null || commandId.isBlank()) {
-            commandId = (batchId == null || batchId.isBlank() ? "batch" : batchId) + ":invalid:" + index;
+    /** The bot whose queue receives a command, resolved the same way even when the command cannot be read. */
+    private String subjectOf(BatchCommandMessage request, String teamId, MatchState state) {
+        if (request == null) {
+            return "";
         }
-        String subjectId = request == null ? null : request.unitId();
-        if (request != null && "SPAWN".equals(request.action())
-                && request.sourceId() != null && !request.sourceId().isBlank()) {
-            subjectId = request.sourceId();
+        if ("SPAWN".equals(request.action())) {
+            return spawnSource(request, teamId, state);
         }
-        if (subjectId == null || subjectId.isBlank()) {
-            try {
-                subjectId = controlledUnitId(state, teamId);
-            } catch (IllegalArgumentException exception) {
-                subjectId = "không-xác-định";
-            }
+        if (request.unitId() != null && !request.unitId().isBlank()) {
+            return request.unitId();
         }
-        return new InvalidActionCommand(commandId, teamId, subjectId);
+        try {
+            return controlledUnitId(state, teamId);
+        } catch (IllegalArgumentException exception) {
+            return "";
+        }
+    }
+
+    /** SPAWN without a source comes from the team's headquarters. */
+    private String spawnSource(BatchCommandMessage request, String teamId, MatchState state) {
+        if (request.sourceId() != null && !request.sourceId().isBlank()) {
+            return request.sourceId();
+        }
+        return state.headquarters().stream()
+                .filter(hq -> hq.teamId().equals(teamId) && hq.hp() > 0)
+                .map(Headquarters::id)
+                .findFirst()
+                .orElse("");
     }
 
     private String controlledUnitId(MatchState state, String teamId) {
@@ -301,16 +316,27 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         ));
     }
 
-    private void broadcastState(MatchState state, List<GameEvent> events) {
+    /** Queue changes without a state change only concern the team that owns the queue. */
+    private void sendTeamState(MatchState state, String teamId) {
+        broadcast(state, session -> teamId.equals(teamId(session)), List.of(), List.of());
+    }
+
+    private void broadcast(
+            MatchState state,
+            java.util.function.Predicate<WebSocketSession> audience,
+            List<GameEvent> events,
+            List<CommandRejection> rejections
+    ) {
         sessions.removeIf(session -> {
             if (!session.isOpen()) {
                 return true;
             }
-            if (!state.matchId().equals(session.getAttributes().get(TokenHandshakeInterceptor.MATCH_ID_ATTRIBUTE))) {
+            if (!state.matchId().equals(session.getAttributes().get(TokenHandshakeInterceptor.MATCH_ID_ATTRIBUTE))
+                    || !audience.test(session)) {
                 return false;
             }
             try {
-                sendState(session, state, events);
+                sendState(session, state, events, rejections);
                 return false;
             } catch (IOException exception) {
                 return true;
@@ -318,23 +344,37 @@ public class GameWebSocketHandler extends TextWebSocketHandler {
         });
     }
 
-    public synchronized void broadcastSimulationUpdate(ApplyResult result) {
-        if (!result.accepted() || result.events().isEmpty()) {
-            return;
+    /**
+     * Every connection sees the stock, queues and failed commands of its own team only;
+     * other teams, allies included, lose wood and meat.
+     */
+    private void sendState(
+            WebSocketSession session,
+            MatchState state,
+            List<GameEvent> events,
+            List<CommandRejection> rejections
+    ) throws IOException {
+        String viewerTeamId = teamId(session);
+        Map<String, List<QueuedCommandView>> queues = new LinkedHashMap<>();
+        if (viewerTeamId != null) {
+            coordinator(session).pendingCommands(viewerTeamId).forEach((subject, commands) ->
+                    queues.put(subject, commands.stream().map(QueuedCommandView::of).toList()));
         }
-        broadcastState(result.state(), result.events());
-    }
-
-    /** Every connection sees the stock of its own team only; other teams, allies included, lose wood and meat. */
-    private void sendState(WebSocketSession session, MatchState state, List<GameEvent> events) throws IOException {
-        ObjectNode payload = objectMapper.valueToTree(StateUpdatedMessage.from(state, events));
-        Object viewerTeamId = session.getAttributes().get(TokenHandshakeInterceptor.TEAM_ID_ATTRIBUTE);
+        List<RejectionMessage> ownRejections = rejections.stream()
+                .filter(rejection -> rejection.teamId().equals(viewerTeamId))
+                .map(RejectionMessage::onTurn)
+                .toList();
+        ObjectNode payload = objectMapper.valueToTree(StateUpdatedMessage.from(viewerTeamId, state, events, queues, ownRejections));
         for (JsonNode team : payload.path("state").path("teams")) {
             if (team instanceof ObjectNode node && !node.path("id").asText().equals(viewerTeamId)) {
                 node.remove(List.of("wood", "meat"));
             }
         }
         send(session, payload);
+    }
+
+    private String teamId(WebSocketSession session) {
+        return (String) session.getAttributes().get(TokenHandshakeInterceptor.TEAM_ID_ATTRIBUTE);
     }
 
     private void send(WebSocketSession session, Object payload) throws IOException {

@@ -27,7 +27,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties = "spring.datasource.url=jdbc:h2:mem:server-integration"
+        properties = {
+                "spring.datasource.url=jdbc:h2:mem:server-integration",
+                "game.profile.limits.tick-millis=50"
+        }
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class GameWebSocketIntegrationTest {
@@ -62,42 +65,43 @@ class GameWebSocketIntegrationTest {
     }
 
     @Test
-    void broadcastsAcceptedMoveToControllerAndViewerAtSameRevision() throws Exception {
+    void queuesACommandAndBroadcastsItsTickToControllerAndViewer() throws Exception {
         SocketClient viewer = connect(null);
         SocketClient blue = connect("blue-token");
         assertEquals(0, viewer.awaitType("STATE_UPDATED").path("revision").asLong());
         JsonNode initial = blue.awaitType("STATE_UPDATED");
-        assertEquals(0, initial.path("revision").asLong());
 
         blue.send(command("move-1", "MOVE", Map.of("direction", "RIGHT")));
 
-        JsonNode result = blue.awaitType("COMMAND_RESULT");
-        JsonNode blueState = blue.awaitType("STATE_UPDATED");
-        JsonNode viewerState = viewer.awaitType("STATE_UPDATED");
-        assertTrue(result.path("ok").asBoolean());
-        assertEquals("move-1", result.path("commandId").asText());
-        assertEquals(1, result.path("revision").asLong());
+        JsonNode ack = blue.awaitType("COMMAND_RESULT");
+        assertTrue(ack.path("ok").asBoolean());
+        assertEquals(1, ack.path("queuedCount").asInt());
+        assertEquals(0, ack.path("revision").asLong());
+        JsonNode blueState = blue.awaitEvent("move-1");
+        JsonNode viewerState = viewer.awaitEvent("move-1");
         assertEquals(1, blueState.path("revision").asLong());
         assertEquals(blueState.path("revision").asLong(), viewerState.path("revision").asLong());
         assertEquals(unitX(initial, "worker-blue") + 1, unitX(viewerState, "worker-blue"));
+        assertTrue(viewerState.path("queues").isEmpty());
 
         viewer.close();
         blue.close();
     }
 
     @Test
-    void reportsOwnershipAndSchemaErrorsWithoutBroadcastingFakeState() throws Exception {
+    void reportsOwnershipFailuresOnlyToTheSendingTeam() throws Exception {
         SocketClient viewer = connect(null);
         SocketClient blue = connect("blue-token");
         viewer.awaitType("STATE_UPDATED");
         blue.awaitType("STATE_UPDATED");
 
         blue.send(command("steal", "WAIT", Map.of("unitId", "worker-red")));
-        JsonNode ownershipError = blue.awaitType("COMMAND_RESULT");
+        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
+        JsonNode rejection = blue.awaitRejection("steal");
 
-        assertFalse(ownershipError.path("ok").asBoolean());
-        assertEquals("NOT_OWNER", ownershipError.path("error").asText());
-        assertNull(viewer.poll(Duration.ofMillis(250)));
+        assertEquals("NOT_OWNER", rejection.path("error").asText());
+        assertEquals("Quân không thuộc đội của bạn.", rejection.path("errorMessage").asText());
+        assertNull(viewer.poll(Duration.ofMillis(300)));
 
         blue.send(Map.of(
                 "type", "COMMAND",
@@ -114,80 +118,84 @@ class GameWebSocketIntegrationTest {
     }
 
     @Test
-    void appliesAtomicAndPartialBatchesWithVietnameseErrors() throws Exception {
+    void failedCommandDropsTheRestOfItsBotsBatch() throws Exception {
         SocketClient blue = connect("blue-token");
         blue.awaitType("STATE_UPDATED");
 
-        blue.send(batch("atomic-batch", "ATOMIC", List.of(
-                action("atomic-wait", "WAIT", Map.of("unitId", "worker-blue")),
-                action("atomic-steal", "WAIT", Map.of("unitId", "worker-red"))
+        blue.send(batch("ghost-batch", List.of(
+                action("real-wait", "WAIT", Map.of("unitId", "worker-blue")),
+                action("ghost-1", "WAIT", Map.of("unitId", "ghost")),
+                action("ghost-2", "WAIT", Map.of("unitId", "ghost"))
         )));
-        JsonNode atomic = blue.awaitType("COMMAND_RESULT");
-        assertFalse(atomic.path("ok").asBoolean());
-        assertEquals("NOT_OWNER", atomic.path("error").asText());
-        assertEquals("Quân không thuộc đội của bạn.", atomic.path("errorMessage").asText());
-        assertEquals(0, atomic.path("appliedCount").asInt());
-        assertEquals(0, atomic.path("revision").asLong());
+        assertEquals(3, blue.awaitType("COMMAND_RESULT").path("queuedCount").asInt());
+        JsonNode rejection = blue.awaitRejection("ghost-1");
 
-        blue.send(batch("partial-batch", "PARTIAL", List.of(
-                action("partial-wait", "WAIT", Map.of("unitId", "worker-blue")),
-                action("partial-steal", "WAIT", Map.of("unitId", "worker-red"))
-        )));
-        JsonNode partial = blue.awaitType("COMMAND_RESULT");
-        assertFalse(partial.path("ok").asBoolean());
-        assertEquals("NOT_OWNER", partial.path("error").asText());
-        assertEquals(1, partial.path("failedIndex").asInt());
-        assertEquals(1, partial.path("appliedCount").asInt());
-        assertEquals(1, blue.awaitType("STATE_UPDATED").path("revision").asLong());
+        assertEquals("UNIT_NOT_FOUND", rejection.path("error").asText());
+        assertEquals(1, rejection.path("droppedCount").asInt());
+        assertTrue(rejection.path("index").isNull());
         blue.close();
     }
 
     @Test
-    void appliesConversionFailuresAtTheirSequentialBatchPosition() throws Exception {
+    void refusesUnreadableCommandsWithTheirLaterCommandsOnArrival() throws Exception {
         SocketClient blue = connect("blue-token");
         blue.awaitType("STATE_UPDATED");
-        List<Map<String, Object>> commands = List.of(
+
+        blue.send(batch("conversion", List.of(
                 action("first", "WAIT", Map.of("unitId", "worker-blue")),
                 action("second", "WAIT", Map.of("unitId", "worker-blue")),
                 action("bad-direction", "MOVE", Map.of("unitId", "worker-blue", "direction", "SIDEWAYS")),
                 action("never-runs", "WAIT", Map.of("unitId", "worker-blue"))
-        );
+        )));
+        JsonNode ack = blue.awaitType("COMMAND_RESULT");
 
-        blue.send(batch("atomic-conversion", "ATOMIC", commands));
-        JsonNode atomic = blue.awaitType("COMMAND_RESULT");
-        assertEquals("INVALID_COMMAND", atomic.path("error").asText());
-        assertEquals(2, atomic.path("failedIndex").asInt());
-        assertEquals(0, atomic.path("appliedCount").asInt());
-        assertEquals(0, atomic.path("revision").asLong());
-
-        blue.send(batch("partial-conversion", "PARTIAL", commands));
-        JsonNode partial = blue.awaitType("COMMAND_RESULT");
-        assertEquals("INVALID_COMMAND", partial.path("error").asText());
-        assertEquals(2, partial.path("failedIndex").asInt());
-        assertEquals(2, partial.path("appliedCount").asInt());
-        assertEquals(2, partial.path("revision").asLong());
-        JsonNode partialState = blue.awaitType("STATE_UPDATED");
-        assertEquals(2, partialState.path("revision").asLong());
-        assertEquals(2, partialState.path("events").size());
-        assertEquals("first", partialState.path("events").get(0).path("commandId").asText());
-        assertEquals("second", partialState.path("events").get(1).path("commandId").asText());
+        assertFalse(ack.path("ok").asBoolean());
+        assertEquals(2, ack.path("queuedCount").asInt());
+        JsonNode rejection = ack.path("rejections").get(0);
+        assertEquals("INVALID_COMMAND", rejection.path("error").asText());
+        assertEquals(2, rejection.path("index").asInt());
+        assertEquals(1, rejection.path("droppedCount").asInt());
+        blue.awaitEvent("first");
+        assertEquals(2, blue.awaitEvent("second").path("revision").asLong());
         blue.close();
     }
 
     @Test
-    void acceptsLargeBatchesUpToTheProfileLimit() throws Exception {
+    void limitsQueueLengthPerBotAndBatchSize() throws Exception {
         SocketClient blue = connect("blue-token");
         blue.awaitType("STATE_UPDATED");
 
-        blue.send(batch("large-batch", "PARTIAL", waits("large", 300)));
-        JsonNode large = blue.awaitType("COMMAND_RESULT");
-        assertEquals("BATCH_LIMIT_EXCEEDED", large.path("error").asText());
-        assertEquals(10, large.path("failedIndex").asInt());
-        assertEquals(10, large.path("appliedCount").asInt());
-        assertEquals(10, blue.awaitType("STATE_UPDATED").path("events").size());
+        blue.send(batch("flood", waits("flood", 41)));
+        JsonNode flood = blue.awaitType("COMMAND_RESULT");
+        assertEquals("COMMAND_QUEUE_FULL", flood.path("error").asText());
+        assertEquals(0, flood.path("queuedCount").asInt());
+        assertEquals(40, flood.path("rejections").get(0).path("droppedCount").asInt());
 
-        blue.send(batch("oversized-batch", "PARTIAL", waits("oversized", 2000)));
+        blue.send(batch("oversized", waits("oversized", 300)));
         assertEquals("INVALID_BATCH", blue.awaitType("COMMAND_RESULT").path("error").asText());
+        blue.close();
+    }
+
+    @Test
+    void clearsTheQueueOfOneOfTheTeamsBots() throws Exception {
+        SocketClient blue = connect("blue-token");
+        blue.awaitType("STATE_UPDATED");
+        blue.send(batch("to-clear", waits("to-clear", 30)));
+        blue.awaitType("COMMAND_RESULT");
+        JsonNode queued = blue.awaitType("STATE_UPDATED");
+        assertEquals("WAIT", queued.path("queues").path("worker-blue").get(0).path("action").asText());
+
+        blue.send(Map.of(
+                "type", "CLEAR_QUEUE",
+                "schemaVersion", 8,
+                "matchId", "match-default",
+                "commandId", "clear-1",
+                "subjectId", "worker-blue"
+        ));
+        JsonNode cleared = blue.awaitType("COMMAND_RESULT");
+
+        assertTrue(cleared.path("ok").asBoolean(), cleared.toString());
+        assertTrue(cleared.path("queuedCount").asInt() > 0, cleared.toString());
         blue.close();
     }
 
@@ -198,7 +206,7 @@ class GameWebSocketIntegrationTest {
     }
 
     @Test
-    void serializesNearConcurrentCommandsIntoUniqueOrderedSequences() throws Exception {
+    void runsCommandsOfDifferentTeamsInTheSameTickWithOrderedSequences() throws Exception {
         SocketClient viewer = connect(null);
         SocketClient blue = connect("blue-token");
         SocketClient red = connect("red-token");
@@ -208,13 +216,10 @@ class GameWebSocketIntegrationTest {
 
         blue.send(command("blue-wait", "WAIT", Map.of()));
         red.send(command("red-wait", "WAIT", Map.of()));
+        viewer.awaitEvent("blue-wait");
+        viewer.awaitEvent("red-wait");
 
-        JsonNode first = viewer.awaitType("STATE_UPDATED");
-        JsonNode second = viewer.awaitType("STATE_UPDATED");
-        assertEquals(1, first.path("sequence").asLong());
-        assertEquals(2, second.path("sequence").asLong());
-        assertNotNull(first.path("events").get(0).path("commandId").textValue());
-        assertNotNull(second.path("events").get(0).path("commandId").textValue());
+        assertEquals(List.of(1L, 2L), viewer.seenEventSequences());
 
         viewer.close();
         blue.close();
@@ -225,30 +230,25 @@ class GameWebSocketIntegrationTest {
     void spawnsNamedUnitAndControlsItByGlobalId() throws Exception {
         SocketClient blue = connect("blue-token");
         walkToWoodNode(blue, blue.awaitType("STATE_UPDATED"));
-        blue.send(command("spawn-harvest", "HARVEST", Map.of()));
-        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
-        blue.awaitType("STATE_UPDATED");
+        run(blue, "spawn-harvest", "HARVEST", Map.of());
 
-        blue.send(command("spawn-blue-2", "SPAWN", Map.of(
+        JsonNode spawnedState = run(blue, "spawn-blue-2", "SPAWN", Map.of(
                 "sourceId", "hq-blue",
                 "unitId", "worker-blue-2",
                 "displayName", "Builder",
                 "direction", "DOWN"
-        )));
-        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
-        JsonNode spawnedState = blue.awaitType("STATE_UPDATED");
+        ));
         JsonNode spawned = unit(spawnedState, "worker-blue-2");
         assertEquals("Builder", spawned.path("displayName").asText());
         assertEquals(0, spawned.path("position").path("x").asInt());
         assertEquals(1, spawned.path("position").path("y").asInt());
         assertEquals(99, teamStock(spawnedState, "BLUE", "meat"));
 
-        blue.send(command("move-blue-2", "MOVE", Map.of(
+        JsonNode moved = run(blue, "move-blue-2", "MOVE", Map.of(
                 "unitId", "worker-blue-2",
                 "direction", "RIGHT"
-        )));
-        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
-        assertEquals(1, unitX(blue.awaitType("STATE_UPDATED"), "worker-blue-2"));
+        ));
+        assertEquals(1, unitX(moved, "worker-blue-2"));
 
         blue.close();
     }
@@ -258,22 +258,26 @@ class GameWebSocketIntegrationTest {
         SocketClient blue = connect("blue-token");
         walkToWoodNode(blue, blue.awaitType("STATE_UPDATED"));
 
-        blue.send(command("harvest-1", "HARVEST", Map.of()));
-        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
-        JsonNode harvested = blue.awaitType("STATE_UPDATED");
+        JsonNode harvested = run(blue, "harvest-1", "HARVEST", Map.of());
         assertEquals(103, teamStock(harvested, "BLUE", "wood"));
         assertEquals(47, resourceAmount(harvested, "wood-blue"));
 
-        blue.send(command("build-1", "BUILD", Map.of(
+        JsonNode built = run(blue, "build-1", "BUILD", Map.of(
                 "buildingId", "barracks-blue",
                 "buildingType", "BARRACKS",
                 "direction", "RIGHT"
-        )));
-        assertTrue(blue.awaitType("COMMAND_RESULT").path("ok").asBoolean());
-        JsonNode built = blue.awaitType("STATE_UPDATED");
+        ));
         assertEquals(100, teamStock(built, "BLUE", "wood"));
         assertEquals("BARRACKS", built.path("state").path("buildings").get(0).path("type").asText());
         blue.close();
+    }
+
+    /** Sends one command, checks it was queued and returns the state of the tick that ran it. */
+    private JsonNode run(SocketClient client, String commandId, String action, Map<String, Object> extra) throws Exception {
+        client.send(command(commandId, action, extra));
+        JsonNode ack = client.awaitType("COMMAND_RESULT");
+        assertTrue(ack.path("ok").asBoolean(), ack.toString());
+        return client.awaitEvent(commandId);
     }
 
     private SocketClient connect(String token) {
@@ -293,20 +297,19 @@ class GameWebSocketIntegrationTest {
     private Map<String, Object> command(String commandId, String action, Map<String, Object> extra) {
         Map<String, Object> message = new java.util.HashMap<>(extra);
         message.put("type", "COMMAND");
-        message.put("schemaVersion", 7);
+        message.put("schemaVersion", 8);
         message.put("matchId", "match-default");
         message.put("commandId", commandId);
         message.put("action", action);
         return message;
     }
 
-    private Map<String, Object> batch(String commandId, String mode, List<Map<String, Object>> commands) {
+    private Map<String, Object> batch(String commandId, List<Map<String, Object>> commands) {
         return Map.of(
                 "type", "BATCH",
-                "schemaVersion", 7,
+                "schemaVersion", 8,
                 "matchId", "match-default",
                 "commandId", commandId,
-                "mode", mode,
                 "commands", commands
         );
     }
@@ -326,10 +329,7 @@ class GameWebSocketIntegrationTest {
         for (int y = position.path("y").asInt(); y < 2; y++) steps.add("DOWN");
         int index = 0;
         for (String direction : steps) {
-            blue.send(command("walk-" + index++, "MOVE", Map.of("direction", direction)));
-            JsonNode moveResult = blue.awaitType("COMMAND_RESULT");
-            assertTrue(moveResult.path("ok").asBoolean(), moveResult.toString());
-            blue.awaitType("STATE_UPDATED");
+            run(blue, "walk-" + index++, "MOVE", Map.of("direction", direction));
         }
     }
 
@@ -380,6 +380,49 @@ class GameWebSocketIntegrationTest {
 
         void send(Object message) throws Exception {
             webSocket.sendText(objectMapper.writeValueAsString(message), true).join();
+        }
+
+        private final List<Long> eventSequences = new java.util.ArrayList<>();
+        private final Map<String, JsonNode> statesByEvent = new java.util.HashMap<>();
+
+        /** Waits for the STATE_UPDATED whose events include the command. */
+        JsonNode awaitEvent(String commandId) throws Exception {
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (System.nanoTime() < deadline) {
+                if (statesByEvent.containsKey(commandId)) {
+                    return statesByEvent.get(commandId);
+                }
+                JsonNode message = poll(Duration.ofMillis(200));
+                if (message == null || !"STATE_UPDATED".equals(message.path("type").asText())) {
+                    continue;
+                }
+                for (JsonNode event : message.path("events")) {
+                    eventSequences.add(event.path("sequence").asLong());
+                    statesByEvent.put(event.path("commandId").asText(), message);
+                }
+            }
+            throw new AssertionError("Timed out waiting for event of " + commandId);
+        }
+
+        /** Waits for the STATE_UPDATED reporting that the command failed on its turn. */
+        JsonNode awaitRejection(String commandId) throws Exception {
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+            while (System.nanoTime() < deadline) {
+                JsonNode message = poll(Duration.ofMillis(200));
+                if (message == null) {
+                    continue;
+                }
+                for (JsonNode rejection : message.path("rejections")) {
+                    if (commandId.equals(rejection.path("commandId").asText())) {
+                        return rejection;
+                    }
+                }
+            }
+            throw new AssertionError("Timed out waiting for rejection of " + commandId);
+        }
+
+        List<Long> seenEventSequences() {
+            return List.copyOf(eventSequences);
         }
 
         JsonNode awaitType(String type) throws Exception {

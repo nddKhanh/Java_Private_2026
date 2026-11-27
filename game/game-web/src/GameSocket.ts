@@ -1,5 +1,7 @@
 import type { StateUpdatedMessage } from './types';
 
+export const SCHEMA_VERSION = 8;
+
 export type ConnectionStatus = 'connecting' | 'online' | 'offline';
 
 export class GameSocket {
@@ -29,6 +31,13 @@ export class GameSocket {
     });
   }
 
+  /** Sends a message when the socket is open; returns false otherwise. */
+  send(message: Record<string, unknown>): boolean {
+    if (this.socket?.readyState !== WebSocket.OPEN) return false;
+    this.socket.send(JSON.stringify({ schemaVersion: SCHEMA_VERSION, ...message }));
+    return true;
+  }
+
   disconnect(): void {
     this.disposed = true;
     if (this.reconnectTimer !== null) {
@@ -46,7 +55,7 @@ export class GameSocket {
     }
     try {
       const message = JSON.parse(raw) as Partial<StateUpdatedMessage>;
-      if (message.type === 'STATE_UPDATED' && message.schemaVersion === 7 && message.state) {
+      if (message.type === 'STATE_UPDATED' && message.schemaVersion === SCHEMA_VERSION && message.state) {
         this.onState(message as StateUpdatedMessage);
       }
     } catch {
