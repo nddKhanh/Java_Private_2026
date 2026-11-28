@@ -26,6 +26,24 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
   Không sửa server; viewer chỉ dùng dữ liệu `STATE_UPDATED` hiện có (state, queues, events, rejections).
 - **Không làm:** tạm dừng, xem chậm/nhanh, phím tốc độ xem; trận đấu online nên viewer luôn hiện trạng thái trực tiếp.
 
+#### Điểm dừng ngày 2026-11-28 — đọc trước khi làm tiếp
+
+- **Đã xong, chờ merge:** PR #4 `feat/graphics-wave1` → `develop` gồm đợt 1, phóng to bản đồ và `maxHp` từ server (schema 9).
+  Chi tiết trong `CHANGELOG.md` và `PROGRESS.md`.
+- **Việc tiếp theo:** đợt 2, tạo nhánh mới từ `develop` sau khi PR #4 được merge.
+- **Nơi sửa:**
+  - Model SVG: `game-web/src/models.ts`.
+  - Màu: `src/theme.ts` khớp biến CSS trong `src/style.css`; `tests/theme.test.mjs` báo lỗi khi lệch.
+  - Quy tắc thanh máu, đèn và phóng to: `src/boardStatus.ts`.
+  - Vẽ bản đồ: `src/BattleScene.ts`.
+- **Tài nguyên:** chỉ dùng tài nguyên lưu trong repo; test chặn đường dẫn `http(s)://` trong CSS, `index.html` và phần vẽ bản đồ.
+- **Kiểm tra trực quan:** máy phát triển không có Chrome, dùng Edge headless (`msedge.exe --headless=new --remote-debugging-port=...`) điều khiển qua DevTools Protocol để đăng nhập, vào trận, lăn chuột và chụp ảnh.
+  Script cũ nằm trong thư mục tạm nên đợt 4 cần viết lại thành script trong `game/scripts/`.
+- **Còn mở từ đợt 1:**
+  - Chưa thấy đèn xanh và cam trên ảnh chụp.
+  - Chưa thử phóng hai ngón trên màn hình cảm ứng.
+  - Chưa đo tốc độ khung hình khi phóng to bản đồ 50×50 đông quân; mỗi lần lăn chuột viewer vẽ lại toàn bộ bản đồ, đợt 3 sẽ đổi sang giữ đối tượng theo id.
+
 #### Đợt 2. Nhật ký lệnh có màu
 
 - **Web:**

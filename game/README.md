@@ -115,6 +115,6 @@ Sau khi cập nhật, chạy `git diff --check` và ghi commit bằng tiếng An
 - Chưa có xác minh email, quên mật khẩu, thu hồi mọi session hoặc giới hạn số account mỗi team.
 - Chưa có load test quy mô lớn hoặc kiểm thử trực quan projectile trên nhiều trình duyệt.
 - HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE/RANGED/SIEGE; đạn xuyên đồng minh nhưng va chạm đối tượng địch, còn mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
-- Viewer phân biệt từng loại unit và công trình bằng silhouette riêng, đồng thời hiển thị ID thực tế trên bản đồ.
+- Viewer vẽ từng loại unit và công trình bằng model SVG tự vẽ theo màu đội, có thanh máu `HP/maxHp`, đèn trạng thái bot, số tọa độ, phóng to bằng lăn chuột và kéo để di chuyển; font và model nằm trong repo, không tải tài nguyên từ Internet.
 - Desktop Code Studio chỉ nên chạy source do người dùng tin cậy.
 - Hàng chờ lệnh chỉ nằm trong bộ nhớ server; khởi động lại server thì các lệnh đang chờ mất, state trận vẫn được phục hồi.
