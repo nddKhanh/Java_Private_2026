@@ -21,6 +21,7 @@ HQ chỉ sản xuất WORKER; BARRACKS sản xuất MELEE, RANGED và SIEGE.
 Projectile giữ tọa độ đích lúc khai hỏa, đi từng ô ngang hoặc dọc theo đường thẳng, bị công trình chặn và không đuổi theo mục tiêu.
 TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô.
 Web viewer có đăng ký/đăng nhập, tạo/tìm trận, phòng chờ theo đội, cùng bảng trạng thái revision, tick, lực lượng, hàng chờ lệnh, nhật ký lệnh và kết quả trận.
+Bản đồ dùng model SVG và font Be Vietnam Pro lưu trong `game-web`, hiện tọa độ, thanh máu theo `maxHp` server gửi, đèn trạng thái bot, và phóng to/kéo được.
 Khi chạy `start-web.ps1`, viewer mở trên mọi địa chỉ mạng để các máy cùng Wi-Fi truy cập bằng IPv4 của máy chủ.
 
 Desktop Code Studio dùng JavaFX để viết, biên dịch và chạy source Java local trong JVM con, sau đó tái sử dụng `GameClient` để điều khiển server.
@@ -221,7 +222,8 @@ Không dùng các token này cho môi trường public hoặc production.
 - SIEGE chiếm footprint 2×2; ATTACK tạo projectile và server cập nhật quỹ đạo, damage cùng winner theo nhịp mô phỏng.
 - Spawn tạo unit ở ô kề nguồn sản xuất, trừ thịt theo loại quân và trừ thêm gỗ với SIEGE; HQ chỉ tạo WORKER và BARRACKS chỉ tạo quân chiến đấu.
 - Resource node, harvest và building đã có; công trình chặn/nhận damage, bị phá hủy ở HP 0 và mỗi TOWER tự bắn tối đa một phát mỗi giây trong tầm 5.
-- Projectile bỏ qua đối tượng cùng phe và viewer dùng silhouette riêng kèm ID thực tế cho mọi unit, HQ và building.
+- Projectile bỏ qua đối tượng cùng phe và viewer dùng model riêng kèm ID thực tế cho mọi unit, HQ và building.
+- Unit, HQ và building mang `maxHp` lấy từ `game-rules.yml`; giao thức WebSocket ở schema 9, snapshot lưu theo định dạng cũ bị bỏ khi server khởi động.
 - Account, lobby membership, session, snapshot và event history được lưu bằng H2/Flyway; file database mặc định nằm trong `game-server/data/`.
 - Hai match được route độc lập theo `matchId`; reconnect nhận snapshot authoritative mới nhất.
 - Chưa có danh sách phòng công khai, matchmaking tự động, email verification, quên mật khẩu, backup hoặc database production.

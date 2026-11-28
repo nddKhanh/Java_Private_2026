@@ -22,6 +22,8 @@ export interface Unit {
   facing: 'UP' | 'RIGHT' | 'DOWN' | 'LEFT';
   width: number;
   height: number;
+  /** HP the unit spawned with; the server sends it so health bars stay right when the rules change. */
+  maxHp: number;
 }
 
 export interface Headquarters {
@@ -29,6 +31,7 @@ export interface Headquarters {
   teamId: string;
   position: Position;
   hp: number;
+  maxHp: number;
 }
 
 export interface ResourceNode {
@@ -44,6 +47,7 @@ export interface Building {
   type: 'BARRACKS' | 'TOWER' | 'WALL';
   position: Position;
   hp: number;
+  maxHp: number;
 }
 
 export interface Projectile {

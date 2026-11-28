@@ -6,6 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SnapshotReplayTest {
     @Test
@@ -19,6 +20,35 @@ class SnapshotReplayTest {
 
         assertEquals(session.state(), restored);
         assertEquals(codec.stateHash(session.state()), codec.stateHash(restored));
+    }
+
+    @Test
+    void damageKeepsMaxHpAndSnapshotsRestoreIt() {
+        Unit unit = new Unit("u", "U", "BLUE", "WORKER", new Position(1, 1), 3, Direction.UP, 1, 1);
+        Headquarters headquarters = new Headquarters("hq", "BLUE", new Position(0, 0), 5);
+        Building tower = new Building("t", "BLUE", BuildingType.TOWER, new Position(2, 2), 4);
+
+        assertEquals(3, unit.takeDamage(2).moveTo(new Position(1, 2), Direction.DOWN).maxHp());
+        assertEquals(5, headquarters.takeDamage(5).maxHp());
+        assertEquals(4, tower.takeDamage(1).maxHp());
+
+        GameSession session = new GameSession(DefaultMatchSetup.create());
+        SnapshotCodec codec = new SnapshotCodec();
+        MatchState restored = codec.deserialize(codec.serialize(session.state()));
+        assertEquals(3, restored.units().getFirst().maxHp());
+        assertEquals(3, restored.headquarters().getFirst().maxHp());
+    }
+
+    @Test
+    void maxHpMustCoverCurrentHp() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new Unit("u", "U", "BLUE", "WORKER", new Position(1, 1), 4, Direction.UP, 1, 1, 3));
+        assertThrows(IllegalArgumentException.class,
+                () -> new Headquarters("hq", "BLUE", new Position(0, 0), 0, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> new SnapshotCodec().deserialize(
+                        new SnapshotCodec().serialize(new GameSession(DefaultMatchSetup.create()).state())
+                                .replace("\"maxHp\":3,", "")));
     }
 
     @Test

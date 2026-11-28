@@ -258,7 +258,7 @@ Quân địch bước vào ô đạn đang bay cũng bị trúng đạn.
 Công trình trên đường bay chặn đạn và nhận sát thương; công trình biến mất khi HP về 0.
 TOWER tự bắn mục tiêu địch gần nhất trong phạm vi 5 ô và mỗi tháp khai hỏa tối đa một lần mỗi giây.
 Projectile xuyên qua unit, HQ và building cùng phe mà không gây sát thương hoặc dừng lại.
-Viewer dùng hình dạng riêng cho từng loại quân và công trình; nhãn cạnh biểu tượng là ID thực tế, ID dài hiển thị đầy đủ khi trỏ chuột.
+Viewer dùng model riêng cho từng loại quân và công trình; nhãn trên model là ID thực tế, trỏ chuột vào để xem ID đầy đủ kèm `HP/HP tối đa`.
 
 ### Cách khác — chạy kịch bản có sẵn
 
@@ -291,6 +291,10 @@ Khởi động lại máy chủ trước mỗi kịch bản độc lập.
 - [x] Bấm vào quân, HQ hoặc công trình của đội mình để xem hàng chờ lệnh và xóa toàn bộ lệnh đang chờ.
 - [x] Xem lệnh bị từ chối màu cam trong nhật ký lệnh, kèm lý do và số lệnh bị bỏ theo.
 - [x] Xem BARRACKS, TOWER và WALL trên bản đồ.
+- [x] Xem thanh máu dưới mỗi quân, HQ và công trình: xanh trên 60 %, vàng trên 30 %, đỏ khi thấp hơn.
+- [x] Xem đèn ở góc trên bên phải bot của đội mình: xám là rảnh, xanh là còn lệnh chờ, cam là vừa bị từ chối lệnh.
+- [x] Đọc số cột phía trên và số hàng bên trái bản đồ để đếm ô khi viết lệnh MOVE.
+- [x] Phóng to bằng lăn chuột, nút −/+ ở góc dưới bên phải hoặc phím `+`, `-`; bấm **Vừa khung** hoặc phím `0` để xem cả bản đồ; kéo chuột để di chuyển.
 - [x] Theo dõi số lần thay đổi trạng thái của trận đấu.
 - [x] Theo dõi đội thắng khi toàn bộ HQ của phe đối phương bị phá hủy.
 

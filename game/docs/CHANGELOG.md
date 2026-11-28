@@ -3,6 +3,48 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-28 — Phóng to bản đồ và HP tối đa từ server
+
+### Added
+
+- Bản đồ phóng to tới khoảng 220 px mỗi ô bằng lăn chuột, nút +/− hoặc phím `+`, `-`, `0`; kéo chuột để di chuyển, số tọa độ bám theo ô đang xem.
+- Unit, HQ và công trình mang `maxHp` trong trạng thái server gửi; thanh máu và mục Lực lượng hiện `HP/HP tối đa`.
+
+### Changed
+
+- Canvas tăng số pixel theo mật độ điểm ảnh của màn hình (960 đến 2400 px) và model được vẽ ở 256 px nên vẫn nét khi phóng to.
+- Giao thức WebSocket lên schema 9.
+
+### Fixed
+
+- Snapshot đã lưu theo định dạng cũ không đọc được thì bị bỏ để trận bắt đầu lại, thay vì làm server dừng khi khởi động.
+
+### Verified
+
+- `mvnw test`, `npm test` và `npm run build` pass; server khởi động được trên bản sao DB có snapshot cũ; chụp Edge headless khi phóng to và kéo bản đồ 12×12 và 50×50.
+
+## 2026-11-28 — Đồ họa đợt 1: font, model và bản đồ
+
+### Added
+
+- Font Be Vietnam Pro lưu sẵn trong `game-web` kèm giấy phép OFL; viewer không tải tài nguyên nào từ Internet.
+- Bộ model SVG tự vẽ cho 4 loại quân, HQ, 3 loại công trình, mỏ gỗ, mỏ thịt và đạn, tô theo màu đội.
+- Thanh máu đổi màu theo phần trăm HP và đèn trạng thái trên bot của đội mình: tối khi rảnh, xanh khi có lệnh chờ, cam khi vừa bị từ chối.
+- Số tọa độ quanh bản đồ, nền ô xen kẽ, đường lưới đậm mỗi 5 ô và vùng 3×3 quanh HQ tô màu đội.
+
+### Changed
+
+- Màu giao diện gom vào biến CSS và `theme.ts`; các nhãn tiếng Anh trên web được Việt hóa.
+- Rê chuột vào quân, HQ hoặc công trình hiện ID kèm HP; trên bản đồ lớn số tài nguyên chỉ hiện khi rê chuột.
+
+### Fixed
+
+- Lỗi khi vẽ trạng thái trận được ghi ra console thay vì bị bỏ qua.
+
+### Verified
+
+- `npm test` và `npm run build` pass; chụp Edge headless trận 12×12, 50×50 và `match-default` khi `WinningScenario` chạy tới lúc BLUE thắng.
+
 ## 2026-11-27 — Hàng chờ lệnh cho từng bot
 
 ### Changed

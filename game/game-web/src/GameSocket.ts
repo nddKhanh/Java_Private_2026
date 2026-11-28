@@ -1,6 +1,6 @@
 import type { StateUpdatedMessage } from './types';
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export type ConnectionStatus = 'connecting' | 'online' | 'offline';
 
@@ -53,13 +53,20 @@ export class GameSocket {
     if (typeof raw !== 'string') {
       return;
     }
+    let message: Partial<StateUpdatedMessage>;
     try {
-      const message = JSON.parse(raw) as Partial<StateUpdatedMessage>;
-      if (message.type === 'STATE_UPDATED' && message.schemaVersion === SCHEMA_VERSION && message.state) {
-        this.onState(message as StateUpdatedMessage);
-      }
+      message = JSON.parse(raw) as Partial<StateUpdatedMessage>;
     } catch {
       // Ignore malformed messages and keep the last confirmed snapshot visible.
+      return;
+    }
+    if (message.type === 'STATE_UPDATED' && message.schemaVersion === SCHEMA_VERSION && message.state) {
+      try {
+        this.onState(message as StateUpdatedMessage);
+      } catch (error) {
+        // A rendering bug must not hide later states, but it should still be visible in the console.
+        console.error('Không hiển thị được trạng thái trận', error);
+      }
     }
   }
 
