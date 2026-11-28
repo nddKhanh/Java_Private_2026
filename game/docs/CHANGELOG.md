@@ -3,6 +3,28 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-28 — Đồ họa đợt 1: font, model và bản đồ
+
+### Added
+
+- Font Be Vietnam Pro lưu sẵn trong `game-web` kèm giấy phép OFL; viewer không tải tài nguyên nào từ Internet.
+- Bộ model SVG tự vẽ cho 4 loại quân, HQ, 3 loại công trình, mỏ gỗ, mỏ thịt và đạn, tô theo màu đội.
+- Thanh máu đổi màu theo phần trăm HP và đèn trạng thái trên bot của đội mình: tối khi rảnh, xanh khi có lệnh chờ, cam khi vừa bị từ chối.
+- Số tọa độ quanh bản đồ, nền ô xen kẽ, đường lưới đậm mỗi 5 ô và vùng 3×3 quanh HQ tô màu đội.
+
+### Changed
+
+- Màu giao diện gom vào biến CSS và `theme.ts`; các nhãn tiếng Anh trên web được Việt hóa.
+- Rê chuột vào quân, HQ hoặc công trình hiện ID kèm HP; trên bản đồ lớn số tài nguyên chỉ hiện khi rê chuột.
+
+### Fixed
+
+- Lỗi khi vẽ trạng thái trận được ghi ra console thay vì bị bỏ qua.
+
+### Verified
+
+- `npm test` và `npm run build` pass; chụp Edge headless trận 12×12, 50×50 và `match-default` khi `WinningScenario` chạy tới lúc BLUE thắng.
+
 ## 2026-11-27 — Hàng chờ lệnh cho từng bot
 
 ### Changed

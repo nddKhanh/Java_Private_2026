@@ -18,33 +18,13 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - **Test:** Hai trận gửi đồng thời không chặn nhau; load test nhiều kết nối.
 - **File:** `game-server/.../GameWebSocketHandler.java`, `MatchCoordinator.java`.
 
-## A2. P2 — Đồ họa và trải nghiệm (B-06 đã chốt, chờ làm)
+## A2. P2 — Đồ họa và trải nghiệm (B-06 đã chốt; đợt 1 xong ngày 2026-11-28)
 
 ### B-06. Kế hoạch đồ họa
 
 - **Nguyên tắc:** học ý tưởng từ [tram-cuoi-cung-hoc-vien](https://github.com/tung51652-alt/tram-cuoi-cung-hoc-vien), không sao chép mã hay tài sản đồ họa; mọi hình do dự án tự vẽ.
   Không sửa server; viewer chỉ dùng dữ liệu `STATE_UPDATED` hiện có (state, queues, events, rejections).
 - **Không làm:** tạm dừng, xem chậm/nhanh, phím tốc độ xem; trận đấu online nên viewer luôn hiện trạng thái trực tiếp.
-
-#### Đợt 1. Bảng màu, font, model và bản đồ
-
-- **Font:** tự lưu Be Vietnam Pro (OFL, kèm file giấy phép) trong `game-web`, không tải từ CDN vì có thể chơi trong LAN không Internet; dùng cho HTML và chữ Phaser, chờ font nạp xong mới vẽ.
-- **Bảng màu:** gom màu vào biến CSS và một module màu dùng chung cho `BattleScene`; màu đội vẫn lấy từ server.
-- **Việt hóa nhãn:** bỏ các nhãn tiếng Anh như `SERVER-AUTHORITATIVE STRATEGY`, `PLAYER LOBBY`, `Revision`, `Winner`; giữ nguyên mã lệnh trong code bot.
-- **Model tự vẽ:** bộ hình SVG cho WORKER, MELEE, RANGED, SIEGE, HQ, BARRACKS, TOWER, WALL, mỏ gỗ, mỏ thịt và đạn.
-  Phần áo hoặc cờ tô theo màu đội; nạp thành texture Phaser thay cho hình que và khối hình học hiện tại.
-  Cùng bộ hình này dùng lại cho ảnh trong docs.
-- **Bản đồ:**
-  - Nền ô xen kẽ sáng tối nhẹ, lưới mờ, cứ 5 ô có một đường đậm hơn.
-  - Số tọa độ dọc mép bản đồ.
-  - Viền khu HQ theo màu đội.
-  - Nhãn tự ẩn khi ô nhỏ như hiện nay.
-- **Máu và trạng thái bot:**
-  - Thanh máu thay số HP, đổi màu theo phần trăm máu còn lại.
-  - Đèn trạng thái trên mỗi bot của đội người xem: sáng khi còn lệnh chờ, tối khi rảnh, nháy cam khi vừa bị từ chối.
-- **Test:**
-  - Hàm thuần cho màu thanh máu và đèn trạng thái có test `node --test`.
-  - Chụp Chrome headless bản đồ 12×12 và 50×50.
 
 #### Đợt 2. Nhật ký lệnh có màu
 

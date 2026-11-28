@@ -1,5 +1,13 @@
 # Tiến độ dự án
 
+## 2026-11-28 — Đồ họa đợt 1 (B-06)
+
+- **Trạng thái:** `VERIFIED` bằng `npm test`, production build và ảnh chụp Edge headless trên server thật.
+- **Đã đạt:** Font, model SVG và mọi tài nguyên đồ họa nằm trong repo; build đưa font vào `dist/assets`.
+- **Đã đạt:** Bản đồ có tọa độ, lưới mỗi 5 ô, vùng HQ, thanh máu và đèn trạng thái bot; nhãn web đã Việt hóa.
+- **Bằng chứng:** Ảnh trận 12×12, 50×50 và `match-default` hiện đủ model, tọa độ và bảng bên phải; `WinningScenario` kết thúc FINISHED, BLUE thắng ở revision 154 khi viewer mới đang mở.
+- **Chưa kiểm chứng:** Chưa nhìn thấy đèn xanh và cam trên ảnh chụp, mới có unit test cho quy tắc màu; thang máu lấy HP cao nhất đã thấy của mỗi loại vì server chưa gửi HP tối đa.
+
 ## 2026-11-27 — Hàng chờ lệnh cho từng bot
 
 - **Trạng thái:** `VERIFIED` bằng test tự động, production build, bot mẫu trên server thật và Chrome chạy ẩn.

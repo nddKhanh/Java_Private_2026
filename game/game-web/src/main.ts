@@ -1,7 +1,10 @@
 import Phaser from 'phaser';
+import './fonts.css';
 import './style.css';
 import { BattleScene } from './BattleScene';
 import { GameSocket, type ConnectionStatus } from './GameSocket';
+import { modelDataUrl } from './models';
+import { PALETTE } from './theme';
 import type { Account, CommandRejection, GameEvent, LobbyView, MatchRuntime, MatchState, QueuedCommand, Session, StateUpdatedMessage } from './types';
 
 const SAMPLE_MAP = `{
@@ -20,31 +23,31 @@ if (!app) throw new Error('Missing #app element');
 app.innerHTML = `
   <div class="shell">
     <header class="topbar">
-      <div class="brand-lockup"><span class="brand-mark">ACW</span><div><p class="eyebrow">SERVER-AUTHORITATIVE STRATEGY</p><h1>Ant Colony Wars</h1></div></div>
+      <div class="brand-lockup"><span class="brand-mark"><img id="brand-model" alt="" width="34" height="34"></span><div><p class="eyebrow">ĐẤU TRƯỜNG LẬP TRÌNH JAVA</p><h1>Ant Colony Wars</h1></div></div>
       <div class="header-actions"><span id="account-chip" class="account-chip hidden"></span><button id="logout" class="quiet-button compact hidden" type="button">Đăng xuất</button><div id="connection" class="connection"><span class="connection-dot"></span><span id="connection-label">Chưa vào trận</span></div></div>
     </header>
     <main>
       <section id="auth" class="auth-layout">
-        <div class="hero-copy"><p class="eyebrow">PLAYER LOBBY</p><h2>Đăng nhập để tạo hoặc tìm trận</h2><p>Mỗi tài khoản giữ một vị trí trong đội. Sau khi vào phòng, nhập pairing key cùng tài khoản này trong Desktop Code Studio để điều khiển quân.</p></div>
+        <div class="hero-copy"><p class="eyebrow">SẢNH NGƯỜI CHƠI</p><h2>Đăng nhập để tạo hoặc tìm trận</h2><p>Mỗi tài khoản giữ một vị trí trong đội. Sau khi vào phòng, nhập mã ghép Desktop cùng tài khoản này trong Desktop Code Studio để điều khiển quân.</p></div>
         <div class="auth-grid">
-          <form id="login-form" class="card form-stack"><div><p class="panel-label">ĐÃ CÓ TÀI KHOẢN</p><h3>Đăng nhập</h3></div><label>Username<input name="username" autocomplete="username" required minlength="3" maxlength="32"></label><label>Password<input name="password" type="password" autocomplete="current-password" required maxlength="72"></label><button type="submit">Đăng nhập</button><p class="form-message" data-message="login"></p></form>
-          <form id="register-form" class="card form-stack"><div><p class="panel-label">NGƯỜI CHƠI MỚI</p><h3>Đăng ký</h3></div><label>Username<input name="username" autocomplete="username" required minlength="3" maxlength="32"></label><label>Password<input name="password" type="password" autocomplete="new-password" required maxlength="72"></label><button type="submit">Tạo tài khoản</button><p class="form-message" data-message="register"></p></form>
+          <form id="login-form" class="card form-stack"><div><p class="panel-label">ĐÃ CÓ TÀI KHOẢN</p><h3>Đăng nhập</h3></div><label>Tên đăng nhập<input name="username" autocomplete="username" required minlength="3" maxlength="32"></label><label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required maxlength="72"></label><button type="submit">Đăng nhập</button><p class="form-message" data-message="login"></p></form>
+          <form id="register-form" class="card form-stack"><div><p class="panel-label">NGƯỜI CHƠI MỚI</p><h3>Đăng ký</h3></div><label>Tên đăng nhập<input name="username" autocomplete="username" required minlength="3" maxlength="32"></label><label>Mật khẩu<input name="password" type="password" autocomplete="new-password" required maxlength="72"></label><button type="submit">Tạo tài khoản</button><p class="form-message" data-message="register"></p></form>
         </div>
       </section>
 
       <section id="dashboard" class="hidden">
-        <div class="section-heading"><div><p class="eyebrow">MATCH CENTER</p><h2 id="welcome">Chọn cách vào trận</h2></div></div>
+        <div class="section-heading"><div><p class="eyebrow">TRUNG TÂM TRẬN ĐẤU</p><h2 id="welcome">Chọn cách vào trận</h2></div></div>
         <div class="action-grid"><button id="show-create" class="action-card" type="button"><span class="action-icon">＋</span><strong>Tạo trận</strong><small>Nhập script bản đồ và mở phòng chờ mới.</small></button><button id="show-find" class="action-card" type="button"><span class="action-icon">⌕</span><strong>Tìm trận</strong><small>Tham gia bằng mã trận và token đội.</small></button></div>
         <section class="card demo-strip"><div><p class="panel-label">TRẬN ĐANG CHẠY</p><p class="muted-copy">Có thể mở nhanh một trận để quan sát.</p></div><select id="match-select"><option value="match-default">Đang tải…</option></select><button id="watch-match" class="quiet-button" type="button">Xem trận</button></section>
       </section>
 
-      <section id="create-panel" class="card editor-panel hidden"><div class="section-heading"><div><p class="eyebrow">CREATE MATCH</p><h2>Tạo bản đồ</h2><p class="muted-copy">JSON mô tả bản đồ vuông nxn, tài nguyên, nhà chính, lính, số đội và số tài khoản mỗi đội.</p></div><button class="quiet-button back-dashboard" type="button">Quay lại</button></div><form id="create-form" class="form-stack"><label>Map script<textarea id="map-script" spellcheck="false"></textarea></label><button type="submit">Tạo phòng chờ</button><p class="form-message" data-message="create"></p></form></section>
+      <section id="create-panel" class="card editor-panel hidden"><div class="section-heading"><div><p class="eyebrow">TẠO TRẬN</p><h2>Tạo bản đồ</h2><p class="muted-copy">JSON mô tả bản đồ vuông nxn, tài nguyên, nhà chính, lính, số đội và số tài khoản mỗi đội.</p></div><button class="quiet-button back-dashboard" type="button">Quay lại</button></div><form id="create-form" class="form-stack"><label>Script bản đồ<textarea id="map-script" spellcheck="false"></textarea></label><button type="submit">Tạo phòng chờ</button><p class="form-message" data-message="create"></p></form></section>
 
-      <section id="find-panel" class="card find-panel hidden"><div class="section-heading"><div><p class="eyebrow">FIND MATCH</p><h2>Nhập mã để tham gia</h2></div><button class="quiet-button back-dashboard" type="button">Quay lại</button></div><form id="find-form" class="form-stack narrow-form"><label>Mã trận<input name="matchCode" autocomplete="off" maxlength="6" placeholder="ABC234" required></label><label>Token đội<input name="teamToken" autocomplete="off" maxlength="8" placeholder="TOKEN ĐỘI" required></label><button type="submit">Tìm và vào trận</button><p class="form-message" data-message="find"></p></form></section>
+      <section id="find-panel" class="card find-panel hidden"><div class="section-heading"><div><p class="eyebrow">TÌM TRẬN</p><h2>Nhập mã để tham gia</h2></div><button class="quiet-button back-dashboard" type="button">Quay lại</button></div><form id="find-form" class="form-stack narrow-form"><label>Mã trận<input name="matchCode" autocomplete="off" maxlength="6" placeholder="ABC234" required></label><label>Token đội<input name="teamToken" autocomplete="off" maxlength="8" placeholder="TOKEN ĐỘI" required></label><button type="submit">Tìm và vào trận</button><p class="form-message" data-message="find"></p></form></section>
 
-      <section id="waiting-room" class="hidden"><div class="section-heading"><div><p class="eyebrow">WAITING ROOM</p><h2>Phòng <span id="waiting-code">—</span></h2><p id="waiting-status" class="muted-copy">Đang chờ chủ phòng bắt đầu.</p><div class="pairing-key"><span>DESKTOP PAIRING KEY</span><strong id="pairing-key">—</strong><small>Nhập mã này cùng tài khoản của bạn trong Desktop Code Studio.</small></div></div><button id="leave-waiting" class="quiet-button" type="button">Về sảnh</button></div><div id="team-grid" class="team-grid"></div><div class="waiting-actions"><button id="start-game" class="hidden" type="button">Bắt đầu trận đấu</button><button id="open-game" class="hidden" type="button">Mở bản đồ trận đấu</button><p class="form-message" data-message="waiting"></p></div></section>
+      <section id="waiting-room" class="hidden"><div class="section-heading"><div><p class="eyebrow">PHÒNG CHỜ</p><h2>Phòng <span id="waiting-code">—</span></h2><p id="waiting-status" class="muted-copy">Đang chờ chủ phòng bắt đầu.</p><div class="pairing-key"><span>MÃ GHÉP DESKTOP</span><strong id="pairing-key">—</strong><small>Nhập mã này cùng tài khoản của bạn trong Desktop Code Studio.</small></div></div><button id="leave-waiting" class="quiet-button" type="button">Về sảnh</button></div><div id="team-grid" class="team-grid"></div><div class="waiting-actions"><button id="start-game" class="hidden" type="button">Bắt đầu trận đấu</button><button id="open-game" class="hidden" type="button">Mở bản đồ trận đấu</button><p class="form-message" data-message="waiting"></p></div></section>
 
-      <section id="arena" class="arena hidden"><div class="arena-heading"><div><p class="eyebrow">LIVE MATCH</p><h2 id="arena-title">match-default</h2></div><button id="change-match" class="quiet-button" type="button">Về sảnh</button></div><div class="workspace"><section class="board-card" aria-label="Bản đồ trận đấu"><div id="game"></div><div id="result-banner" class="result-banner hidden"></div></section><aside class="sidebar"><section class="panel match-panel"><p class="panel-label">TRẬN ĐẤU</p><div class="status-row"><span>Trạng thái</span><strong id="match-status">Đang chờ</strong></div><div class="status-row"><span>Revision</span><strong id="revision">—</strong></div><div class="status-row"><span>Winner</span><strong id="winner">—</strong></div><div class="status-row"><span>Nhịp mô phỏng</span><strong id="tick">—</strong></div></section><section class="panel"><p id="side-label" class="panel-label">LỰC LƯỢNG</p><div id="forces" class="forces empty">Chưa có snapshot.</div><div id="queue-panel" class="queue-panel hidden"></div></section><section class="panel log-panel"><p class="panel-label">NHẬT KÝ LỆNH</p><ol id="command-log" class="command-log"><li class="empty">Chưa có command.</li></ol></section></aside></div></section>
+      <section id="arena" class="arena hidden"><div class="arena-heading"><div><p class="eyebrow">TRẬN TRỰC TIẾP</p><h2 id="arena-title">match-default</h2></div><button id="change-match" class="quiet-button" type="button">Về sảnh</button></div><div class="workspace"><section class="board-card" aria-label="Bản đồ trận đấu"><div id="game"></div><div id="result-banner" class="result-banner hidden"></div></section><aside class="sidebar"><section class="panel match-panel"><p class="panel-label">TRẬN ĐẤU</p><div class="status-row"><span>Trạng thái</span><strong id="match-status">Đang chờ</strong></div><div class="status-row"><span>Lượt cập nhật</span><strong id="revision">—</strong></div><div class="status-row"><span>Đội thắng</span><strong id="winner">—</strong></div><div class="status-row"><span>Nhịp mô phỏng</span><strong id="tick">—</strong></div></section><section class="panel"><p id="side-label" class="panel-label">LỰC LƯỢNG</p><div id="forces" class="forces empty">Chưa có dữ liệu trận.</div><div id="queue-panel" class="queue-panel hidden"></div></section><section class="panel log-panel"><p class="panel-label">NHẬT KÝ LỆNH</p><ol id="command-log" class="command-log"><li class="empty">Chưa có lệnh nào chạy.</li></ol></section></aside></div></section>
     </main>
     <footer>Trạng thái trận đấu được xác nhận bởi Java server.</footer>
   </div>`;
@@ -60,6 +63,8 @@ const logEntries: { key: string; html: string }[] = [];
 let latestState: MatchState | null = null;
 let latestQueues: Record<string, QueuedCommand[]> = {};
 let selectedSubjectId: string | null = null;
+/** Rejections already flashed on the board; a later state may repeat them. */
+const seenRejections = new Set<string>();
 let game: Phaser.Game | null = null;
 let gameSocket: GameSocket | null = null;
 let sessionToken = window.localStorage.getItem('acw-session') ?? '';
@@ -69,6 +74,7 @@ let lobbyPoll: number | null = null;
 let viewerTeamId: string | null = null;
 
 document.querySelector<HTMLTextAreaElement>('#map-script')!.value = SAMPLE_MAP;
+document.querySelector<HTMLImageElement>('#brand-model')!.src = modelDataUrl('HQ', PALETTE.accent);
 bindForms();
 void restoreSession();
 
@@ -242,10 +248,11 @@ function startMatch(matchId: string, token: string): void {
   // A destroyed game cannot host its old scene again, so every match gets a fresh one.
   battleScene = new BattleScene();
   resetArena();
-  game = new Phaser.Game({ type: Phaser.AUTO, width: 960, height: 960, parent: 'game', backgroundColor: '#0b1120', scene: battleScene, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
+  game = new Phaser.Game({ type: Phaser.AUTO, width: 960, height: 960, parent: 'game', backgroundColor: PALETTE.surface, scene: battleScene, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
   logEntries.length = 0;
   latestState = null;
   latestQueues = {};
+  seenRejections.clear();
   selectedSubjectId = null;
   battleScene.onSelect(selectSubject);
   viewerTeamId = null;
@@ -265,7 +272,7 @@ function resetArena(): void {
   setText('#tick', '—');
   document.querySelector('#result-banner')?.classList.add('hidden');
   const forces = document.querySelector<HTMLElement>('#forces');
-  if (forces) { forces.classList.remove('hidden'); forces.classList.add('empty'); forces.textContent = 'Chưa có snapshot.'; }
+  if (forces) { forces.classList.remove('hidden'); forces.classList.add('empty'); forces.textContent = 'Chưa có dữ liệu trận.'; }
   document.querySelector('#queue-panel')?.classList.add('hidden');
   setText('#side-label', 'LỰC LƯỢNG');
   const log = document.querySelector<HTMLOListElement>('#command-log');
@@ -289,7 +296,10 @@ function receiveState(message: StateUpdatedMessage): void {
   latestQueues = message.queues ?? {};
   // The server knows which team this connection plays for; the forces and queue panels follow it.
   viewerTeamId = message.viewerTeamId ?? null;
-  battleScene.updateSnapshot(message.state);
+  battleScene.updateSnapshot(message.state, { viewerTeamId, queues: latestQueues });
+  const newRejections = (message.rejections ?? []).filter((rejection) => !seenRejections.has(rejection.commandId));
+  newRejections.forEach((rejection) => seenRejections.add(rejection.commandId));
+  battleScene.markRejected(newRejections.map((rejection) => rejection.subjectId));
   for (const event of message.events ?? []) {
     if (event.action !== 'TICK') addLog(`e${event.sequence}`, eventLine(event));
   }

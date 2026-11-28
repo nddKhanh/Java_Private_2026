@@ -4,27 +4,27 @@ import test from 'node:test';
 
 const source = await readFile(new URL('../src/BattleScene.ts', import.meta.url), 'utf8');
 
-test('entity IDs render as contrasting overlays inside every entity symbol', () => {
-  assert.match(source, /addIdLabel\(shape, center\.x, center\.y - size \* 0\.32, headquarters\.id/);
-  assert.match(source, /addIdLabel\(shape, center\.x, center\.y - size \* 0\.3, building\.id/);
-  assert.match(source, /center\.y - cellSize \* unit\.height \* 0\.3,[\s\S]*unit\.id/);
-  assert.match(source, /backgroundColor: '#020617'/);
-  assert.match(source, /label\.on\('pointerover'/);
-});
-
-test('small cells reveal ID labels on hover instead of covering neighbours', () => {
+test('small cells reveal ID and HP labels on hover instead of covering neighbours', () => {
   assert.match(source, /const compact = cellSize < 28;/);
   assert.match(source, /target\.on\('pointerover', \(\) => label\.setVisible\(true\)\)/);
+  assert.match(source, /`\$\{item\.id\} · \$\{Math\.max\(0, item\.hp\)\}\/\$\{max\} HP`/);
 });
 
-test('headquarters hexagon uses non-negative points so it stays centered on its cell', () => {
-  const hexagon = source.match(/this\.add\.polygon\(center\.x, center\.y, \[([\s\S]*?)\]/);
-  assert.ok(hexagon);
-  assert.doesNotMatch(hexagon[1], /-\s*(?:size|halfWidth|halfHeight)/);
+test('every entity is drawn from the bundled models, never from a network URL', () => {
+  assert.match(source, /this\.textures\.addBase64\(key, url\)/);
+  assert.match(source, /modelDataUrl\(item\.kind, color\)/);
+  assert.doesNotMatch(source, /https?:\/\//);
 });
 
-test('workers and soldiers render as people while SIEGE stays a vehicle', () => {
-  assert.match(source, /unit\.type === 'SIEGE'/);
-  assert.match(source, /this\.drawPerson\(center\.x, center\.y, cellSize \* 0\.9, color, alpha, unit\.type\)/);
-  assert.match(source, /figure\.fillCircle\(0, headY/);
+test('status lights appear only on commandable entities of the viewer team', () => {
+  assert.match(source, /item\.commandable && item\.teamId !== null && item\.teamId === this\.overlay\.viewerTeamId/);
+});
+
+test('SIEGE keeps its 2x2 footprint and units facing left are mirrored', () => {
+  assert.match(source, /width: item\.width, height: item\.height/);
+  assert.match(source, /flip: item\.facing === 'LEFT'/);
+});
+
+test('only model textures trigger a redraw, so text canvases cannot cause an endless redraw loop', () => {
+  assert.match(source, /if \(!this\.pendingTextures\.delete\(key\) \|\| this\.redrawQueued\) return;/);
 });
