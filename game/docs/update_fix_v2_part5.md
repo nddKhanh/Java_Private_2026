@@ -18,6 +18,77 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - **Test:** Hai trận gửi đồng thời không chặn nhau; load test nhiều kết nối.
 - **File:** `game-server/.../GameWebSocketHandler.java`, `MatchCoordinator.java`.
 
+## A2. P2 — Đồ họa và trải nghiệm (B-06 đã chốt, chờ làm)
+
+### B-06. Kế hoạch đồ họa
+
+- **Nguyên tắc:** học ý tưởng từ [tram-cuoi-cung-hoc-vien](https://github.com/tung51652-alt/tram-cuoi-cung-hoc-vien), không sao chép mã hay tài sản đồ họa; mọi hình do dự án tự vẽ.
+  Không sửa server; viewer chỉ dùng dữ liệu `STATE_UPDATED` hiện có (state, queues, events, rejections).
+- **Không làm:** tạm dừng, xem chậm/nhanh, phím tốc độ xem; trận đấu online nên viewer luôn hiện trạng thái trực tiếp.
+
+#### Đợt 1. Bảng màu, font, model và bản đồ
+
+- **Font:** tự lưu Be Vietnam Pro (OFL, kèm file giấy phép) trong `game-web`, không tải từ CDN vì có thể chơi trong LAN không Internet; dùng cho HTML và chữ Phaser, chờ font nạp xong mới vẽ.
+- **Bảng màu:** gom màu vào biến CSS và một module màu dùng chung cho `BattleScene`; màu đội vẫn lấy từ server.
+- **Việt hóa nhãn:** bỏ các nhãn tiếng Anh như `SERVER-AUTHORITATIVE STRATEGY`, `PLAYER LOBBY`, `Revision`, `Winner`; giữ nguyên mã lệnh trong code bot.
+- **Model tự vẽ:** bộ hình SVG cho WORKER, MELEE, RANGED, SIEGE, HQ, BARRACKS, TOWER, WALL, mỏ gỗ, mỏ thịt và đạn.
+  Phần áo hoặc cờ tô theo màu đội; nạp thành texture Phaser thay cho hình que và khối hình học hiện tại.
+  Cùng bộ hình này dùng lại cho ảnh trong docs.
+- **Bản đồ:**
+  - Nền ô xen kẽ sáng tối nhẹ, lưới mờ, cứ 5 ô có một đường đậm hơn.
+  - Số tọa độ dọc mép bản đồ.
+  - Viền khu HQ theo màu đội.
+  - Nhãn tự ẩn khi ô nhỏ như hiện nay.
+- **Máu và trạng thái bot:**
+  - Thanh máu thay số HP, đổi màu theo phần trăm máu còn lại.
+  - Đèn trạng thái trên mỗi bot của đội người xem: sáng khi còn lệnh chờ, tối khi rảnh, nháy cam khi vừa bị từ chối.
+- **Test:**
+  - Hàm thuần cho màu thanh máu và đèn trạng thái có test `node --test`.
+  - Chụp Chrome headless bản đồ 12×12 và 50×50.
+
+#### Đợt 2. Nhật ký lệnh có màu
+
+- **Web:**
+  - Dòng nhật ký hiện tiếng Việt, dùng chung `ACTION_LABELS` với hàng chờ, kèm biểu tượng và màu theo loại lệnh; cam là bị từ chối.
+  - Giữ khoảng 50 dòng có cuộn.
+  - Lọc "Chỉ đội tôi" và "Chỉ lỗi".
+  - Bấm vào dòng thì chọn bot đó trên bản đồ, chỉ với bot đội mình.
+- **Desktop:**
+  - Console đổi từ `TextArea` sang danh sách dòng có màu: đỏ là lỗi biên dịch hoặc exception, cam là bị từ chối, xanh là thành công, xám là thông tin.
+  - Lỗi biên dịch hiện số dòng kèm một câu giải thích dễ hiểu.
+- **Test:**
+  - Web: test phân loại dòng nhật ký.
+  - Desktop: test phân loại mức thông báo, không cần mở GUI.
+
+#### Đợt 3. Chuyển động trên bản đồ
+
+- `BattleScene` giữ đối tượng theo id thay vì `children.removeAll()` mỗi trạng thái; chỉ tạo mới, cập nhật hoặc xóa phần thay đổi.
+- Quân trượt sang ô mới trong 250 ms, đúng nhịp mô phỏng.
+- Đạn bay theo đường đi.
+- Nháy đỏ khi trúng đòn.
+- Hiệu ứng vỡ khi quân hoặc công trình bị phá, rồi mới xóa.
+- Khi tab bị ẩn rồi quay lại: bỏ hiệu ứng tồn đọng, nhảy thẳng tới trạng thái mới nhất.
+- **Test:**
+  - Test hàm so sánh trạng thái cũ và mới để biết đối tượng nào tạo, cập nhật hoặc xóa.
+  - Soát bằng mắt trận 10 đội trên 50×50.
+
+#### Đợt 4. Hướng dẫn có hình, làm sau đợt 1–3
+
+- **Ảnh model:** bảng model có ảnh từng loại quân, công trình, mỏ và đạn, kèm HP, sát thương, tầm và giá đọc từ `game-rules.yml` để không lệch số.
+- **Bản đồ mẫu:**
+  - Ảnh bản đồ 12×12 và 50×50, đánh số các vùng: HQ, mỏ, bãi trống, đường tiến quân.
+  - Ảnh minh họa hệ tọa độ: gốc (0,0), hướng UP/RIGHT/DOWN/LEFT, đường đạn.
+- **Ảnh giao diện:** sảnh, phòng chờ, màn trận và Desktop, có ô số đỏ đánh dấu từng khu vực, chú thích ngay dưới ảnh.
+- **Trang trí docs:**
+  - Banner đầu `GUIDE.md` vẽ từ bộ model.
+  - Biểu tượng nhỏ cho từng mục.
+  - Hộp "Mẹo" và "Lưu ý".
+  - Chú giải màu nhật ký.
+  - Mọi thứ hiển thị đúng trên GitHub.
+- **Cách tạo ảnh:**
+  - Script trong `game/scripts/` mở trang trưng bày model và bản đồ mẫu bằng Chrome headless rồi xuất PNG vào `game/docs/images/`, để chạy lại khi đồ họa đổi.
+  - Ảnh Desktop chụp tay.
+
 ## B. Quyết định còn mở — cần chủ dự án chốt trước khi làm
 
 ### B-01. Cân bằng chiến đấu
@@ -33,16 +104,6 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
   Cần chốt lượng khai thác và có cần hồi chiêu khai thác không.
 - **Giới hạn quân:** 50 quân × 10 đội trên bản đồ 50×50 dễ kín chỗ.
   Cần chốt giới hạn quân mỗi đội cho bản đồ này.
-
-### B-06. Đồ họa và trải nghiệm người chơi còn kém
-
-- **Tham khảo:** [tram-cuoi-cung-hoc-vien](https://github.com/tung51652-alt/tram-cuoi-cung-hoc-vien), học cách làm rồi làm theo kiểu của mình, không sao chép mã hay tài sản đồ họa.
-- **Điểm nên học:**
-  - Bảng màu và font tiếng Việt thống nhất (Be Vietnam Pro, giấy phép OFL), robot có trạng thái nhìn thấy được (mắt tắt/sáng).
-  - Nhật ký hành động tô màu theo kết quả: cam là bị từ chối, đỏ là code lỗi, kèm lý do dễ hiểu.
-  - Điều khiển xem trận: tạm dừng, xem chậm 0.5x, nhanh 2x; phím tắt cho các nút chính.
-  - Hướng dẫn từng bài có ảnh chụp giao diện đánh số từng khu vực.
-- **Cần chốt:** phạm vi đợt đầu (bảng màu và font, nhật ký màu, hay điều khiển tốc độ xem) và có cần ảnh chụp trong docs không.
 
 ### B-07. Viết code trong trình soạn thảo bất kỳ
 
@@ -64,6 +125,7 @@ Danh sách chỉ giữ việc chưa xong; mục nào xử lý xong thì xóa kh�
 - Hàng chờ lệnh theo bot, exception Java hủy batch dở; spawn đúng HQ/BARRACKS.
 - Đạn Bresenham cố định, xuyên đồng minh, tháp cooldown 1 giây; API `bot.stay()`.
 - Cảnh báo overload spawn cũ, nhãn ID nằm trên hình; phân biệt WORKER/MELEE/RANGED/SIEGE và HQ/BARRACKS/TOWER/WALL.
+- Tạm dừng và đổi tốc độ xem trận: trận đấu online, viewer luôn hiện trực tiếp.
 
 ## Kiểm chứng tập trung, một lần
 
