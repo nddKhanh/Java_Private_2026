@@ -16,7 +16,7 @@ export const MODEL_KINDS: readonly ModelKind[] = [
 const NEUTRAL: ReadonlySet<ModelKind> = new Set<ModelKind>(['WOOD', 'MEAT']);
 
 /** Pixel size the SVG is rasterized at; the board scales it down to the cell. */
-export const MODEL_PIXELS = 128;
+export const MODEL_PIXELS = 256;
 
 const OUTLINE = '#0b1020';
 const SKIN = '#f1c27d';

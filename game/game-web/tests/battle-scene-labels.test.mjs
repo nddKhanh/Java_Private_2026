@@ -5,9 +5,9 @@ import test from 'node:test';
 const source = await readFile(new URL('../src/BattleScene.ts', import.meta.url), 'utf8');
 
 test('small cells reveal ID and HP labels on hover instead of covering neighbours', () => {
-  assert.match(source, /const compact = cellSize < 28;/);
+  assert.match(source, /const compact = cellOnScreen < 28;/);
   assert.match(source, /target\.on\('pointerover', \(\) => label\.setVisible\(true\)\)/);
-  assert.match(source, /`\$\{item\.id\} · \$\{Math\.max\(0, item\.hp\)\}\/\$\{max\} HP`/);
+  assert.match(source, /`\$\{item\.id\} · \$\{Math\.max\(0, item\.hp\)\}\/\$\{item\.maxHp\} HP`/);
 });
 
 test('every entity is drawn from the bundled models, never from a network URL', () => {
@@ -27,4 +27,18 @@ test('SIEGE keeps its 2x2 footprint and units facing left are mirrored', () => {
 
 test('only model textures trigger a redraw, so text canvases cannot cause an endless redraw loop', () => {
   assert.match(source, /if \(!this\.pendingTextures\.delete\(key\) \|\| this\.redrawQueued\) return;/);
+});
+
+test('health bars use the max HP sent by the server', () => {
+  assert.match(source, /hpRatio\(item\.hp, item\.maxHp\)/);
+  assert.doesNotMatch(source, /HpScale/);
+});
+
+test('coordinate labels stay on an unzoomed UI camera while the main camera zooms the board', () => {
+  assert.match(source, /this\.cameras\.main\.ignore\(this\.uiObjects\)/);
+  assert.match(source, /this\.uiCamera\?\.ignore\(/);
+});
+
+test('a press that moves pans the board instead of selecting', () => {
+  assert.match(source, /if \(!drag \|\| drag\.moved\) return;/);
 });

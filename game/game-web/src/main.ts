@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import './fonts.css';
 import './style.css';
 import { BattleScene } from './BattleScene';
+import { canvasSize } from './boardStatus';
 import { GameSocket, type ConnectionStatus } from './GameSocket';
 import { modelDataUrl } from './models';
 import { PALETTE } from './theme';
@@ -47,7 +48,7 @@ app.innerHTML = `
 
       <section id="waiting-room" class="hidden"><div class="section-heading"><div><p class="eyebrow">PHÒNG CHỜ</p><h2>Phòng <span id="waiting-code">—</span></h2><p id="waiting-status" class="muted-copy">Đang chờ chủ phòng bắt đầu.</p><div class="pairing-key"><span>MÃ GHÉP DESKTOP</span><strong id="pairing-key">—</strong><small>Nhập mã này cùng tài khoản của bạn trong Desktop Code Studio.</small></div></div><button id="leave-waiting" class="quiet-button" type="button">Về sảnh</button></div><div id="team-grid" class="team-grid"></div><div class="waiting-actions"><button id="start-game" class="hidden" type="button">Bắt đầu trận đấu</button><button id="open-game" class="hidden" type="button">Mở bản đồ trận đấu</button><p class="form-message" data-message="waiting"></p></div></section>
 
-      <section id="arena" class="arena hidden"><div class="arena-heading"><div><p class="eyebrow">TRẬN TRỰC TIẾP</p><h2 id="arena-title">match-default</h2></div><button id="change-match" class="quiet-button" type="button">Về sảnh</button></div><div class="workspace"><section class="board-card" aria-label="Bản đồ trận đấu"><div id="game"></div><div id="result-banner" class="result-banner hidden"></div></section><aside class="sidebar"><section class="panel match-panel"><p class="panel-label">TRẬN ĐẤU</p><div class="status-row"><span>Trạng thái</span><strong id="match-status">Đang chờ</strong></div><div class="status-row"><span>Lượt cập nhật</span><strong id="revision">—</strong></div><div class="status-row"><span>Đội thắng</span><strong id="winner">—</strong></div><div class="status-row"><span>Nhịp mô phỏng</span><strong id="tick">—</strong></div></section><section class="panel"><p id="side-label" class="panel-label">LỰC LƯỢNG</p><div id="forces" class="forces empty">Chưa có dữ liệu trận.</div><div id="queue-panel" class="queue-panel hidden"></div></section><section class="panel log-panel"><p class="panel-label">NHẬT KÝ LỆNH</p><ol id="command-log" class="command-log"><li class="empty">Chưa có lệnh nào chạy.</li></ol></section></aside></div></section>
+      <section id="arena" class="arena hidden"><div class="arena-heading"><div><p class="eyebrow">TRẬN TRỰC TIẾP</p><h2 id="arena-title">match-default</h2></div><button id="change-match" class="quiet-button" type="button">Về sảnh</button></div><div class="workspace"><section class="board-card" aria-label="Bản đồ trận đấu"><div id="game"></div><div class="zoom-controls" role="group" aria-label="Phóng to bản đồ"><button id="zoom-out" class="zoom-button" type="button" title="Thu nhỏ (-)" aria-label="Thu nhỏ">−</button><span id="zoom-level" class="zoom-level">100%</span><button id="zoom-in" class="zoom-button" type="button" title="Phóng to (+)" aria-label="Phóng to">+</button><button id="zoom-reset" class="zoom-button zoom-fit" type="button" title="Xem toàn bản đồ (0)">Vừa khung</button></div><p class="zoom-hint">Lăn chuột để phóng to · kéo để di chuyển bản đồ</p><div id="result-banner" class="result-banner hidden"></div></section><aside class="sidebar"><section class="panel match-panel"><p class="panel-label">TRẬN ĐẤU</p><div class="status-row"><span>Trạng thái</span><strong id="match-status">Đang chờ</strong></div><div class="status-row"><span>Lượt cập nhật</span><strong id="revision">—</strong></div><div class="status-row"><span>Đội thắng</span><strong id="winner">—</strong></div><div class="status-row"><span>Nhịp mô phỏng</span><strong id="tick">—</strong></div></section><section class="panel"><p id="side-label" class="panel-label">LỰC LƯỢNG</p><div id="forces" class="forces empty">Chưa có dữ liệu trận.</div><div id="queue-panel" class="queue-panel hidden"></div></section><section class="panel log-panel"><p class="panel-label">NHẬT KÝ LỆNH</p><ol id="command-log" class="command-log"><li class="empty">Chưa có lệnh nào chạy.</li></ol></section></aside></div></section>
     </main>
     <footer>Trạng thái trận đấu được xác nhận bởi Java server.</footer>
   </div>`;
@@ -97,6 +98,32 @@ function bindForms(): void {
     if (currentLobby) startMatch(currentLobby.matchCode, sessionToken);
   });
   document.querySelector('#change-match')?.addEventListener('click', showDashboard);
+  document.querySelector('#zoom-in')?.addEventListener('click', () => battleScene.zoomBy(1.25));
+  document.querySelector('#zoom-out')?.addEventListener('click', () => battleScene.zoomBy(1 / 1.25));
+  document.querySelector('#zoom-reset')?.addEventListener('click', () => battleScene.resetZoom());
+  document.addEventListener('keydown', (event) => {
+    const typing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement
+      || event.target instanceof HTMLSelectElement;
+    if (typing || event.ctrlKey || event.metaKey || document.querySelector('#arena')?.classList.contains('hidden')) return;
+    if (event.key === '+' || event.key === '=') battleScene.zoomBy(1.25);
+    else if (event.key === '-' || event.key === '_') battleScene.zoomBy(1 / 1.25);
+    else if (event.key === '0') battleScene.resetZoom();
+    else return;
+    event.preventDefault();
+  });
+}
+
+/** Shows the zoom level and greys out the buttons at either limit. */
+function showZoom(zoom: number, max: number): void {
+  setText('#zoom-level', `${Math.round(zoom * 100)}%`);
+  const zoomIn = document.querySelector<HTMLButtonElement>('#zoom-in');
+  const zoomOut = document.querySelector<HTMLButtonElement>('#zoom-out');
+  const reset = document.querySelector<HTMLButtonElement>('#zoom-reset');
+  if (zoomIn) zoomIn.disabled = zoom >= max - 1e-6;
+  if (zoomOut) zoomOut.disabled = zoom <= 1 + 1e-6;
+  if (reset) reset.disabled = zoom <= 1 + 1e-6;
+  // The hint sits over the row numbers, which only matter once the board is zoomed.
+  document.querySelector('.zoom-hint')?.classList.toggle('hidden', zoom > 1 + 1e-6);
 }
 
 async function restoreSession(): Promise<void> {
@@ -248,7 +275,21 @@ function startMatch(matchId: string, token: string): void {
   // A destroyed game cannot host its old scene again, so every match gets a fresh one.
   battleScene = new BattleScene();
   resetArena();
-  game = new Phaser.Game({ type: Phaser.AUTO, width: 960, height: 960, parent: 'game', backgroundColor: PALETTE.surface, scene: battleScene, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH } });
+  // The canvas has more pixels than its on-screen box on high-density screens, so models and text stay sharp.
+  const boardWidth = document.querySelector<HTMLElement>('#game')?.clientWidth ?? 960;
+  const size = canvasSize(boardWidth, window.devicePixelRatio || 1);
+  game = new Phaser.Game({
+    type: Phaser.AUTO,
+    width: size,
+    height: size,
+    parent: 'game',
+    backgroundColor: PALETTE.surface,
+    scene: battleScene,
+    input: { mouse: { preventDefaultWheel: true } },
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+  });
+  battleScene.onZoom(showZoom);
+  showZoom(1, 1);
   logEntries.length = 0;
   latestState = null;
   latestQueues = {};
@@ -402,7 +443,7 @@ function updatePanel(state: MatchState): void {
   forces.innerHTML = ownTeams.map((team) => {
     const headquarters = state.headquarters.find((item) => item.teamId === team.id);
     const units = state.units.filter((unit) => unit.teamId === team.id);
-    return `<article class="team-card" style="--team-color:${safeColor(team.color)}"><div class="team-heading"><span class="team-swatch"></span><strong>${escapeHtml(team.displayName)}</strong><small>Gỗ ${team.wood ?? 0} · Thịt ${team.meat ?? 0}</small></div><div class="force-stat"><span>HQ</span><strong>${headquarters?.hp ?? 0} HP</strong></div>${units.map((unit) => `<div class="force-stat"><span>${escapeHtml(unit.displayName)}</span><strong>${unit.hp} HP</strong></div>`).join('')}</article>`;
+    return `<article class="team-card" style="--team-color:${safeColor(team.color)}"><div class="team-heading"><span class="team-swatch"></span><strong>${escapeHtml(team.displayName)}</strong><small>Gỗ ${team.wood ?? 0} · Thịt ${team.meat ?? 0}</small></div><div class="force-stat"><span>HQ</span><strong>${headquarters?.hp ?? 0}/${headquarters?.maxHp ?? 0} HP</strong></div>${units.map((unit) => `<div class="force-stat"><span>${escapeHtml(unit.displayName)}</span><strong>${unit.hp}/${unit.maxHp} HP</strong></div>`).join('')}</article>`;
   }).join('');
 }
 

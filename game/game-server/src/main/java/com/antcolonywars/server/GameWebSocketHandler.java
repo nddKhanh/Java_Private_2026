@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 public class GameWebSocketHandler extends TextWebSocketHandler {
-    public static final int SCHEMA_VERSION = 8;
+    public static final int SCHEMA_VERSION = 9;
 
     private final MatchRegistry matchRegistry;
     private final ObjectMapper objectMapper;

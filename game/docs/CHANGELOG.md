@@ -3,6 +3,26 @@
 Ghi các thay đổi đã hoàn thành theo kết quả cuối cùng.
 Mỗi mục chỉ nên có một câu ngắn và bỏ qua nhóm không có thay đổi.
 
+## 2026-11-28 — Phóng to bản đồ và HP tối đa từ server
+
+### Added
+
+- Bản đồ phóng to tới khoảng 220 px mỗi ô bằng lăn chuột, nút +/− hoặc phím `+`, `-`, `0`; kéo chuột để di chuyển, số tọa độ bám theo ô đang xem.
+- Unit, HQ và công trình mang `maxHp` trong trạng thái server gửi; thanh máu và mục Lực lượng hiện `HP/HP tối đa`.
+
+### Changed
+
+- Canvas tăng số pixel theo mật độ điểm ảnh của màn hình (960 đến 2400 px) và model được vẽ ở 256 px nên vẫn nét khi phóng to.
+- Giao thức WebSocket lên schema 9.
+
+### Fixed
+
+- Snapshot đã lưu theo định dạng cũ không đọc được thì bị bỏ để trận bắt đầu lại, thay vì làm server dừng khi khởi động.
+
+### Verified
+
+- `mvnw test`, `npm test` và `npm run build` pass; server khởi động được trên bản sao DB có snapshot cũ; chụp Edge headless khi phóng to và kéo bản đồ 12×12 và 50×50.
+
 ## 2026-11-28 — Đồ họa đợt 1: font, model và bản đồ
 
 ### Added

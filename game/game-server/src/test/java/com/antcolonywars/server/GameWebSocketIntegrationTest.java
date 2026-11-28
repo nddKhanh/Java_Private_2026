@@ -187,7 +187,7 @@ class GameWebSocketIntegrationTest {
 
         blue.send(Map.of(
                 "type", "CLEAR_QUEUE",
-                "schemaVersion", 8,
+                "schemaVersion", 9,
                 "matchId", "match-default",
                 "commandId", "clear-1",
                 "subjectId", "worker-blue"
@@ -297,7 +297,7 @@ class GameWebSocketIntegrationTest {
     private Map<String, Object> command(String commandId, String action, Map<String, Object> extra) {
         Map<String, Object> message = new java.util.HashMap<>(extra);
         message.put("type", "COMMAND");
-        message.put("schemaVersion", 8);
+        message.put("schemaVersion", 9);
         message.put("matchId", "match-default");
         message.put("commandId", commandId);
         message.put("action", action);
@@ -307,7 +307,7 @@ class GameWebSocketIntegrationTest {
     private Map<String, Object> batch(String commandId, List<Map<String, Object>> commands) {
         return Map.of(
                 "type", "BATCH",
-                "schemaVersion", 8,
+                "schemaVersion", 9,
                 "matchId", "match-default",
                 "commandId", commandId,
                 "commands", commands

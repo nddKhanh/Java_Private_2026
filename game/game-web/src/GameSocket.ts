@@ -1,6 +1,6 @@
 import type { StateUpdatedMessage } from './types';
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export type ConnectionStatus = 'connecting' | 'online' | 'offline';
 

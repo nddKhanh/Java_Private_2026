@@ -170,6 +170,32 @@ class MatchCoordinatorTest {
         assertTrue(elapsedMillis < 5_000, "400 match ticks took " + elapsedMillis + " ms");
     }
 
+    @Test
+    void snapshotSavedInAnOlderFormatIsDiscardedInsteadOfStoppingTheServer() {
+        MatchPersistence unreadable = new MatchPersistence() {
+            @Override public Optional<MatchState> load(String matchId) {
+                throw new IllegalStateException("Cannot deserialize persisted match data");
+            }
+            @Override public void save(MatchState state, GameEvent event) { }
+            @Override public List<GameEvent> history(String matchId) { return List.of(); }
+        };
+
+        MatchRegistry registry = new MatchRegistry(
+                DefaultMatchSetup.create(), List.of("old-format"), LIMITS, Clock.systemUTC(), unreadable
+        );
+
+        assertEquals(0, registry.require("old-format").state().revision());
+    }
+
+    @Test
+    void stateSentToViewersCarriesMaxHpOfDamagedEntities() throws Exception {
+        Unit damaged = new Unit("u", "U", "BLUE", "WORKER", new Position(1, 1), 3, Direction.UP, 1, 1).takeDamage(2);
+        String json = new ObjectMapper().writeValueAsString(damaged);
+
+        assertTrue(json.contains("\"hp\":1"), json);
+        assertTrue(json.contains("\"maxHp\":3"), json);
+    }
+
     private static final class MutableClock extends Clock {
         private long millis;
 

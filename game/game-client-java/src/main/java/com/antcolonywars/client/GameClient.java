@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public final class GameClient implements AutoCloseable, WebSocket.Listener {
-    private static final int SCHEMA_VERSION = 8;
+    private static final int SCHEMA_VERSION = 9;
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
     /** A single command waits behind its bot's queue, one command per tick, so its result can take a while. */
     private static final Duration EXECUTION_TIMEOUT = Duration.ofSeconds(60);

@@ -1,5 +1,13 @@
 # Tiến độ dự án
 
+## 2026-11-28 — Phóng to bản đồ và HP tối đa từ server
+
+- **Trạng thái:** `VERIFIED` bằng `mvnw test`, `npm test`, production build và ảnh chụp Edge headless trên server thật.
+- **Đã đạt:** Lăn chuột, nút và phím phóng to quanh vị trí chuột; kéo để di chuyển; tọa độ nằm trên camera riêng nên không phóng theo.
+- **Đã đạt:** `maxHp` đi từ `game-rules.yml` vào Unit, HQ và Building, giữ nguyên khi bị đánh và khi lưu, khôi phục snapshot.
+- **Bằng chứng:** Mục Lực lượng hiện `3/3 HP`; ảnh phóng to 516% trên `match-default` và 301% trên 12×12; server mở bản sao DB cũ không lỗi, các trận cũ bắt đầu lại từ revision 0.
+- **Chưa kiểm chứng:** Chưa thử phóng to bằng hai ngón trên màn hình cảm ứng; chưa đo tốc độ khung hình khi phóng to bản đồ 50×50 nhiều quân trên máy yếu.
+
 ## 2026-11-28 — Đồ họa đợt 1 (B-06)
 
 - **Trạng thái:** `VERIFIED` bằng `npm test`, production build và ảnh chụp Edge headless trên server thật.

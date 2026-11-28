@@ -101,3 +101,13 @@ footer { padding-top: 18px; color: #475569; font-size: 12px; text-align: center;
 .queue-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .danger-button { color: #fff; background: #dc2626; font-size: 13px; } .danger-button:disabled { cursor: not-allowed; opacity: .45; }
 .command-log li.rejected { background: rgba(234,88,12,.16); border: 1px solid rgba(234,88,12,.45); } .command-log li.rejected strong { color: #fdba74; } .command-log li.rejected .log-sequence { color: var(--warning); }
+
+.zoom-controls { position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 12px; padding: 4px; background: rgba(11,18,33,.88); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.zoom-button { min-width: 32px; height: 32px; padding: 0 9px; border: 0; border-radius: 8px; color: var(--text-strong); background: rgba(51,65,85,.6); font-size: 17px; font-weight: 800; line-height: 1; }
+.zoom-button:hover { background: rgba(71,85,105,.9); transform: none; }
+.zoom-button:disabled { cursor: default; opacity: .35; }
+.zoom-fit { font-size: 12px; }
+.zoom-level { min-width: 46px; color: var(--muted); font-size: 12px; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+.zoom-hint { position: absolute; left: 14px; bottom: 20px; margin: 0; color: var(--subtle); font-size: 11px; pointer-events: none; }
+#game canvas { cursor: grab; } #game canvas:active { cursor: grabbing; }
+@media (max-width: 560px) { .zoom-hint { display: none; } .zoom-fit { display: none; } }

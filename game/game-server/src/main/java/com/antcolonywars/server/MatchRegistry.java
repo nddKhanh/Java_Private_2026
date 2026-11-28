@@ -61,9 +61,17 @@ public final class MatchRegistry {
         return coordinator;
     }
 
-    /** A stored snapshot from another map or rules version is discarded and the match starts fresh. */
+    /**
+     * A stored snapshot from another map or rules version, or one saved in an older format that no longer reads
+     * (such as before units carried {@code maxHp}), is discarded and the match starts fresh.
+     */
     private MatchCoordinator restoreOrCreate(MatchSetup setup) {
-        MatchState restored = persistence.load(setup.matchId()).orElse(null);
+        MatchState restored;
+        try {
+            restored = persistence.load(setup.matchId()).orElse(null);
+        } catch (IllegalStateException unreadable) {
+            restored = null;
+        }
         try {
             return new MatchCoordinator(setup, restored, limits, clock, persistence);
         } catch (IllegalArgumentException exception) {
